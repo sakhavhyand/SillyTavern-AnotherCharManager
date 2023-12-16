@@ -1,11 +1,12 @@
 {
-    "display_name": "AnotherTagManager",
-    "loading_order": 9,
+    "display_name": "TAG Manager",
+    "loading_order": 6,
     "requires": [],
-    "optional": [],
+    "optional": [
+    ],
     "js": "index.js",
     "css": "style.css",
     "author": "Rendal",
-    "version": "1.5",
-    "homePage": "https://github.com/sakhavhyand/SillyTavern-AnotherTagManager"
+    "version": "0.0.1",
+    "homePage": "https://github.com/sakhavhyand/SillyTavern-TagManager"
 }
