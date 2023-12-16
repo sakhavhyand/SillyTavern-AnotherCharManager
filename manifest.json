@@ -1,9 +1,8 @@
 {
-    "display_name": "TAG Manager",
-    "loading_order": 6,
+    "display_name": "Tag Manager",
+    "loading_order": 8,
     "requires": [],
-    "optional": [
-    ],
+    "optional": [],
     "js": "index.js",
     "css": "style.css",
     "author": "Rendal",
