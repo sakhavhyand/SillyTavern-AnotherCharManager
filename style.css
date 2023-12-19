@@ -1,0 +1,10 @@
+.list-character-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;  /* Adjust as needed. If this is a popup, it might be set to a fixed height. */
+}
+
+.character-list-popup{
+    flex-grow: 1;
+    overflow-y: auto;  /* This ensures that if the list grows too long, it becomes scrollable. */
+}
