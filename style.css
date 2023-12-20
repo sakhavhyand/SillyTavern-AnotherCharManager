@@ -1,10 +1,30 @@
 .list-character-wrapper {
+    flex-grow: 1;
+    height: 100%;
+    overflow-y: auto;  /* This ensures that if the list grows too long, it becomes scrollable. */
+}
+
+.character-list-popup {
     display: flex;
-    flex-direction: column;
+    gap: 5px;
+    overflow-y: auto;
+    flex-wrap: wrap;
+    flex-direction: row;
+    flex-grow: 1;
+    justify-content: space-around;
+    align-content: flex-start;
     height: 100%;  /* Adjust as needed. If this is a popup, it might be set to a fixed height. */
 }
 
-.character-list-popup{
-    flex-grow: 1;
-    overflow-y: auto;  /* This ensures that if the list grows too long, it becomes scrollable. */
+.character_item {
+    width: 30%;
+    align-items: flex-start;
+    height: min-content;
+    flex-direction: column;
+    overflow: hidden;
+    max-width: 100px;
+}
+
+.avatar {
+    align-self: center;
 }
