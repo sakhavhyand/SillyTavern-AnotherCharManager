@@ -4,7 +4,7 @@
     overflow-y: auto;  /* This ensures that if the list grows too long, it becomes scrollable. */
 }
 
-.character-list-popup {
+.character-list {
     display: flex;
     gap: 5px;
     overflow-y: auto;
@@ -13,7 +13,19 @@
     flex-grow: 1;
     justify-content: space-around;
     align-content: flex-start;
-    height: 100%;  /* Adjust as needed. If this is a popup, it might be set to a fixed height. */
+    height: 95%;
+}
+
+.character-list-selected {
+    display: flex;
+    gap: 5px;
+    overflow-y: auto;
+    flex-wrap: wrap;
+    flex-direction: row;
+    flex-grow: 1;
+    justify-content: space-around;
+    align-content: flex-start;
+    height: 30%;
 }
 
 .character_item {
@@ -23,8 +35,60 @@
     flex-direction: column;
     overflow: hidden;
     max-width: 100px;
+    padding: 5px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 1px;
+}
+
+.character-details {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    flex-direction: row;
+    flex-grow: 1;
+    justify-content: space-around;
+    align-content: flex-start;
+    height: 65%;
+}
+
+.char-details-tags {
+    display: flex;
+    flex: 1;
+    align-items: stretch;
+}
+
+.char-details-desc {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    align-items: stretch;
+}
+
+.divider {
+    background-image: linear-gradient(90deg, var(--transparent), var(--SmartThemeBodyColor), var(--transparent));
+    margin: 5px 0;
+    width: 1px;
+    min-width: 1px;
+    border: 0;
+    opacity: 0.2;
+    height: 98%;
+}
+
+.desc_div {
+    display: flex;
+    align-items: center;
+}
+
+.desc_zone {
+    resize: none;
+    height: 95%;
 }
 
 .avatar {
     align-self: center;
+}
+
+.char_select:hover {
+    background-color: var(--white30a);
 }
