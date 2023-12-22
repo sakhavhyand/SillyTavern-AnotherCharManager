@@ -51,7 +51,17 @@ function getCharBlock(item, id) {
     return html;
 }
 
-function fillDetails({item, id, type}) {
+function displayTag({ id, name, color }){
+    let html = `<span id="${id}" class="tag" style="background-color: ${color};">
+                    <span class="tag_name">${name}</span>
+                    <i class="fa-solid fa-circle-xmark tag_remove"></i>
+                </span>`;
+
+
+    return html;
+}
+
+function fillDetails({ item, id, type }) {
 
     let this_avatar = default_avatar;
     if (item.avatar != 'none') {
@@ -65,7 +75,14 @@ function fillDetails({item, id, type}) {
                                         <img src="${this_avatar}">
                                     </div>
                                     <div>${item.name}</div>
-                                    <div>${getTagsList(item.avatar).map((t) => t.name)}</div>
+                                    <div>
+                                        <div id="tagSearch">
+                                            <input id="tagInput" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
+                                        </div>
+                                        <div id="tagList" class="tags">
+                                            ${getTagsList(item.avatar).map((t) => displayTag(t)).join('')}
+                                        </div>
+                                    </div>
                                 </div>`;
     //document.getElementById('desc_zone').value = getDescription(char.id);
     document.getElementById('desc_zone').value = item.description;
