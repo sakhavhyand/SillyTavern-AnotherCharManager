@@ -6,8 +6,6 @@ import { getTagsList, createTagInput } from '../../../tags.js';
 const extensionName = 'SillyTavern-TagManager';
 const extensionFolderPath = `scripts/extensions/${extensionName}/`;
 
-let popupState = null;
-let savedPopupContent = null;
 const defaultSettings = {};
 let charsData = {};
 
@@ -54,7 +52,7 @@ function getCharBlock(item, id) {
 function displayTag({ id, name, color }){
     let html = `<span id="${id}" class="tag" style="background-color: ${color};">
                     <span class="tag_name">${name}</span>
-                    <i class="fa-solid fa-circle-xmark remove_tag"></i>
+                    <i class="fa-solid fa-circle-xmark tag_remove"></i>
                 </span>`;
 
 
@@ -89,7 +87,6 @@ function fillDetails({ item, id, type }) {
 }
 
 function cleanAndFillList() {
-    charsData = getEntitiesList({ doFilter: false });
     let charList = charsData.filter(i => i.type === 'character').map((e) => getCharBlock(e.item, e.id)).join('');
     document.getElementById('character-list').innerHTML = '';
     document.getElementById('character-list').innerHTML = charList;
