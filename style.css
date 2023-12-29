@@ -52,6 +52,13 @@
     height: 65%;
 }
 
+.character_item_details {
+    display: flex;
+    gap: 5px;
+    flex-direction: row;
+    flex-grow: 1;
+    align-content: flex-start;
+}
 .char-details-tags {
     display: flex;
     flex: 1;
