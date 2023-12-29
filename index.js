@@ -68,11 +68,16 @@ function fillDetails({ item, id, type }) {
     let divDetailsTags = document.getElementById('char-details-tags');
 
 
-    divDetailsTags.innerHTML = `<div class="character_item flex-container" chid="${id}" id="CharID${id}">
-                                    <div class="avatar" title="${item.avatar}">
-                                        <img src="${this_avatar}">
+    divDetailsTags.innerHTML = `<div chid="${id}" id="CharID${id}">
+                                    <div class="char-details-summary">
+                                        <div class="avatar-tags" title="${item.avatar}">
+                                            <img src="${this_avatar}">
+                                        </div>
+                                        <div class="char-details-summary-desc">
+                                            <div>${item.name}</div>
+                                            <div>${item.creatorcomment}</div>
+                                        </div>
                                     </div>
-                                    <div>${item.name}</div>
                                     <div>
                                         <div id="tagSearch">
                                             <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
