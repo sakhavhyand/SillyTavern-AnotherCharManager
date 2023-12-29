@@ -68,9 +68,15 @@ function fillDetails({ item, id, type }) {
     let divDetailsTags = document.getElementById('char-details-tags');
 
 
-    divDetailsTags.innerHTML = `<div class="character_item_details flex-container" chid="${id}" id="CharID${id}">
-                                    <div class="avatar" title="${item.avatar}">
-                                        <img src="${this_avatar}">
+    divDetailsTags.innerHTML = `<div chid="${id}" id="CharID${id}">
+                                    <div class="char-details-summary">
+                                        <div class="avatar-tags" title="${item.avatar}">
+                                            <img src="${this_avatar}">
+                                        </div>
+                                        <div class="char-details-summary-desc">
+                                            <div>${item.name}</div>
+                                            <div>${item.creatorcomment}</div>
+                                        </div>
                                     </div>
                                     <div>${item.name}</div>
                                     <div>${if(typeof item.creatorcomment !== 'undefined'){item.creatorcomment}}</div>
