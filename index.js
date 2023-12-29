@@ -65,6 +65,10 @@ function fillDetails({ item, id, type }) {
     if (item.avatar != 'none') {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
+    let creator_comment = '';
+    if(typeof item.creatorcomment !== 'undefined'){
+        creator_comment =item.creatorcomment;
+    }
     let divDetailsTags = document.getElementById('char-details-tags');
 
 
@@ -75,11 +79,9 @@ function fillDetails({ item, id, type }) {
                                         </div>
                                         <div class="char-details-summary-desc">
                                             <div>${item.name}</div>
-                                            <div>${item.creatorcomment}</div>
+                                            <div>${creator_comment}</div>
                                         </div>
                                     </div>
-                                    <div>${item.name}</div>
-                                    <div>${if(typeof item.creatorcomment !== 'undefined'){item.creatorcomment}}</div>
                                     <div>
                                         <div id="tagSearch">
                                             <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
