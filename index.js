@@ -65,6 +65,10 @@ function fillDetails({ item, id, type }) {
     if (item.avatar != 'none') {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
+    let creator_comment = '';
+    if(typeof item.creatorcomment !== 'undefined'){
+        creator_comment =item.creatorcomment;
+    }
     let divDetailsTags = document.getElementById('char-details-tags');
 
 
@@ -75,7 +79,7 @@ function fillDetails({ item, id, type }) {
                                         </div>
                                         <div class="char-details-summary-desc">
                                             <div>${item.name}</div>
-                                            <div>${item.creatorcomment}</div>
+                                            <div>${creator_comment}</div>
                                         </div>
                                     </div>
                                     <div>
