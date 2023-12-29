@@ -69,26 +69,24 @@ function fillDetails({ item, id, type }) {
     if(typeof item.creatorcomment !== 'undefined'){
         creator_comment =item.creatorcomment;
     }
-    let divDetailsTags = document.getElementById('char-details-tags');
+    let divDetailsTags = document.getElementById('char-details-block');
 
 
-    divDetailsTags.innerHTML = `<div chid="${id}" id="CharID${id}">
-                                    <div class="char-details-summary">
-                                        <div class="avatar-tags" title="${item.avatar}">
-                                            <img src="${this_avatar}">
-                                        </div>
-                                        <div class="char-details-summary-desc">
-                                            <div>${item.name}</div>
-                                            <div>${creator_comment}</div>
-                                        </div>
+    divDetailsTags.innerHTML = `<div class="char-details-summary">
+                                    <div class="avatar-tags" title="${item.avatar}">
+                                        <img src="${this_avatar}">
                                     </div>
-                                    <div>
-                                        <div id="tagSearch">
-                                            <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
-                                        </div>
-                                        <div id="tag_List" class="tags">
-                                            ${getTagsList(item.avatar).map((t) => displayTag(t)).join('')}
-                                        </div>
+                                    <div class="char-details-summary-desc">
+                                        <div class="ch_name_details">${item.name}</div>
+                                        <div>${creator_comment}</div>
+                                    </div>
+                                </div>
+                                <div class="char-details-tags">
+                                    <div id="tagSearch" class="tag-searchbar">
+                                        <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
+                                    </div>
+                                    <div id="tag_List" class="tags">
+                                        ${getTagsList(item.avatar).map((t) => displayTag(t)).join('')}
                                     </div>
                                 </div>`;
     createTagInput('#input_tag', '#tag_List');
@@ -115,7 +113,7 @@ function openPopup() {
         </div>
         <hr>
         <div class="character-details" id="char-details" style="display:none">
-            <div class="char-details-tags" id="char-details-tags"></div>
+            <div class="char-details-block" id="char-details-block"></div>
             <div class="divider"></div>
             <div class="char-details-desc" id="char-details-desc">
                 <div class="desc_div">
