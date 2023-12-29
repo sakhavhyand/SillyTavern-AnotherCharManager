@@ -1,7 +1,7 @@
 .list-character-wrapper {
     flex-grow: 1;
     height: 100%;
-    overflow-y: auto;  /* This ensures that if the list grows too long, it becomes scrollable. */
+    overflow-y: auto;
 }
 
 .character-list {
@@ -58,10 +58,19 @@
     flex-grow: 1;
     align-content: flex-start;
 }
-.char-details-tags {
+
+.char-details-block {
     display: flex;
     flex: 1;
     align-items: stretch;
+    flex-direction: column;
+}
+
+.char-details-tags {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .char-details-desc {
@@ -75,9 +84,12 @@
     display: flex;
     flex-wrap: nowrap;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: stretch;
-    align-content: start
+    align-content: start;
+    gap: 10px;
+    padding: 5px;
+    margin-bottom: 1px;
 }
 
 .char-details-summary-desc {
@@ -87,6 +99,11 @@
     align-items: stretch;
     align-content: start;
     text-align: left;
+    padding: 5px;
+}
+
+.tag-searchbar {
+    width: 50%;
 }
 
 .divider {
@@ -118,4 +135,9 @@
 }
 .char_select:hover {
     background-color: var(--white30a);
+}
+
+.ch_name_details {
+    font-weight: bolder;
+    margin-bottom: 10px;
 }
