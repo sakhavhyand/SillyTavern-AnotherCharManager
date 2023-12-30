@@ -137,6 +137,10 @@
     background-color: var(--white30a);
 }
 
+.char_selected {
+    background-color: rgb(0, 0, 0);
+}
+
 .ch_name_details {
     font-weight: bolder;
     margin-bottom: 10px;
