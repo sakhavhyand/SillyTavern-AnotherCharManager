@@ -1,6 +1,6 @@
 // An extension that allows you to manage tags.
 import { extension_settings } from '../../../extensions.js';
-import { callPopup, getEntitiesList, getThumbnailUrl, setMenuType, setCharacterId, default_avatar, characters } from '../../../../script.js';
+import { callPopup, getEntitiesList, getThumbnailUrl, setMenuType, setCharacterId, default_avatar, characters, this_chid } from '../../../../script.js';
 import { getTagsList, createTagInput } from '../../../tags.js';
 
 const extensionName = 'SillyTavern-TagManager';
@@ -40,7 +40,7 @@ function getCharBlock(item, id) {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
 
-    let html = `<div class="character_item flex-container char_select" chid="${id}" id="CharID${id}">
+    let html = `<div class="character_item flex-container char_select" chid="${id}" id="CharDID${id}">
                     <div class="avatar" title="${item.avatar}">
                         <img src="${this_avatar}">
                     </div>
@@ -67,7 +67,10 @@ function fillDetails({ item, id, type }) {
     }
     let creator_comment = '';
     if(typeof item.creatorcomment !== 'undefined'){
-        creator_comment =item.creatorcomment;
+        creator_comment = item.creatorcomment;
+    }
+    else {
+        creator_comment = item.data.creator_notes;
     }
     let divDetailsTags = document.getElementById('char-details-block');
 
@@ -130,6 +133,25 @@ function openPopup() {
     callPopup(listLayout, 'text', '', { okButton: 'Close', wide: true, large: true });
 }
 
+function selectAndDisplay(id) {
+
+    if(typeof this_chid !== 'undefined'){
+        document.getElementById(`CharDID${this_chid}`).classList.add('char_select');
+        document.getElementById(`CharDID${this_chid}`).classList.remove('char_selected');
+    }
+    setMenuType('character_edit');
+    setCharacterId(id);
+
+    fillDetails(charsData.filter(i => i.id == id && i.type === 'character')[0]);
+
+    document.getElementById(`CharDID${id}`).classList.remove('char_select');
+    document.getElementById(`CharDID${id}`).classList.add('char_selected');
+    document.getElementById('character-list').classList.remove('character-list');
+    document.getElementById('character-list').classList.add('character-list-selected');
+    document.getElementById('char-details').style.display = 'flex';
+
+}
+
 jQuery(async () => {
     // put our button in between external_import_button and rm_button_group_chats in the form_character_search_form
     // on hover, should say "Open Tag Manager"
@@ -138,16 +160,8 @@ jQuery(async () => {
         openPopup();
     });
 
-    $(document).on('click', '.char_select', async function () {
-        const id = $(this).attr('chid');
-        setMenuType('character_edit');
-        setCharacterId(id);
-
-        fillDetails(charsData.filter(i => i.id == id && i.type === 'character')[0]);
-
-        document.getElementById('character-list').classList.remove('character-list');
-        document.getElementById('character-list').classList.add('character-list-selected');
-        document.getElementById('char-details').style.display = 'flex';
+    $(document).on('click', '.char_select', function () {
+        selectAndDisplay($(this).attr('chid'));
     });
 
     $(document).on('click', '#reload_char', cleanAndFillList);
