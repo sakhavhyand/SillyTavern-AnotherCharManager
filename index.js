@@ -234,7 +234,7 @@ jQuery(async () => {
         refreshCharList(sortData, sortOrder);
     });
 
-    $(document).on('click', '#dialogue_popup_ok', function () {this_charId = null;});
+    $(document).on('click', '#dialogue_popup_ok', function () {this_charId = undefined;});
 
     loadSettings();
 });
