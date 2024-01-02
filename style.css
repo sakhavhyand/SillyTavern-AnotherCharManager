@@ -145,3 +145,46 @@
     font-weight: bolder;
     margin-bottom: 10px;
 }
+
+.sortAndFilter {
+    display: flex;
+    gap: 5px;
+    overflow-y: auto;
+    flex-direction: row;
+    justify-content: start;
+    align-content: flex-start;
+}
+
+.sortList {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 5px;
+    padding: 3px 5px;
+    cursor: pointer;
+    margin-bottom: 5px;
+}
+
+#form_sort_filter{
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    margin: 5px;
+    column-gap: 5px;
+}
+
+#char_sort_order {
+    margin: 0;
+    flex: 1;
+    border-radius: 5px;
+    height: auto;
+}
+
+#form_sort_filter .menu_button {
+    margin: 0;
+    height: fit-content;
+    padding: 5px;
+    border-radius: 5px;
+    aspect-ratio: 1 / 1;
+}
