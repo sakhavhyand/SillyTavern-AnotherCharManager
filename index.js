@@ -1,6 +1,6 @@
 // An extension that allows you to manage tags.
 import { extension_settings } from '../../../extensions.js';
-import { callPopup, getEntitiesList, getThumbnailUrl, setMenuType, setCharacterId, default_avatar, characters, this_chid } from '../../../../script.js';
+import { callPopup, getEntitiesList, getThumbnailUrl, setMenuType, setCharacterId, default_avatar, this_chid } from '../../../../script.js';
 import { getTagsList, createTagInput } from '../../../tags.js';
 
 const extensionName = 'SillyTavern-TagManager';
@@ -65,14 +65,7 @@ function fillDetails(item) {
     if (item.avatar != 'none') {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
-    /**
-    let creator_comment = '';
-    if(typeof item.creatorcomment !== 'undefined'){
-        creator_comment = item.creatorcomment;
-    }
-    else {
-        creator_comment = item.data.creator_notes;
-    }*/
+
     let divDetailsTags = document.getElementById('char-details-block');
 
 
