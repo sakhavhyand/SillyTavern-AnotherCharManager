@@ -1,6 +1,6 @@
 // An extension that allows you to manage tags.
 import { extension_settings } from '../../../extensions.js';
-import { callPopup, getEntitiesList, getThumbnailUrl, setMenuType, default_avatar } from '../../../../script.js';
+import { callPopup, getEntitiesList, getThumbnailUrl, setMenuType, default_avatar, this_chid, setCharacterId, eventSource, event_types } from '../../../../script.js';
 import { getTagsList, createTagInput } from '../../../tags.js';
 
 const extensionName = 'SillyTavern-TagManager';
@@ -8,7 +8,7 @@ const extensionFolderPath = `scripts/extensions/${extensionName}/`;
 
 const defaultSettings = {};
 let charsList = {};
-let this_charId;
+let mem_chid;
 let sortOrder = 'asc';
 let sortData = 'name';
 
@@ -43,7 +43,7 @@ function getCharBlock(item) {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
 
-    const parsedThisId = this_charId !== undefined ? parseInt(this_charId, 10) : undefined;
+    const parsedThisId = this_chid !== undefined ? parseInt(this_chid, 10) : undefined;
     const charClass = (parsedThisId !== undefined && parsedThisId === item.id) ? 'char_selected' : 'char_select';
 
     let html = `<div class="character_item flex-container ${charClass}" chid="${item.id}" id="CharDID${item.id}">
@@ -96,7 +96,7 @@ function fillDetails(item) {
     document.getElementById('desc_zone').value = item.description;
 }
 
-function refreshCharList(sort_data = null, sort_order = null) {
+function refreshCharList() {
     let htmlList = buildCharAR().map((item) => getCharBlock(item)).join('');
 
     document.getElementById('character-list').innerHTML = '';
@@ -145,13 +145,15 @@ function buildCharAR() {
 
 function openPopup() {
 
+    mem_chid = this_chid;
+
     charsList = buildCharAR();
 
     const listLayout = `
     <div class="list-character-wrapper flexFlowColumn" id="list-character-wrapper">
         <div id="sortAndFilter" class="sortAndFilter">
             <form id="form_sort_filter" action="javascript:void(null);">
-                <button id="reload_char" class="menu_button fa-solid fa-arrows-rotate faSmallFontSquareFix" title="Refresh List"></button>
+                Sorted by :
                 <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
                     <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
                     <option data-field="name" data-order="desc" data-i18n="Z-A">Z-A</option>
@@ -196,12 +198,12 @@ function openPopup() {
 
 function selectAndDisplay(id) {
 
-    if(typeof this_charId !== 'undefined'){
-        document.getElementById(`CharDID${this_charId}`).classList.add('char_select');
-        document.getElementById(`CharDID${this_charId}`).classList.remove('char_selected');
+    if(typeof this_chid !== 'undefined'){
+        document.getElementById(`CharDID${this_chid}`).classList.add('char_select');
+        document.getElementById(`CharDID${this_chid}`).classList.remove('char_selected');
     }
     setMenuType('character_edit');
-    this_charId = id;
+    setCharacterId(id);
 
     fillDetails(charsList.filter(i => i.id == id)[0]);
 
@@ -225,16 +227,16 @@ jQuery(async () => {
         selectAndDisplay($(this).attr('chid'));
     });
 
-    $(document).on('click', '#reload_char', refreshCharList);
+    eventSource.on(event_types.SETTINGS_UPDATED, refreshCharList);
 
     $(document).on('change', '#char_sort_order' , function () {
         sortData = $(this).find(':selected').data('field');
         sortOrder = $(this).find(':selected').data('order');
 
-        refreshCharList(sortData, sortOrder);
+        refreshCharList();
     });
 
-    $(document).on('click', '#dialogue_popup_ok', function () {this_charId = undefined;});
+    $(document).on('click', '#dialogue_popup_ok', function () {setCharacterId(mem_chid);});
 
     loadSettings();
 });
