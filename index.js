@@ -1,6 +1,6 @@
 // An extension that allows you to manage tags.
 import { extension_settings } from '../../../extensions.js';
-import { callPopup, getEntitiesList, getThumbnailUrl, setMenuType, setCharacterId, default_avatar, this_chid } from '../../../../script.js';
+import { callPopup, getEntitiesList, getThumbnailUrl, setMenuType, default_avatar } from '../../../../script.js';
 import { getTagsList, createTagInput } from '../../../tags.js';
 
 const extensionName = 'SillyTavern-TagManager';
@@ -8,6 +8,7 @@ const extensionFolderPath = `scripts/extensions/${extensionName}/`;
 
 const defaultSettings = {};
 let charsList = {};
+let this_charId;
 let sortOrder = 'asc';
 let sortData = 'name';
 
@@ -42,7 +43,7 @@ function getCharBlock(item) {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
 
-    const parsedThisId = this_chid !== undefined ? parseInt(this_chid, 10) : undefined;
+    const parsedThisId = this_charId !== undefined ? parseInt(this_charId, 10) : undefined;
     const charClass = (parsedThisId !== undefined && parsedThisId === item.id) ? 'char_selected' : 'char_select';
 
     let html = `<div class="character_item flex-container ${charClass}" chid="${item.id}" id="CharDID${item.id}">
@@ -195,12 +196,12 @@ function openPopup() {
 
 function selectAndDisplay(id) {
 
-    if(typeof this_chid !== 'undefined'){
-        document.getElementById(`CharDID${this_chid}`).classList.add('char_select');
-        document.getElementById(`CharDID${this_chid}`).classList.remove('char_selected');
+    if(typeof this_charId !== 'undefined'){
+        document.getElementById(`CharDID${this_charId}`).classList.add('char_select');
+        document.getElementById(`CharDID${this_charId}`).classList.remove('char_selected');
     }
     setMenuType('character_edit');
-    setCharacterId(id);
+    this_charId = id;
 
     fillDetails(charsList.filter(i => i.id == id)[0]);
 
@@ -215,7 +216,7 @@ function selectAndDisplay(id) {
 jQuery(async () => {
     // put our button in between external_import_button and rm_button_group_chats in the form_character_search_form
     // on hover, should say "Open Tag Manager"
-    $('#external_import_button').after('<button id="tag-manager" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Open Tag Manager"></button>');
+    $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Open Tag Manager"></button>');
     $('#tag-manager').on('click', function () {
         openPopup();
     });
@@ -232,6 +233,8 @@ jQuery(async () => {
 
         refreshCharList(sortData, sortOrder);
     });
+
+    $(document).on('click', '#dialogue_popup_ok', function () {this_charId = null;});
 
     loadSettings();
 });
