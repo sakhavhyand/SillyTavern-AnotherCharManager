@@ -7,7 +7,7 @@ const extensionName = 'SillyTavern-TagManager';
 const extensionFolderPath = `scripts/extensions/${extensionName}/`;
 
 const defaultSettings = {};
-let charsData = {};
+let charsList = {};
 
 /**
  * Asynchronously loads settings from `extension_settings.tag`,
@@ -33,18 +33,18 @@ async function loadSettings() {
 }
 
 
-function getCharBlock(item, id) {
+function getCharBlock(item) {
 
     let this_avatar = default_avatar;
     if (item.avatar != 'none') {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
 
-    let html = `<div class="character_item flex-container char_select" chid="${id}" id="CharDID${id}">
+    let html = `<div class="character_item flex-container char_select" chid="${item.id}" id="CharDID${item.id}">
                     <div class="avatar" title="${item.avatar}">
                         <img src="${this_avatar}">
                     </div>
-                    <div class="description">${item.name} : ${getTagsList(item.avatar).length}</div>
+                    <div class="description">${item.name} : ${item.tags.length}</div>
                 </div>`;
     return html;
 }
@@ -59,19 +59,20 @@ function displayTag({ id, name, color }){
     return html;
 }
 
-function fillDetails({ item, id, type }) {
+function fillDetails(item) {
 
     let this_avatar = default_avatar;
     if (item.avatar != 'none') {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
+    /**
     let creator_comment = '';
     if(typeof item.creatorcomment !== 'undefined'){
         creator_comment = item.creatorcomment;
     }
     else {
         creator_comment = item.data.creator_notes;
-    }
+    }*/
     let divDetailsTags = document.getElementById('char-details-block');
 
 
@@ -81,7 +82,7 @@ function fillDetails({ item, id, type }) {
                                     </div>
                                     <div class="char-details-summary-desc">
                                         <div class="ch_name_details">${item.name}</div>
-                                        <div>${creator_comment}</div>
+                                        <div>${item.creatorcomment}</div>
                                     </div>
                                 </div>
                                 <div class="char-details-tags">
@@ -89,27 +90,49 @@ function fillDetails({ item, id, type }) {
                                         <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
                                     </div>
                                     <div id="tag_List" class="tags">
-                                        ${getTagsList(item.avatar).map((t) => displayTag(t)).join('')}
+                                        ${item.tags.map((t) => displayTag(t)).join('')}
                                     </div>
                                 </div>`;
     createTagInput('#input_tag', '#tag_List');
     document.getElementById('desc_zone').value = item.description;
 }
 
-function cleanAndFillList() {
-    let charList = charsData.filter(i => i.type === 'character').map((e) => getCharBlock(e.item, e.id)).join('');
+function refreshCharList() {
+    let refreshedList = buildCharAR().map((item) => getCharBlock(item)).join('');
     document.getElementById('character-list').innerHTML = '';
-    document.getElementById('character-list').innerHTML = charList;
+    document.getElementById('character-list').innerHTML = refreshedList;
+}
+
+function buildCharAR() {
+
+    const charsInit = getEntitiesList({ doFilter: false }).filter(item => item.type === 'character');
+
+    const charsFiltered = charsInit.map(element => {
+
+        return {
+            id: element.id,
+            name: element.item.name,
+            avatar: element.item.avatar,
+            description: element.item.description,
+            creatorcomment: element.item.creatorcomment !== undefined ? element.item.creatorcomment : element.item.data.creator_notes,
+            tags: getTagsList(element.item.avatar),
+        };
+    });
+
+    return charsFiltered;
 }
 
 function openPopup() {
 
-    charsData = getEntitiesList({ doFilter: false });
+    charsList = buildCharAR();
 
     const listLayout = `
     <div class="list-character-wrapper flexFlowColumn" id="list-character-wrapper">
+        <div id="reload_char" class="menu_button whitespacenowrap">
+            Refresh
+        </div>
         <div class="character-list" id="character-list">
-        ${charsData.filter(i => i.type === 'character').map((e) => getCharBlock(e.item, e.id)).join('')}
+        ${charsList.map((item) => getCharBlock(item)).join('')}
         </div>
         <hr>
         <div class="character-details" id="char-details" style="display:none">
@@ -139,7 +162,7 @@ function selectAndDisplay(id) {
     setMenuType('character_edit');
     setCharacterId(id);
 
-    fillDetails(charsData.filter(i => i.id == id && i.type === 'character')[0]);
+    fillDetails(charsList.filter(i => i.id == id)[0]);
 
     document.getElementById(`CharDID${id}`).classList.remove('char_select');
     document.getElementById(`CharDID${id}`).classList.add('char_selected');
@@ -160,6 +183,8 @@ jQuery(async () => {
     $(document).on('click', '.char_select', function () {
         selectAndDisplay($(this).attr('chid'));
     });
+
+    $(document).on('click', '#reload_char', refreshCharList);
 
     loadSettings();
 });
