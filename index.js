@@ -8,6 +8,8 @@ const extensionFolderPath = `scripts/extensions/${extensionName}/`;
 
 const defaultSettings = {};
 let charsList = {};
+let sortOrder = 'asc';
+let sortData = 'name';
 
 /**
  * Asynchronously loads settings from `extension_settings.tag`,
@@ -40,7 +42,10 @@ function getCharBlock(item) {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
 
-    let html = `<div class="character_item flex-container char_select" chid="${item.id}" id="CharDID${item.id}">
+    const parsedThisId = this_chid !== undefined ? parseInt(this_chid, 10) : undefined;
+    const charClass = (parsedThisId !== undefined && parsedThisId === item.id) ? 'char_selected' : 'char_select';
+
+    let html = `<div class="character_item flex-container ${charClass}" chid="${item.id}" id="CharDID${item.id}">
                     <div class="avatar" title="${item.avatar}">
                         <img src="${this_avatar}">
                     </div>
@@ -90,10 +95,32 @@ function fillDetails(item) {
     document.getElementById('desc_zone').value = item.description;
 }
 
-function refreshCharList() {
-    let refreshedList = buildCharAR().map((item) => getCharBlock(item)).join('');
+function refreshCharList(sort_data = null, sort_order = null) {
+    let htmlList = buildCharAR().map((item) => getCharBlock(item)).join('');
+
     document.getElementById('character-list').innerHTML = '';
-    document.getElementById('character-list').innerHTML = refreshedList;
+    document.getElementById('character-list').innerHTML = htmlList;
+}
+
+function sortCharAR(data, sort_data, sort_order) {
+    return data.sort((a, b) => {
+        // Compare function based on the specified property (sortBy)
+        let comparison = 0;
+
+        if (typeof a[sort_data] === 'string') {
+            // For string properties, use localeCompare for string comparison
+            comparison = a[sort_data].localeCompare(b[sort_data]);
+        } else if (typeof a[sort_data] === 'number') {
+            // For numeric properties, subtract one from the other
+            comparison = a[sort_data] - b[sort_data];
+        } else if (Array.isArray(a[sort_data])) {
+            // For array properties, compare based on array length
+            comparison = a[sort_data].length - b[sort_data].length;
+        }
+
+        // Adjust comparison based on order (asc or desc)
+        return sort_order === 'desc' ? comparison * -1 : comparison;
+    });
 }
 
 function buildCharAR() {
@@ -101,7 +128,6 @@ function buildCharAR() {
     const charsInit = getEntitiesList({ doFilter: false }).filter(item => item.type === 'character');
 
     const charsFiltered = charsInit.map(element => {
-
         return {
             id: element.id,
             name: element.item.name,
@@ -112,7 +138,8 @@ function buildCharAR() {
         };
     });
 
-    return charsFiltered;
+    return sortCharAR(charsFiltered, sortData, sortOrder);
+
 }
 
 function openPopup() {
@@ -121,8 +148,16 @@ function openPopup() {
 
     const listLayout = `
     <div class="list-character-wrapper flexFlowColumn" id="list-character-wrapper">
-        <div id="reload_char" class="menu_button whitespacenowrap">
-            Refresh
+        <div id="sortAndFilter" class="sortAndFilter">
+            <form id="form_sort_filter" action="javascript:void(null);">
+                <button id="reload_char" class="menu_button fa-solid fa-arrows-rotate faSmallFontSquareFix" title="Refresh List"></button>
+                <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
+                    <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
+                    <option data-field="name" data-order="desc" data-i18n="Z-A">Z-A</option>
+                    <option data-field="tags" data-order="asc">Least Tags</option>
+                    <option data-field="tags" data-order="desc">Most Tags</option>
+                </select>
+            </form>
         </div>
         <div class="character-list" id="character-list">
         ${charsList.map((item) => getCharBlock(item)).join('')}
@@ -144,6 +179,18 @@ function openPopup() {
 
     // Call the popup with our list layout
     callPopup(listLayout, 'text', '', { okButton: 'Close', wide: true, large: true });
+
+    const charSortOrderSelect = document.getElementById('char_sort_order');
+    Array.from(charSortOrderSelect.options).forEach(option => {
+        const field = option.getAttribute('data-field');
+        const order = option.getAttribute('data-order');
+
+        if (field === sortData && order === sortOrder) {
+            option.selected = true;
+        } else {
+            option.selected = false;
+        }
+    });
 }
 
 function selectAndDisplay(id) {
@@ -178,6 +225,13 @@ jQuery(async () => {
     });
 
     $(document).on('click', '#reload_char', refreshCharList);
+
+    $(document).on('change', '#char_sort_order' , function () {
+        sortData = $(this).find(':selected').data('field');
+        sortOrder = $(this).find(':selected').data('order');
+
+        refreshCharList(sortData, sortOrder);
+    });
 
     loadSettings();
 });
