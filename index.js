@@ -1,39 +1,13 @@
 // An extension that allows you to manage tags.
-import { extension_settings } from '../../../extensions.js';
-import { callPopup, getEntitiesList, getThumbnailUrl, setMenuType, default_avatar, this_chid, setCharacterId, eventSource, event_types } from '../../../../script.js';
+import { callPopup, getEntitiesList, getThumbnailUrl, setMenuType, menu_type, default_avatar, this_chid, setCharacterId, eventSource, event_types } from '../../../../script.js';
 import { getTagsList, createTagInput } from '../../../tags.js';
 
-const extensionName = 'SillyTavern-TagManager';
-const extensionFolderPath = `scripts/extensions/${extensionName}/`;
-
-const defaultSettings = {};
 let charsList = {};
 let mem_chid;
+let mem_menu;
 let sortOrder = 'asc';
 let sortData = 'name';
-
-/**
- * Asynchronously loads settings from `extension_settings.tag`,
- * filling in with default settings if some are missing.
- *
- * After loading the settings, it also updates the UI components
- * with the appropriate values from the loaded settings.
- */
-async function loadSettings() {
-    // Ensure extension_settings.timeline exists
-    if (!extension_settings.tag) {
-        console.log('Creating extension_settings.tag');
-        extension_settings.tag = {};
-    }
-
-    // Check and merge each default setting if it doesn't exist
-    for (const [key, value] of Object.entries(defaultSettings)) {
-        if (!extension_settings.tag.hasOwnProperty(key)) {
-            console.log(`Setting default for: ${key}`);
-            extension_settings.tag[key] = value;
-        }
-    }
-}
+let searchValue;
 
 
 function getCharBlock(item) {
@@ -97,7 +71,21 @@ function fillDetails(item) {
 }
 
 function refreshCharList() {
-    let htmlList = buildCharAR().map((item) => getCharBlock(item)).join('');
+
+    let filteredChars;
+
+    if(searchValue !== undefined){
+        filteredChars = charsList.filter(item => {
+            return item.description.toLowerCase().includes(searchValue) ||
+                item.name.toLowerCase().includes(searchValue) ||
+                item.creatorcomment.toLowerCase().includes(searchValue);
+        });
+    }
+
+    //sortCharAR(filteredChars, sortData, sortOrder);
+    const sortedList = sortCharAR((filteredChars == undefined ? charsList : filteredChars), sortData, sortOrder);
+
+    const htmlList = sortedList.map((item) => getCharBlock(item)).join('');
 
     document.getElementById('character-list').innerHTML = '';
     document.getElementById('character-list').innerHTML = htmlList;
@@ -128,7 +116,7 @@ function buildCharAR() {
 
     const charsInit = getEntitiesList({ doFilter: false }).filter(item => item.type === 'character');
 
-    const charsFiltered = charsInit.map(element => {
+    let preCharsList = charsInit.map(element => {
         return {
             id: element.id,
             name: element.item.name,
@@ -138,16 +126,15 @@ function buildCharAR() {
             tags: getTagsList(element.item.avatar),
         };
     });
-
-    return sortCharAR(charsFiltered, sortData, sortOrder);
-
+    charsList = sortCharAR(preCharsList, sortData, sortOrder);
 }
 
 function openPopup() {
 
     mem_chid = this_chid;
-
-    charsList = buildCharAR();
+    mem_menu = menu_type;
+    searchValue = undefined;
+    buildCharAR();
 
     const listLayout = `
     <div class="list-character-wrapper flexFlowColumn" id="list-character-wrapper">
@@ -252,11 +239,9 @@ jQuery(async () => {
     });
 
     $(document).on('input','#char_search_bar', function () {
-        const searchValue = String($(this).val()).toLowerCase();
-        filterCharList(searchValue);
+        searchValue = String($(this).val()).toLowerCase();
+        refreshCharList();
     });
 
-    $(document).on('click', '#dialogue_popup_ok', function () {setCharacterId(mem_chid);});
-
-    loadSettings();
+    $(document).on('click', '#dialogue_popup_ok', function () {setCharacterId(mem_chid); setMenuType(mem_menu);});
 });
