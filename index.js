@@ -153,13 +153,14 @@ function openPopup() {
     <div class="list-character-wrapper flexFlowColumn" id="list-character-wrapper">
         <div id="sortAndFilter" class="sortAndFilter">
             <form id="form_sort_filter" action="javascript:void(null);">
-                Sorted by :
+                <span>Sorted by :</span>
                 <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
                     <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
                     <option data-field="name" data-order="desc" data-i18n="Z-A">Z-A</option>
                     <option data-field="tags" data-order="asc">Least Tags</option>
                     <option data-field="tags" data-order="desc">Most Tags</option>
                 </select>
+                <input id="char_search_bar" class="text_pole width100p" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
             </form>
         </div>
         <div class="character-list" id="character-list">
@@ -215,6 +216,20 @@ function selectAndDisplay(id) {
 
 }
 
+function filterCharList (searchValue) {
+
+    const filteredChars = charsList.filter(item => {
+        return item.description.toLowerCase().includes(searchValue) ||
+            item.name.toLowerCase().includes(searchValue) ||
+            item.creatorcomment.toLowerCase().includes(searchValue);
+    });
+
+    let htmlList = filteredChars.map((item) => getCharBlock(item)).join('');
+
+    document.getElementById('character-list').innerHTML = '';
+    document.getElementById('character-list').innerHTML = htmlList;
+}
+
 jQuery(async () => {
     // put our button in between external_import_button and rm_button_group_chats in the form_character_search_form
     // on hover, should say "Open Tag Manager"
@@ -234,6 +249,11 @@ jQuery(async () => {
         sortOrder = $(this).find(':selected').data('order');
 
         refreshCharList();
+    });
+
+    $(document).on('input','#char_search_bar', function () {
+        const searchValue = String($(this).val()).toLowerCase();
+        filterCharList(searchValue);
     });
 
     $(document).on('click', '#dialogue_popup_ok', function () {setCharacterId(mem_chid);});
