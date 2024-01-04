@@ -1,7 +1,20 @@
 // An extension that allows you to manage tags.
-import { callPopup, getEntitiesList, getThumbnailUrl, setMenuType, menu_type, default_avatar, this_chid, setCharacterId, eventSource, event_types } from '../../../../script.js';
+import {
+    callPopup,
+    getEntitiesList,
+    getThumbnailUrl,
+    setMenuType,
+    menu_type,
+    default_avatar,
+    this_chid,
+    setCharacterId,
+    eventSource,
+    event_types
+} from '../../../../script.js';
+
 import { getTagsList, createTagInput } from '../../../tags.js';
 
+// Initializing some variables
 let charsList = [];
 let mem_chid;
 let mem_menu;
@@ -9,7 +22,7 @@ let sortOrder = 'asc';
 let sortData = 'name';
 let searchValue = '';
 
-
+// Function to build the character array based on entities
 function buildCharAR() {
 
     const entities = getEntitiesList({ doFilter: false }).filter(item => item.type === 'character');
@@ -26,6 +39,7 @@ function buildCharAR() {
     });
 }
 
+// Function to sort the character array based on specified property and order
 function sortCharAR(chars, sort_data, sort_order) {
     return chars.sort((a, b) => {
         let comparison = 0;
@@ -43,6 +57,7 @@ function sortCharAR(chars, sort_data, sort_order) {
     });
 }
 
+// Function to generate the HTML block for a character
 function getCharBlock(item) {
 
     let this_avatar = default_avatar;
@@ -61,6 +76,7 @@ function getCharBlock(item) {
                 </div>`;
 }
 
+// Function to generate the HTML for displaying a tag
 function displayTag({ id, name, color }){
     return `<span id="${id}" class="tag" style="background-color: ${color};">
                     <span class="tag_name">${name}</span>
@@ -68,6 +84,7 @@ function displayTag({ id, name, color }){
                 </span>`;
 }
 
+// Function to fill details in the character details block
 function fillDetails(item) {
 
     let this_avatar = default_avatar;
@@ -99,6 +116,7 @@ function fillDetails(item) {
     document.getElementById('desc_zone').value = item.description;
 }
 
+// Function to refresh the character list based on search and sorting parameters
 function refreshCharList() {
 
     let filteredChars;
@@ -119,6 +137,7 @@ function refreshCharList() {
     document.getElementById('character-list').innerHTML = htmlList;
 }
 
+// Function display the selected character
 function selectAndDisplay(id) {
 
     if(typeof this_chid !== 'undefined'){
@@ -138,6 +157,7 @@ function selectAndDisplay(id) {
 
 }
 
+// Function to open the Tag Manager popup
 function openPopup() {
 
     mem_chid = this_chid;
@@ -196,7 +216,7 @@ function openPopup() {
 }
 
 jQuery(async () => {
-    // put our button before rm_button_group_chats in the form_character_search_form
+    // Put the button before rm_button_group_chats in the form_character_search_form
     // on hover, should say "Open Tag Manager"
     $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Open Tag Manager"></button>');
     $('#tag-manager').on('click', function () {
@@ -207,12 +227,9 @@ jQuery(async () => {
         selectAndDisplay($(this).attr('chid'));
     });
 
-    
-
     $(document).on('change', '#char_sort_order' , function () {
         sortData = $(this).find(':selected').data('field');
         sortOrder = $(this).find(':selected').data('order');
-
         refreshCharList();
     });
 
@@ -221,5 +238,8 @@ jQuery(async () => {
         refreshCharList();
     });
 
-    $(document).on('click', '#dialogue_popup_ok', function () {setCharacterId(mem_chid); setMenuType(mem_menu);});
+    $(document).on('click', '#dialogue_popup_ok', function () {
+        setCharacterId(mem_chid);
+        setMenuType(mem_menu);
+    });
 });
