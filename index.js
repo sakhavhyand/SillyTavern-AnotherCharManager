@@ -9,6 +9,44 @@ let sortOrder = 'asc';
 let sortData = 'name';
 
 
+function buildCharAR() {
+
+    const entities = getEntitiesList({ doFilter: false }).filter(item => item.type === 'character');
+
+    const preCharsList = entities.map(entity => {
+        return {
+            id: entity.id,
+            name: entity.item.name,
+            avatar: entity.item.avatar,
+            description: entity.item.description,
+            creatorcomment: entity.item.creatorcomment !== undefined ? entity.item.creatorcomment : entity.item.data.creator_notes,
+            tags: getTagsList(entity.item.avatar),
+        };
+    });
+    charsList = sortCharAR(preCharsList, sortData, sortOrder);
+}
+
+function sortCharAR(chars, sort_data, sort_order) {
+    return chars.sort((a, b) => {
+        // Compare function based on the specified property (sortBy)
+        let comparison = 0;
+
+        if (typeof a[sort_data] === 'string') {
+            // For string properties, use localeCompare for string comparison
+            comparison = a[sort_data].localeCompare(b[sort_data]);
+        } else if (typeof a[sort_data] === 'number') {
+            // For numeric properties, subtract one from the other
+            comparison = a[sort_data] - b[sort_data];
+        } else if (Array.isArray(a[sort_data])) {
+            // For array properties, compare based on array length
+            comparison = a[sort_data].length - b[sort_data].length;
+        }
+
+        // Adjust comparison based on order (asc or desc)
+        return sort_order === 'desc' ? comparison * -1 : comparison;
+    });
+}
+
 function getCharBlock(item) {
 
     let this_avatar = default_avatar;
@@ -16,26 +54,22 @@ function getCharBlock(item) {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
 
-    const parsedThisId = this_chid !== undefined ? parseInt(this_chid, 10) : undefined;
-    const charClass = (parsedThisId !== undefined && parsedThisId === item.id) ? 'char_selected' : 'char_select';
+    const parsedThis_chid = this_chid !== undefined ? parseInt(this_chid, 10) : undefined;
+    const charClass = (parsedThis_chid !== undefined && parsedThis_chid === item.id) ? 'char_selected' : 'char_select';
 
-    let html = `<div class="character_item flex-container ${charClass}" chid="${item.id}" id="CharDID${item.id}">
+    return `<div class="character_item flex-container ${charClass}" chid="${item.id}" id="CharDID${item.id}">
                     <div class="avatar" title="${item.avatar}">
                         <img src="${this_avatar}">
                     </div>
                     <div class="description">${item.name} : ${item.tags.length}</div>
                 </div>`;
-    return html;
 }
 
 function displayTag({ id, name, color }){
-    let html = `<span id="${id}" class="tag" style="background-color: ${color};">
+    return `<span id="${id}" class="tag" style="background-color: ${color};">
                     <span class="tag_name">${name}</span>
                     <i class="fa-solid fa-circle-xmark tag_remove"></i>
                 </span>`;
-
-
-    return html;
 }
 
 function fillDetails(item) {
@@ -62,7 +96,7 @@ function fillDetails(item) {
                                         <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
                                     </div>
                                     <div id="tag_List" class="tags">
-                                        ${item.tags.map((t) => displayTag(t)).join('')}
+                                        ${item.tags.map((tag) => displayTag(tag)).join('')}
                                     </div>
                                 </div>`;
     createTagInput('#input_tag', '#tag_List');
@@ -89,42 +123,23 @@ function refreshCharList(searchValue = undefined) {
     document.getElementById('character-list').innerHTML = htmlList;
 }
 
-function sortCharAR(data, sort_data, sort_order) {
-    return data.sort((a, b) => {
-        // Compare function based on the specified property (sortBy)
-        let comparison = 0;
+function selectAndDisplay(id) {
 
-        if (typeof a[sort_data] === 'string') {
-            // For string properties, use localeCompare for string comparison
-            comparison = a[sort_data].localeCompare(b[sort_data]);
-        } else if (typeof a[sort_data] === 'number') {
-            // For numeric properties, subtract one from the other
-            comparison = a[sort_data] - b[sort_data];
-        } else if (Array.isArray(a[sort_data])) {
-            // For array properties, compare based on array length
-            comparison = a[sort_data].length - b[sort_data].length;
-        }
+    if(typeof this_chid !== 'undefined'){
+        document.getElementById(`CharDID${this_chid}`).classList.add('char_select');
+        document.getElementById(`CharDID${this_chid}`).classList.remove('char_selected');
+    }
+    setMenuType('character_edit');
+    setCharacterId(id);
 
-        // Adjust comparison based on order (asc or desc)
-        return sort_order === 'desc' ? comparison * -1 : comparison;
-    });
-}
+    fillDetails(charsList.filter(item => item.id == id)[0]);
 
-function buildCharAR() {
+    document.getElementById(`CharDID${id}`).classList.remove('char_select');
+    document.getElementById(`CharDID${id}`).classList.add('char_selected');
+    document.getElementById('character-list').classList.remove('character-list');
+    document.getElementById('character-list').classList.add('character-list-selected');
+    document.getElementById('char-details').style.display = 'flex';
 
-    const charsInit = getEntitiesList({ doFilter: false }).filter(item => item.type === 'character');
-
-    let preCharsList = charsInit.map(element => {
-        return {
-            id: element.id,
-            name: element.item.name,
-            avatar: element.item.avatar,
-            description: element.item.description,
-            creatorcomment: element.item.creatorcomment !== undefined ? element.item.creatorcomment : element.item.data.creator_notes,
-            tags: getTagsList(element.item.avatar),
-        };
-    });
-    charsList = sortCharAR(preCharsList, sortData, sortOrder);
 }
 
 function openPopup() {
@@ -179,25 +194,6 @@ function openPopup() {
             option.selected = false;
         }
     });
-}
-
-function selectAndDisplay(id) {
-
-    if(typeof this_chid !== 'undefined'){
-        document.getElementById(`CharDID${this_chid}`).classList.add('char_select');
-        document.getElementById(`CharDID${this_chid}`).classList.remove('char_selected');
-    }
-    setMenuType('character_edit');
-    setCharacterId(id);
-
-    fillDetails(charsList.filter(i => i.id == id)[0]);
-
-    document.getElementById(`CharDID${id}`).classList.remove('char_select');
-    document.getElementById(`CharDID${id}`).classList.add('char_selected');
-    document.getElementById('character-list').classList.remove('character-list');
-    document.getElementById('character-list').classList.add('character-list-selected');
-    document.getElementById('char-details').style.display = 'flex';
-
 }
 
 jQuery(async () => {
