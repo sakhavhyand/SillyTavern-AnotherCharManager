@@ -2,12 +2,11 @@
 import { callPopup, getEntitiesList, getThumbnailUrl, setMenuType, menu_type, default_avatar, this_chid, setCharacterId, eventSource, event_types } from '../../../../script.js';
 import { getTagsList, createTagInput } from '../../../tags.js';
 
-let charsList = {};
+let charsList = [];
 let mem_chid;
 let mem_menu;
 let sortOrder = 'asc';
 let sortData = 'name';
-let searchValue;
 
 
 function getCharBlock(item) {
@@ -70,7 +69,7 @@ function fillDetails(item) {
     document.getElementById('desc_zone').value = item.description;
 }
 
-function refreshCharList() {
+function refreshCharList(searchValue = undefined) {
 
     let filteredChars;
 
@@ -82,7 +81,6 @@ function refreshCharList() {
         });
     }
 
-    //sortCharAR(filteredChars, sortData, sortOrder);
     const sortedList = sortCharAR((filteredChars == undefined ? charsList : filteredChars), sortData, sortOrder);
 
     const htmlList = sortedList.map((item) => getCharBlock(item)).join('');
@@ -133,7 +131,6 @@ function openPopup() {
 
     mem_chid = this_chid;
     mem_menu = menu_type;
-    searchValue = undefined;
     buildCharAR();
 
     const listLayout = `
@@ -203,22 +200,8 @@ function selectAndDisplay(id) {
 
 }
 
-function filterCharList (searchValue) {
-
-    const filteredChars = charsList.filter(item => {
-        return item.description.toLowerCase().includes(searchValue) ||
-            item.name.toLowerCase().includes(searchValue) ||
-            item.creatorcomment.toLowerCase().includes(searchValue);
-    });
-
-    let htmlList = filteredChars.map((item) => getCharBlock(item)).join('');
-
-    document.getElementById('character-list').innerHTML = '';
-    document.getElementById('character-list').innerHTML = htmlList;
-}
-
 jQuery(async () => {
-    // put our button in between external_import_button and rm_button_group_chats in the form_character_search_form
+    // put our button before rm_button_group_chats in the form_character_search_form
     // on hover, should say "Open Tag Manager"
     $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Open Tag Manager"></button>');
     $('#tag-manager').on('click', function () {
@@ -239,8 +222,7 @@ jQuery(async () => {
     });
 
     $(document).on('input','#char_search_bar', function () {
-        searchValue = String($(this).val()).toLowerCase();
-        refreshCharList();
+        refreshCharList(String($(this).val()).toLowerCase());
     });
 
     $(document).on('click', '#dialogue_popup_ok', function () {setCharacterId(mem_chid); setMenuType(mem_menu);});
