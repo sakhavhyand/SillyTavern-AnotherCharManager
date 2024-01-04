@@ -7,13 +7,14 @@ let mem_chid;
 let mem_menu;
 let sortOrder = 'asc';
 let sortData = 'name';
+let searchValue = '';
 
 
 function buildCharAR() {
 
     const entities = getEntitiesList({ doFilter: false }).filter(item => item.type === 'character');
 
-    const preCharsList = entities.map(entity => {
+    charsList = entities.map(entity => {
         return {
             id: entity.id,
             name: entity.item.name,
@@ -23,21 +24,16 @@ function buildCharAR() {
             tags: getTagsList(entity.item.avatar),
         };
     });
-    charsList = sortCharAR(preCharsList, sortData, sortOrder);
 }
 
 function sortCharAR(chars, sort_data, sort_order) {
     return chars.sort((a, b) => {
-        // Compare function based on the specified property (sortBy)
         let comparison = 0;
 
-        if (typeof a[sort_data] === 'string') {
+        if (sort_data == 'name') {
             // For string properties, use localeCompare for string comparison
             comparison = a[sort_data].localeCompare(b[sort_data]);
-        } else if (typeof a[sort_data] === 'number') {
-            // For numeric properties, subtract one from the other
-            comparison = a[sort_data] - b[sort_data];
-        } else if (Array.isArray(a[sort_data])) {
+        } else if (sort_data == 'tags') {
             // For array properties, compare based on array length
             comparison = a[sort_data].length - b[sort_data].length;
         }
@@ -103,11 +99,11 @@ function fillDetails(item) {
     document.getElementById('desc_zone').value = item.description;
 }
 
-function refreshCharList(searchValue = undefined) {
+function refreshCharList() {
 
     let filteredChars;
 
-    if(searchValue !== undefined){
+    if(searchValue !== '' && searchValue.length >= 3){
         filteredChars = charsList.filter(item => {
             return item.description.toLowerCase().includes(searchValue) ||
                 item.name.toLowerCase().includes(searchValue) ||
@@ -147,6 +143,7 @@ function openPopup() {
     mem_chid = this_chid;
     mem_menu = menu_type;
     buildCharAR();
+    charsList = sortCharAR(charsList, sortData, sortOrder);
 
     const listLayout = `
     <div class="list-character-wrapper flexFlowColumn" id="list-character-wrapper">
@@ -183,6 +180,8 @@ function openPopup() {
     // Call the popup with our list layout
     callPopup(listLayout, 'text', '', { okButton: 'Close', wide: true, large: true });
 
+    eventSource.on(event_types.SETTINGS_UPDATED, function () {buildCharAR(); refreshCharList();});
+
     const charSortOrderSelect = document.getElementById('char_sort_order');
     Array.from(charSortOrderSelect.options).forEach(option => {
         const field = option.getAttribute('data-field');
@@ -208,7 +207,7 @@ jQuery(async () => {
         selectAndDisplay($(this).attr('chid'));
     });
 
-    eventSource.on(event_types.SETTINGS_UPDATED, refreshCharList);
+    
 
     $(document).on('change', '#char_sort_order' , function () {
         sortData = $(this).find(':selected').data('field');
@@ -218,7 +217,8 @@ jQuery(async () => {
     });
 
     $(document).on('input','#char_search_bar', function () {
-        refreshCharList(String($(this).val()).toLowerCase());
+        searchValue = String($(this).val()).toLowerCase();
+        refreshCharList();
     });
 
     $(document).on('click', '#dialogue_popup_ok', function () {setCharacterId(mem_chid); setMenuType(mem_menu);});
