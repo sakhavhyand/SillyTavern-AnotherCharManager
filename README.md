@@ -22,6 +22,7 @@ This extension has been tested on SillyTavern 1.11.0 and 1.11.1.
 Utilize SillyTavern's third party extension importer to install like any other extension.
 
 ## Usage
+![image](https://github.com/sakhavhyand/SillyTavern-TagManager/assets/23568313/ee81ab43-b1ea-4a47-97f9-6b0fc948f0d7)
 
 
 ## Support and Contributions
