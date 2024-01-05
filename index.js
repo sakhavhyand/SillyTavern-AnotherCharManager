@@ -9,7 +9,7 @@ import {
     this_chid,
     setCharacterId,
     eventSource,
-    event_types
+    event_types,
 } from '../../../../script.js';
 
 import { getTagsList, createTagInput } from '../../../tags.js';
