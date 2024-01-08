@@ -45,14 +45,11 @@ function sortCharAR(chars, sort_data, sort_order) {
         let comparison = 0;
 
         if (sort_data == 'name') {
-            // For string properties, use localeCompare for string comparison
             comparison = a[sort_data].localeCompare(b[sort_data]);
         } else if (sort_data == 'tags') {
-            // For array properties, compare based on array length
             comparison = a[sort_data].length - b[sort_data].length;
         }
 
-        // Adjust comparison based on order (asc or desc)
         return sort_order === 'desc' ? comparison * -1 : comparison;
     });
 }
@@ -72,7 +69,7 @@ function getCharBlock(item) {
                     <div class="avatar" title="${item.avatar}">
                         <img src="${this_avatar}">
                     </div>
-                    <div class="description">${item.name} : ${item.tags.length}</div>
+                    <div>${item.name} : ${item.tags.length}</div>
                 </div>`;
 }
 
@@ -96,7 +93,7 @@ function fillDetails(item) {
 
 
     divDetailsTags.innerHTML = `<div class="char-details-summary">
-                                    <div class="avatar-tags" title="${item.avatar}">
+                                    <div title="${item.avatar}">
                                         <img src="${this_avatar}">
                                     </div>
                                     <div class="char-details-summary-desc">
@@ -105,7 +102,7 @@ function fillDetails(item) {
                                     </div>
                                 </div>
                                 <div class="char-details-tags">
-                                    <div id="tagSearch" class="tag-searchbar">
+                                    <div class="tag-searchbar">
                                         <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
                                     </div>
                                     <div id="tag_List" class="tags">
@@ -137,24 +134,30 @@ function refreshCharList() {
     document.getElementById('character-list').innerHTML = htmlList;
 }
 
-// Function display the selected character
+// Function to display the selected character
 function selectAndDisplay(id) {
 
     if(typeof this_chid !== 'undefined'){
-        document.getElementById(`CharDID${this_chid}`).classList.add('char_select');
-        document.getElementById(`CharDID${this_chid}`).classList.remove('char_selected');
+        document.getElementById(`CharDID${this_chid}`).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
     setCharacterId(id);
 
     fillDetails(charsList.filter(item => item.id == id)[0]);
 
-    document.getElementById(`CharDID${id}`).classList.remove('char_select');
-    document.getElementById(`CharDID${id}`).classList.add('char_selected');
-    document.getElementById('character-list').classList.remove('character-list');
-    document.getElementById('character-list').classList.add('character-list-selected');
-    document.getElementById('char-details').style.display = 'flex';
+    document.getElementById(`CharDID${id}`).classList.replace('char_select','char_selected');
+    document.getElementById('char-sep').style.removeProperty('display');
+    document.getElementById('char-details').style.removeProperty('display');
 
+}
+
+// Function to close the details panel
+function closeDetails() {
+    document.getElementById(`CharDID${this_chid}`).classList.replace('char_selected','char_select');
+    setCharacterId(undefined);
+
+    document.getElementById('char-details').style.display = 'none';
+    document.getElementById('char-sep').style.display = 'none';
 }
 
 // Function to open the Tag Manager popup
@@ -166,9 +169,9 @@ function openPopup() {
     charsList = sortCharAR(charsList, sortData, sortOrder);
 
     const listLayout = `
-    <div class="list-character-wrapper flexFlowColumn" id="list-character-wrapper">
-        <div id="sortAndFilter" class="sortAndFilter">
-            <form id="form_sort_filter" action="javascript:void(null);">
+    <div class="list-character-wrapper flexFlowColumn">
+        <div class="sortAndFilter">
+            <form class="form_sort_filter" action="javascript:void(null);">
                 <div class="sortText">Sorted by :</div>
                 <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
                     <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
@@ -179,18 +182,18 @@ function openPopup() {
                 <input id="char_search_bar" class="text_pole width100p" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
             </form>
         </div>
-        <div class="character-list" id="character-list">
-        ${charsList.map((item) => getCharBlock(item)).join('')}
+        <div id="character-list">
+            ${charsList.map((item) => getCharBlock(item)).join('')}
         </div>
-        <hr>
-        <div class="character-details" id="char-details" style="display:none">
-            <div class="char-details-block" id="char-details-block"></div>
+        <hr id="char-sep" style="display:none">
+        <div id="char-details" style="display:none">
+            <div id="char-details-block"></div>
             <div class="divider"></div>
-            <div class="char-details-desc" id="char-details-desc">
+            <div class="char-details-desc">
                 <div class="desc_div">
                     <span data-i18n="Character Description">Description</span>
                 </div>
-                <textarea readonly id="desc_zone" class="desc_zone"></textarea>
+                <textarea readonly id="desc_zone"></textarea>
             </div>
         </div>
         <hr>
@@ -236,6 +239,10 @@ jQuery(async () => {
     $(document).on('input','#char_search_bar', function () {
         searchValue = String($(this).val()).toLowerCase();
         refreshCharList();
+    });
+
+    $(document).on('click', '#char-sep', function () {
+        closeDetails();
     });
 
     $(document).on('click', '#dialogue_popup_ok', function () {
