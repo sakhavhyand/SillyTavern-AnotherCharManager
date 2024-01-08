@@ -15,6 +15,8 @@ import {
 import { getTagsList, createTagInput } from '../../../tags.js';
 
 // Initializing some variables
+const extensionName = "SillyTavern-TagManager";
+const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 let charsList = [];
 let mem_chid;
 let mem_menu;
@@ -225,6 +227,9 @@ jQuery(async () => {
     $('#tag-manager').on('click', function () {
         openPopup();
     });
+
+    const modalHtml = await $.get(`${extensionFolderPath}/modal.html`);
+    $("#background_template").after(modalHtml);
 
     $(document).on('click', '.char_select', function () {
         selectAndDisplay($(this).attr('chid'));
