@@ -25,7 +25,7 @@ Utilize SillyTavern's third party extension importer to install like any other e
 
 The extension will add a new Tag button just before the Group button.
 
-![image](https://github.com/sakhavhyand/SillyTavern-TagManager/assets/23568313/ee81ab43-b1ea-4a47-97f9-6b0fc948f0d7)
+![image](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/75cf68fd-6359-47b4-b7bc-313d1a21cfd7)
 
 Clicking on this button will open a pop-up window showing your characters and the number of tags they currently have.
 
