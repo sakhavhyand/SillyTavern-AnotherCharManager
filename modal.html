@@ -1,98 +1,12 @@
-<div id="atm_shadow_popup">
-    <div id="atm_popup">
-        <div id="atm_popup_holder">
-            <div id="atm_popup_text">
-                <div class="list-character-wrapper flexFlowColumn">
-                    <div class="sortAndFilter">
-                        <form class="form_sort_filter" action="javascript:voidnull;">
-                            <div id="atm_tags_view" class="menu_button tags_view fa-solid fa-tags" title="View all tags" data-i18n="[title]View all tags"></div>
-                            <div id="atm_character_import_button" class="menu_button fa-solid fa-file-import faSmallFontSquareFix" title="Import Character from File" data-i18n="[title]Import Character from File"></div>
-                            <div id="atm_external_import_button" class="menu_button fa-solid fa-cloud-arrow-down faSmallFontSquareFix" title="Import content from external URL" data-i18n="[title]Import content from external URL"></div>
-                            <div class="sortText">Sorted by :</div>
-                            <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
-                                <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
-                                <option data-field="name" data-order="desc" data-i18n="Z-A">Z-A</option>
-                                <option data-field="tags" data-order="asc">Least Tags</option>
-                                <option data-field="tags" data-order="desc">Most Tags</option>
-                                <option data-field="date_last_chat" data-order="asc">Recent</option>
-                                <option data-field="date_added" data-order="asc">Newest</option>
-                                <option data-field="date_added" data-order="desc">Oldest</option>
-                            </select>
-                            <input id="char_search_bar" class="text_pole width100p" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
-                        </form>
-                        <span id="charNumber"></span>
-                    </div>
-                    <div id="character-list">
-                    </div>
-                    <hr id="char-sep" style="display:none">
-                    <div id="char-details" style="display:none">
-                        <div id="char-details-block">
-                            <div class="char-details-summary">
-                                <div id="avatar_title">
-                                    <img id="avatar_img" class="char-details-img" src="">
-                                </div>
-                                <div class="char-details-summary-desc">
-                                    <div id="ch_name_details"></div>
-                                    <div id="crea_comment"></div>
-                                </div>
-                            </div>
-                            <div id="atm_details_buttons_block">
-                                <div id="atm_rename_button" class="menu_button fa-solid fa-user-pen" title="Rename Character" data-i18n="[title]Rename" style="display: flex;"></div>
-                                <div id="atm_export_button" class="menu_button fa-solid fa-file-export " title="Export and Download" data-i18n="[title]Export and Download" style="display: flex;"></div>
-                                <div id="atm_dupe_button" class="menu_button fa-solid fa-clone " title="Duplicate Character" data-i18n="[title]Duplicate Character" style="display: flex;"></div>
-                                <div id="atm_delete_button" class="menu_button fa-solid fa-skull " title="Delete Character" data-i18n="[title]Delete Character" style="display: flex;"></div>
-                            </div>
-                            <div class="char-details-tags">
-                                <div class="tag-searchbar">
-                                    <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
-                                </div>
-                                <div id="tag_List" class="tags"></div>
-                            </div>
-                        </div>
-                        <div id="char-details-desc">
-                            <div class="desc_container">
-                                <div class="inline-drawer">
-                                    <div id="desc_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <b>Description</b>
-                                        <span id="desc_Tokens"></span>
-                                        <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
-                                    </div>
-                                    <div class="inline-drawer-content">
-                                        <textarea id="desc_zone" class="autoSetHeight"></textarea>
-                                    </div>
-                                </div>
-                                <div class="inline-drawer">
-                                    <div id="firstMes_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <b>Greeting</b>
-                                        <span id="firstMess_tokens"></span>
-                                        <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
-                                    </div>
-                                    <div class="inline-drawer-content">
-                                        <textarea id="firstMes_zone" class="autoSetHeight"></textarea>
-                                    </div>
-                                </div>
-                                <div id="altGreetings_drawer" class="inline-drawer">
-                                    <div id="altGreetings_header" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <b>Alt. Greetings</b>
-                                        <span id="altGreetings_number"></span>
-                                        <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
-                                    </div>
-                                    <div id="altGreetings_content" class="inline-drawer-content">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <hr>
-                </div>
+<div id="atm_popup" style="display:none;">
+    <div id="dialogue_popup">
+        <div id="dialogue_popup_holder">
+            <div id="dialogue_popup_text">
+                <!-- add content here-->
             </div>
-            <div id="atm_popup_controls">
-                <div id="atm_popup_close" class="menu_button">Close</div>
+            <div id="dialogue_popup_controls">
+                <div id="dialogue_popup_ok" class="menu_button" data-i18n="Delete">Close</div>
             </div>
         </div>
     </div>
-</div>
-<div id="atm_export_format_popup" class="list-group" style="position: absolute; inset: 0px 0px auto auto; margin: 0px; transform: translate(-1920px);" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="left">
-    <div class="atm_export_format list-group-item" data-format="png">PNG</div>
-    <div class="atm_export_format list-group-item" data-format="json">JSON</div>
 </div>
