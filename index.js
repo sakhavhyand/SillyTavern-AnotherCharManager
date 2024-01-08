@@ -169,7 +169,7 @@ function openPopup() {
     <div class="list-character-wrapper flexFlowColumn" id="list-character-wrapper">
         <div id="sortAndFilter" class="sortAndFilter">
             <form id="form_sort_filter" action="javascript:void(null);">
-                <span>Sorted by :</span>
+                <div class="sortText">Sorted by :</div>
                 <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
                     <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
                     <option data-field="name" data-order="desc" data-i18n="Z-A">Z-A</option>

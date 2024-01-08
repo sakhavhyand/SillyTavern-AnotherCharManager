@@ -146,6 +146,12 @@
     margin-bottom: 10px;
 }
 
+.sortText {
+    display: flex;
+    flex-shrink: 0;
+    margin: 8px;
+}
+
 .sortAndFilter {
     display: flex;
     gap: 5px;
@@ -175,10 +181,9 @@
 }
 
 #char_sort_order {
-    margin: 0;
+    margin: 5px;
     flex: 1;
     border-radius: 5px;
-    height: auto;
 }
 
 #form_sort_filter .menu_button {
