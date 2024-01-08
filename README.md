@@ -29,9 +29,11 @@ The extension will add a new tag button just before the Group Button.
 
 A click on this button will open a popup, displaying your characters with the number of tags it actually have.
 
-You have the possibility to sort Alphabetically or by the number of tags.
+You have the possibility to sort alphabetically or by the number of tags.
 
 When choosing a character, the bottom part will display basic information about the character, including his tags and description (read-only).
+
+You can now add, remove or create tags like you normally do with the classical interface.
 
 ## Support and Contributions
 
