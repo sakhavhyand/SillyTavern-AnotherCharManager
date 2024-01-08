@@ -29,9 +29,14 @@ The extension will add a new tag button just before the Group Button.
 
 A click on this button will open a popup, displaying your characters with the number of tags it actually have.
 
+![image](https://github.com/sakhavhyand/SillyTavern-TagManager/assets/23568313/b7fb0253-8e13-4fb2-9c79-1711658b6402)
+
 You have the possibility to sort alphabetically or by the number of tags.
+You also have access to a searchbar.
 
 When choosing a character, the bottom part will display basic information about the character, including his tags and description (read-only).
+
+![image](https://github.com/sakhavhyand/SillyTavern-TagManager/assets/23568313/8b431995-d3e0-4109-9eaf-12accc79ca59)
 
 You can now add, remove or create tags like you normally do with the classical interface.
 
