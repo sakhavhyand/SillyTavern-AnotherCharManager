@@ -1,105 +1,100 @@
+/* Wrapper */
 .list-character-wrapper {
-    flex-grow: 1;
+    display: flex;
     height: 100%;
     overflow-y: auto;
 }
 
-.character-list {
+
+/* Search and Sort banner */
+.sortAndFilter {
     display: flex;
-    gap: 5px;
-    overflow-y: auto;
-    flex-wrap: wrap;
-    flex-direction: row;
-    flex-grow: 1;
-    justify-content: space-around;
-    align-content: flex-start;
-    height: 95%;
 }
 
-.character-list-selected {
+.form_sort_filter{
     display: flex;
-    gap: 5px;
-    overflow-y: auto;
+    margin: 5px;
+    column-gap: 5px;
+}
+
+.sortText {
+    flex-shrink: 0;
+    margin: 8px;
+}
+
+#char_sort_order {
+    margin: 5px;
+}
+
+
+/* Characters List */
+
+#character-list {
+    display: flex;
     flex-wrap: wrap;
-    flex-direction: row;
     flex-grow: 1;
     justify-content: space-around;
     align-content: flex-start;
-    height: 30%;
 }
 
 .character_item {
-    width: 30%;
-    align-items: flex-start;
-    height: min-content;
-    flex-direction: column;
-    overflow: hidden;
     max-width: 100px;
     padding: 5px;
     border-radius: 10px;
-    margin-bottom: 1px;
 }
 
-.character-details {
+.char_select:hover {
+    background-color: var(--white30a);
+}
+
+.avatar {
+    align-self: center;
+}
+
+.char_selected {
+    background-color: rgb(0, 0, 0);
+}
+
+
+/* Characters Details */
+
+#char-sep {
+    padding: 3px;
+}
+
+#char-sep:hover {
+    cursor: pointer;
+}
+
+#char-details {
     display: flex;
     gap: 5px;
-    flex-wrap: wrap;
-    flex-direction: row;
     flex-grow: 1;
-    justify-content: space-around;
-    align-content: flex-start;
-    height: 65%;
 }
 
-.character_item_details {
-    display: flex;
-    gap: 5px;
-    flex-direction: row;
-    flex-grow: 1;
-    align-content: flex-start;
-}
-
-.char-details-block {
-    display: flex;
+#char-details-block {
     flex: 1;
-    align-items: stretch;
-    flex-direction: column;
-}
-
-.char-details-tags {
-    display: flex;
-    align-items: stretch;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.char-details-desc {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    align-items: stretch;
 }
 
 .char-details-summary {
     display: flex;
-    flex-wrap: nowrap;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: stretch;
-    align-content: start;
     gap: 10px;
     padding: 5px;
-    margin-bottom: 1px;
 }
 
 .char-details-summary-desc {
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: column;
-    align-items: stretch;
-    align-content: start;
     text-align: left;
-    padding: 5px;
+}
+
+.ch_name_details {
+    font-weight: bolder;
+    margin-bottom: 10px;
+}
+
+.char-details-tags {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .tag-searchbar {
@@ -110,86 +105,20 @@
     background-image: linear-gradient(90deg, var(--transparent), var(--SmartThemeBodyColor), var(--transparent));
     margin: 5px 0;
     width: 1px;
-    min-width: 1px;
-    border: 0;
     opacity: 0.2;
-    height: 98%;
+}
+
+.char-details-desc {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .desc_div {
     display: flex;
-    align-items: center;
 }
 
-.desc_zone {
+#desc_zone {
+    height: 100%;
     resize: none;
-    height: 95%;
-}
-
-.avatar {
-    align-self: center;
-}
-
-.avatar-tags {
-    align-self: auto;
-}
-.char_select:hover {
-    background-color: var(--white30a);
-}
-
-.char_selected {
-    background-color: rgb(0, 0, 0);
-}
-
-.ch_name_details {
-    font-weight: bolder;
-    margin-bottom: 10px;
-}
-
-.sortText {
-    display: flex;
-    flex-shrink: 0;
-    margin: 8px;
-}
-
-.sortAndFilter {
-    display: flex;
-    gap: 5px;
-    overflow-y: auto;
-    flex-direction: row;
-    justify-content: start;
-    align-content: flex-start;
-}
-
-.sortList {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    border-radius: 5px;
-    padding: 3px 5px;
-    cursor: pointer;
-    margin-bottom: 5px;
-}
-
-#form_sort_filter{
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    margin: 5px;
-    column-gap: 5px;
-}
-
-#char_sort_order {
-    margin: 5px;
-    flex: 1;
-    border-radius: 5px;
-}
-
-#form_sort_filter .menu_button {
-    margin: 0;
-    height: fit-content;
-    padding: 5px;
-    border-radius: 5px;
-    aspect-ratio: 1 / 1;
 }
