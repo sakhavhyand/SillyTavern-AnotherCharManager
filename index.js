@@ -1,6 +1,5 @@
 // An extension that allows you to manage tags.
 import {
-    callPopup,
     getEntitiesList,
     getThumbnailUrl,
     setMenuType,
@@ -15,7 +14,7 @@ import {
 import { getTagsList, createTagInput } from '../../../tags.js';
 
 // Initializing some variables
-const extensionName = "SillyTavern-TagManager";
+const extensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 let charsList = [];
 let mem_chid;
@@ -162,8 +161,21 @@ function closeDetails() {
     document.getElementById('char-sep').style.display = 'none';
 }
 
+function callModal(html){
+    $('#atm_popup').toggleClass('wide_dialogue_popup');
+    $('#atm_popup').toggleClass('large_dialogue_popup');
+    $('#atm_popup_text').empty().append(html);
+    $('#atm_shadow_popup').css('display', 'block');
+
+    $('#atm_shadow_popup').transition({
+        opacity: 1,
+        duration: 125,
+        easing: 'ease-in-out',
+    });
+}
+
 // Function to open the Tag Manager popup
-function openPopup() {
+function openModal() {
 
     mem_chid = this_chid;
     mem_menu = menu_type;
@@ -202,8 +214,8 @@ function openPopup() {
     </div>
     `;
 
-    // Call the popup with our list layout
-    callPopup(listLayout, 'text', '', { okButton: 'Close', wide: true, large: true });
+    // Call the modal with our list layout
+    callModal(listLayout);
 
     eventSource.on(event_types.SETTINGS_UPDATED, function () {buildCharAR(); refreshCharList();});
 
@@ -221,15 +233,17 @@ function openPopup() {
 }
 
 jQuery(async () => {
+
+    // Create the shadow div
+    const modalHtml = await $.get(`${extensionFolderPath}/modal.html`);
+    $('#background_template').after(modalHtml);
+
     // Put the button before rm_button_group_chats in the form_character_search_form
     // on hover, should say "Open Tag Manager"
     $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Open Tag Manager"></button>');
     $('#tag-manager').on('click', function () {
-        openPopup();
+        openModal();
     });
-
-    const modalHtml = await $.get(`${extensionFolderPath}/modal.html`);
-    $("#background_template").after(modalHtml);
 
     $(document).on('click', '.char_select', function () {
         selectAndDisplay($(this).attr('chid'));
@@ -250,8 +264,18 @@ jQuery(async () => {
         closeDetails();
     });
 
-    $(document).on('click', '#dialogue_popup_ok', function () {
+    $(document).on('click', '#atm_popup_close', function () {
         setCharacterId(mem_chid);
         setMenuType(mem_menu);
+        $('#shadow_popup').transition({
+            opacity: 0,
+            duration: 125,
+            easing: 'ease-in-out',
+        });
+        setTimeout(function () {
+            $('#atm_shadow_popup').css('display', 'none');
+            $('#atm_popup').removeClass('large_dialogue_popup');
+            $('#atm_popup').removeClass('wide_dialogue_popup');
+        }, 125);
     });
 });

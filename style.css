@@ -1,3 +1,70 @@
+/* Modal */
+
+#atm_shadow_popup {
+    backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 2));
+    -webkit-backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 2));
+    background-color: var(--black30a);
+    display: none;
+    opacity: 0.0;
+    position: absolute;
+    width: 100%;
+    height: 100vh;
+    height: 100svh;
+    z-index: 9999;
+    top: 0;
+}
+
+#atm_popup {
+    width: 500px;
+    max-width: 90vw;
+    max-width: 90svw;
+    position: absolute;
+    z-index: 9999;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+    box-shadow: 0px 0px 14px var(--black70a);
+    border: 1px solid var(--SmartThemeBorderColor);
+    padding: 4px;
+    background-color: var(--SmartThemeBlurTintColor);
+    border-radius: 10px;
+    max-height: 90vh;
+    max-height: 90svh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+}
+
+#atm_popup_holder {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: hidden;
+    padding: 0 10px;
+}
+
+#atm_popup_text {
+    flex-grow: 1;
+    overflow-y: auto;
+    height: 100%;
+}
+
+#atm_popup_controls {
+    display: flex;
+    align-self: center;
+    gap: 20px;
+}
+
+#atm_popup_close {
+    background-color: var(--crimson70a);
+    cursor: pointer;
+}
+
+
 /* Wrapper */
 .list-character-wrapper {
     display: flex;
