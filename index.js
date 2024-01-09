@@ -157,8 +157,6 @@ function selectAndDisplay(id) {
 // Function to close the details panel
 function closeDetails() {
     document.getElementById(`CharDID${this_chid}`).classList.replace('char_selected','char_select');
-    setCharacterId(undefined);
-
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
 }
@@ -236,11 +234,13 @@ jQuery(async () => {
 
     // Trigger when clicking on the separator to close the character details
     $(document).on('click', '#char-sep', function () {
+        setCharacterId(undefined);
         closeDetails();
     });
 
     // Trigger when the modal is closed to reset some global parameters
     $(document).on('click', '#atm_popup_close', function () {
+        closeDetails();
         setCharacterId(mem_chid);
         setMenuType(mem_menu);
 
