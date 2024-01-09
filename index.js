@@ -90,10 +90,8 @@ function fillDetails(item) {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
 
-    let divDetailsTags = document.getElementById('char-details-block');
-
-
-    divDetailsTags.innerHTML = `<div class="char-details-summary">
+    // Filling details block
+    document.getElementById('char-details-block').innerHTML = `<div class="char-details-summary">
                                     <div title="${item.avatar}">
                                         <img src="${this_avatar}">
                                     </div>
@@ -119,6 +117,7 @@ function refreshCharList() {
 
     let filteredChars;
 
+    // Filtering only if there is more than three chars in the searchbar
     if(searchValue !== '' && searchValue.length >= 3){
         filteredChars = charsList.filter(item => {
             return item.description.toLowerCase().includes(searchValue) ||
@@ -127,8 +126,10 @@ function refreshCharList() {
         });
     }
 
+    // Sorting the characters
     const sortedList = sortCharAR((filteredChars == undefined ? charsList : filteredChars), sortData, sortOrder);
 
+    // Generating characters HTML
     const htmlList = sortedList.map((item) => getCharBlock(item)).join('');
 
     document.getElementById('character-list').innerHTML = '';
@@ -138,7 +139,8 @@ function refreshCharList() {
 // Function to display the selected character
 function selectAndDisplay(id) {
 
-    if(typeof this_chid !== 'undefined'){
+    // Check if a visible character is already selected
+    if(typeof this_chid !== 'undefined' && document.getElementById(`CharDID${this_chid}`) !== null){
         document.getElementById(`CharDID${this_chid}`).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
@@ -161,10 +163,21 @@ function closeDetails() {
     document.getElementById('char-sep').style.display = 'none';
 }
 
-function callModal(html){
+// Function to build the modal
+function openModal() {
+
+    // Memorize some global variables
+    mem_chid = this_chid;
+    mem_menu = menu_type;
+
+    // Build our own characters list
+    buildCharAR();
+    charsList = sortCharAR(charsList, sortData, sortOrder);
+
+    // Display the modal with our list layout
     $('#atm_popup').toggleClass('wide_dialogue_popup');
     $('#atm_popup').toggleClass('large_dialogue_popup');
-    $('#atm_popup_text').empty().append(html);
+    $('#character-list').empty().append(charsList.map((item) => getCharBlock(item)).join(''));
     $('#atm_shadow_popup').css('display', 'block');
 
     $('#atm_shadow_popup').transition({
@@ -172,52 +185,8 @@ function callModal(html){
         duration: 125,
         easing: 'ease-in-out',
     });
-}
 
-// Function to open the Tag Manager popup
-function openModal() {
-
-    mem_chid = this_chid;
-    mem_menu = menu_type;
-    buildCharAR();
-    charsList = sortCharAR(charsList, sortData, sortOrder);
-
-    const listLayout = `
-    <div class="list-character-wrapper flexFlowColumn">
-        <div class="sortAndFilter">
-            <form class="form_sort_filter" action="javascript:void(null);">
-                <div id="atm_tags_view" class="menu_button tags_view fa-solid fa-tags" title="View all tags" data-i18n="[title]View all tags"></div>
-                <div class="sortText">Sorted by :</div>
-                <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
-                    <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
-                    <option data-field="name" data-order="desc" data-i18n="Z-A">Z-A</option>
-                    <option data-field="tags" data-order="asc">Least Tags</option>
-                    <option data-field="tags" data-order="desc">Most Tags</option>
-                </select>
-                <input id="char_search_bar" class="text_pole width100p" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
-            </form>
-        </div>
-        <div id="character-list">
-            ${charsList.map((item) => getCharBlock(item)).join('')}
-        </div>
-        <hr id="char-sep" style="display:none">
-        <div id="char-details" style="display:none">
-            <div id="char-details-block"></div>
-            <div class="divider"></div>
-            <div class="char-details-desc">
-                <div class="desc_div">
-                    <span data-i18n="Character Description">Description</span>
-                </div>
-                <textarea readonly id="desc_zone"></textarea>
-            </div>
-        </div>
-        <hr>
-    </div>
-    `;
-
-    // Call the modal with our list layout
-    callModal(listLayout);
-
+    // Add listener to refresh the display on characters edit
     eventSource.on(event_types.SETTINGS_UPDATED, function () {buildCharAR(); refreshCharList();});
 
     const charSortOrderSelect = document.getElementById('char_sort_order');
@@ -246,28 +215,34 @@ jQuery(async () => {
         openModal();
     });
 
+    // Trigger when a character is selected in the list
     $(document).on('click', '.char_select', function () {
         selectAndDisplay($(this).attr('chid'));
     });
 
+    // Trigger when the sort dropdown is used
     $(document).on('change', '#char_sort_order' , function () {
         sortData = $(this).find(':selected').data('field');
         sortOrder = $(this).find(':selected').data('order');
         refreshCharList();
     });
 
+    // Trigger when the search bar is used
     $(document).on('input','#char_search_bar', function () {
         searchValue = String($(this).val()).toLowerCase();
         refreshCharList();
     });
 
+    // Trigger when clicking on the separator to close the character details
     $(document).on('click', '#char-sep', function () {
         closeDetails();
     });
 
+    // Trigger when the modal is closed to reset some global parameters
     $(document).on('click', '#atm_popup_close', function () {
         setCharacterId(mem_chid);
         setMenuType(mem_menu);
+
         $('#atm_shadow_popup').transition({
             opacity: 0,
             duration: 125,
