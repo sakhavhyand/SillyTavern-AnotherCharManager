@@ -186,6 +186,7 @@ function openModal() {
     <div class="list-character-wrapper flexFlowColumn">
         <div class="sortAndFilter">
             <form class="form_sort_filter" action="javascript:void(null);">
+                <div id="atm_tags_view" class="menu_button tags_view fa-solid fa-tags" title="View all tags" data-i18n="[title]View all tags"></div>
                 <div class="sortText">Sorted by :</div>
                 <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
                     <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
@@ -267,7 +268,7 @@ jQuery(async () => {
     $(document).on('click', '#atm_popup_close', function () {
         setCharacterId(mem_chid);
         setMenuType(mem_menu);
-        $('#shadow_popup').transition({
+        $('#atm_shadow_popup').transition({
             opacity: 0,
             duration: 125,
             easing: 'ease-in-out',
