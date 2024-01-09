@@ -106,6 +106,8 @@
     flex-grow: 1;
     justify-content: space-around;
     align-content: flex-start;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .character_item {
@@ -140,7 +142,7 @@
 #char-details {
     display: flex;
     gap: 5px;
-    flex-grow: 1;
+    min-height: 50%;
 }
 
 #char-details-block {
