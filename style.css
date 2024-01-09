@@ -164,6 +164,11 @@
     margin-bottom: 10px;
 }
 
+.crea_comment {
+    overflow-y: auto;
+    max-height: 115px;
+}
+
 .char-details-tags {
     display: flex;
     flex-direction: column;
