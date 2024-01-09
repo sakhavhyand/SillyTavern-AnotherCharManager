@@ -97,7 +97,7 @@ function fillDetails(item) {
                                     </div>
                                     <div class="char-details-summary-desc">
                                         <div class="ch_name_details">${item.name}</div>
-                                        <div>${item.creatorcomment}</div>
+                                        <div class="crea_comment">${item.creatorcomment}</div>
                                     </div>
                                 </div>
                                 <div class="char-details-tags">
@@ -234,8 +234,8 @@ jQuery(async () => {
 
     // Trigger when clicking on the separator to close the character details
     $(document).on('click', '#char-sep', function () {
-        setCharacterId(undefined);
         closeDetails();
+        setCharacterId(undefined);
     });
 
     // Trigger when the modal is closed to reset some global parameters
