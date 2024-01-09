@@ -169,6 +169,7 @@ function openModal() {
     // Memorize some global variables
     mem_chid = this_chid;
     mem_menu = menu_type;
+    setCharacterId(undefined);
 
     // Build our own characters list
     buildCharAR();
