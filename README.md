@@ -25,14 +25,16 @@ Utilize SillyTavern's third party extension importer to install like any other e
 
 The extension will add a new Tag button just before the Group button.
 
-![image](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/75cf68fd-6359-47b4-b7bc-313d1a21cfd7)
+![image](https://github.com/sakhavhyand/SillyTavern-TagManager/assets/23568313/ee81ab43-b1ea-4a47-97f9-6b0fc948f0d7)
 
 Clicking on this button will open a pop-up window showing your characters and the number of tags they currently have.
 
-![image](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/75cf68fd-6359-47b4-b7bc-313d1a21cfd7)
+![image](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/e5ff005d-f95b-41ec-a3af-68a4b929bd5a)
 
-You can sort alphabetically or by number of tags.
-You also have access to a search bar.
+You can sort alphabetically or by number of tags.<br/>
+You also have access to a search bar and the Manage Tags menu.
+
+![image](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/b29097e0-e1bf-4b84-8124-129d9404ccc5)
 
 When you select a character, basic information about the character is displayed at the bottom, including its tags and description (read-only).
 
