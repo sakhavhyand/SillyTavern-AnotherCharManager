@@ -2,6 +2,35 @@
     <div id="atm_popup">
         <div id="atm_popup_holder">
             <div id="atm_popup_text">
+                <div class="list-character-wrapper flexFlowColumn">
+                    <div class="sortAndFilter">
+                        <form class="form_sort_filter" action="javascript:void(null);">
+                            <div id="atm_tags_view" class="menu_button tags_view fa-solid fa-tags" title="View all tags" data-i18n="[title]View all tags"></div>
+                            <div class="sortText">Sorted by :</div>
+                            <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
+                                <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
+                                <option data-field="name" data-order="desc" data-i18n="Z-A">Z-A</option>
+                                <option data-field="tags" data-order="asc">Least Tags</option>
+                                <option data-field="tags" data-order="desc">Most Tags</option>
+                            </select>
+                            <input id="char_search_bar" class="text_pole width100p" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
+                        </form>
+                    </div>
+                    <div id="character-list">
+                    </div>
+                    <hr id="char-sep" style="display:none">
+                    <div id="char-details" style="display:none">
+                        <div id="char-details-block"></div>
+                        <div class="divider"></div>
+                        <div class="char-details-desc">
+                            <div class="desc_div">
+                                <span data-i18n="Character Description">Description</span>
+                            </div>
+                            <textarea readonly id="desc_zone"></textarea>
+                        </div>
+                    </div>
+                    <hr>
+                </div>
             </div>
             <div id="atm_popup_controls">
                 <div id="atm_popup_close" class="menu_button">Close</div>
