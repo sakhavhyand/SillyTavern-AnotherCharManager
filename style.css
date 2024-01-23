@@ -111,7 +111,12 @@
 }
 
 .character_item {
-    max-width: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-wrap: wrap;
+    width: 100px;
+    height: 150px;
     padding: 5px;
     border-radius: 10px;
 }
@@ -120,7 +125,7 @@
     background-color: var(--white30a);
 }
 
-.avatar {
+.avatar_item {
     align-self: center;
 }
 

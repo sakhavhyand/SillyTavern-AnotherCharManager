@@ -66,8 +66,8 @@ function getCharBlock(item) {
     const parsedThis_chid = this_chid !== undefined ? parseInt(this_chid, 10) : undefined;
     const charClass = (parsedThis_chid !== undefined && parsedThis_chid === item.id) ? 'char_selected' : 'char_select';
 
-    return `<div class="character_item flex-container ${charClass}" chid="${item.id}" id="CharDID${item.id}">
-                    <div class="avatar" title="${item.avatar}">
+    return `<div class="character_item ${charClass}" chid="${item.id}" id="CharDID${item.id}">
+                    <div class="avatar_item" title="${item.avatar}">
                         <img src="${this_avatar}">
                     </div>
                     <div>${item.name} : ${item.tags.length}</div>
