@@ -156,7 +156,7 @@ function selectAndDisplay(id) {
 
 // Function to close the details panel
 function closeDetails() {
-    document.getElementById(`CharDID${this_chid}`).classList.replace('char_selected','char_select');
+    document.getElementById(`CharDID${this_chid}`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
 }
