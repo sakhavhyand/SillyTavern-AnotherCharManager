@@ -130,7 +130,7 @@
     border-radius: 50%;
     flex: unset;
     border-style: none;
-    width: 100px;
+    width: 95px;
     height: 100px;
 }
 
@@ -157,6 +157,7 @@
 
 #char-sep:hover {
     cursor: pointer;
+    background-color: white;
 }
 
 #char-details {
@@ -173,6 +174,10 @@
     display: flex;
     gap: 10px;
     padding: 5px;
+}
+
+.char-details-img {
+    border-radius: 20%;
 }
 
 .char-details-summary-desc {
