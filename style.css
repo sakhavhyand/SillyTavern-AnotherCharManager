@@ -111,7 +111,12 @@
 }
 
 .character_item {
-    max-width: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-wrap: nowrap;
+    width: 100px;
+    height: 150px;
     padding: 5px;
     border-radius: 10px;
 }
@@ -120,8 +125,23 @@
     background-color: var(--white30a);
 }
 
-.avatar {
+.avatar_item {
     align-self: center;
+    border-radius: 50%;
+    flex: unset;
+    border-style: none;
+    width: 100px;
+    height: 100px;
+}
+
+.avatar_item > img {
+    width: 100%;
+    height: 100%;
+    border: none;
+    object-fit: cover;
+    object-position: center center;
+    border-radius: 20%;
+    box-shadow: 0 0 5px var(--black50a);
 }
 
 .char_selected {
