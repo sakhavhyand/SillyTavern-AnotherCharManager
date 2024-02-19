@@ -93,7 +93,7 @@ function fillDetails(item) {
     // Filling details block
     document.getElementById('char-details-block').innerHTML = `<div class="char-details-summary">
                                     <div title="${item.avatar}">
-                                        <img src="${this_avatar}">
+                                        <img class="char-details-img" src="${this_avatar}">
                                     </div>
                                     <div class="char-details-summary-desc">
                                         <div class="ch_name_details">${item.name}</div>
@@ -149,7 +149,7 @@ function selectAndDisplay(id) {
     fillDetails(charsList.filter(item => item.id == id)[0]);
 
     document.getElementById(`CharDID${id}`).classList.replace('char_select','char_selected');
-    document.getElementById('char-sep').style.removeProperty('display');
+    document.getElementById('char-sep').style.display = 'block';
     document.getElementById('char-details').style.removeProperty('display');
 
 }
