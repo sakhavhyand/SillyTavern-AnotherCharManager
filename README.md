@@ -29,7 +29,8 @@ The extension will add a new Tag button just before the Group button.
 
 Clicking on this button will open a pop-up window showing your characters and the number of tags they currently have.
 
-![image](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/e5ff005d-f95b-41ec-a3af-68a4b929bd5a)
+![Screenshot_20240220_090147](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/60ab6c01-08e6-4f4e-b5a8-6cb9e39a0826)
+
 
 You can sort alphabetically or by number of tags.<br/>
 You also have access to a search bar and the Manage Tags menu.
