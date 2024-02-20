@@ -22,6 +22,7 @@ let mem_menu;
 let sortOrder = 'asc';
 let sortData = 'name';
 let searchValue = '';
+let charNumber;
 
 // Function to build the character array based on entities
 function buildCharAR() {
@@ -36,8 +37,12 @@ function buildCharAR() {
             description: entity.item.description,
             creatorcomment: entity.item.creatorcomment !== undefined ? entity.item.creatorcomment : entity.item.data.creator_notes,
             tags: getTagsList(entity.item.avatar),
+            dateAdded: entity.item.date_added,
+            dateLastChat: entity.item.date_last_chat,
         };
     });
+
+    charNumber = charsList.length;
 }
 
 // Function to sort the character array based on specified property and order
@@ -45,10 +50,19 @@ function sortCharAR(chars, sort_data, sort_order) {
     return chars.sort((a, b) => {
         let comparison = 0;
 
-        if (sort_data == 'name') {
-            comparison = a[sort_data].localeCompare(b[sort_data]);
-        } else if (sort_data == 'tags') {
-            comparison = a[sort_data].length - b[sort_data].length;
+        switch (sort_data) {
+            case 'name':
+                comparison = a[sort_data].localeCompare(b[sort_data]);
+                break;
+            case 'tags':
+                comparison = a[sort_data].length - b[sort_data].length;
+                break;
+            case 'dateLastChat':
+                comparison = b[sort_data] - a[sort_data];
+                break;
+            case 'dateAdded':
+                comparison = b[sort_data] - a[sort_data];
+                break;
         }
 
         return sort_order === 'desc' ? comparison * -1 : comparison;
@@ -178,6 +192,7 @@ function openModal() {
     $('#atm_popup').toggleClass('large_dialogue_popup');
     $('#character-list').empty().append(charsList.map((item) => getCharBlock(item)).join(''));
     $('#atm_shadow_popup').css('display', 'block');
+    $('#charNumber').empty().append(`Total characters : ${charNumber}`);
 
     $('#atm_shadow_popup').transition({
         opacity: 1,
