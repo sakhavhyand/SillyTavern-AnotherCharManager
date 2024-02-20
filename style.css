@@ -76,6 +76,7 @@
 /* Search and Sort banner */
 .sortAndFilter {
     display: flex;
+    justify-content: space-between;
 }
 
 .form_sort_filter{
@@ -97,6 +98,11 @@
     margin: 5px;
 }
 
+#charNumber {
+    padding: 7px 2px;
+    min-width: fit-content;
+    margin: 5px;
+}
 
 /* Characters List */
 
