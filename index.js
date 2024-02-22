@@ -11,6 +11,10 @@ import {
     event_types,
 } from '../../../../script.js';
 
+import { getTokenCount } from '../../../tokenizers.js';
+
+import { resetScrollHeight } from '../../../utils.js';
+
 import { getTagsList, createTagInput } from '../../../tags.js';
 
 // Initializing some variables
@@ -35,6 +39,10 @@ function buildCharAR() {
             name: entity.item.name,
             avatar: entity.item.avatar,
             description: entity.item.description,
+            descTokens: getTokenCount(entity.item.description),
+            firstMes: entity.item.first_mes,
+            firstTokens: getTokenCount(entity.item.first_mes),
+            alternateGreetings: entity.item.data.alternate_greetings,
             creatorcomment: entity.item.creatorcomment !== undefined ? entity.item.creatorcomment : entity.item.data.creator_notes,
             tags: getTagsList(entity.item.avatar),
             dateAdded: entity.item.date_added,
@@ -96,6 +104,31 @@ function displayTag({ id, name, color }){
                 </span>`;
 }
 
+function displayAltGreetings(item) {
+
+    let altGreetingsHTML = '';
+
+    if(item.alternateGreetings.length == 0){
+        return '<span>Nothing here but chickens!!</span>';
+    }
+    else {
+        for (let i = 0; i < item.alternateGreetings.length; i++) {
+            let greetingNumber = i + 1;
+            altGreetingsHTML += `<div class="inline-drawer">
+                <div id="altGreetDrawer${greetingNumber}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
+                    <b>Greeting #${greetingNumber}</b>
+                    <span>Tokens: ${getTokenCount(item.alternateGreetings[i])}</span>
+                    <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+                </div>
+                <div class="inline-drawer-content">
+                    <textarea readonly class="altGreeting_zone autoSetHeight">${item.alternateGreetings[i]}</textarea>
+                </div>
+            </div>`;
+        }
+        return altGreetingsHTML;
+    }
+}
+
 // Function to fill details in the character details block
 function fillDetails(item) {
 
@@ -123,7 +156,12 @@ function fillDetails(item) {
                                     </div>
                                 </div>`;
     createTagInput('#input_tag', '#tag_List');
+    document.getElementById('desc_Tokens').innerHTML = `Tokens: ${getTokenCount(item.description)}`;
     document.getElementById('desc_zone').value = item.description;
+    document.getElementById('firstMess_tokens').innerHTML = `Tokens: ${getTokenCount(item.firstMes)}`;
+    document.getElementById('firstMes_zone').value = item.firstMes;
+    document.getElementById('altGreetings_number').innerHTML = `Numbers: ${item.alternateGreetings.length}`;
+    document.getElementById('altGreetings_content').innerHTML = displayAltGreetings(item);
 }
 
 // Function to refresh the character list based on search and sorting parameters
@@ -251,6 +289,18 @@ jQuery(async () => {
     $(document).on('click', '#char-sep', function () {
         closeDetails();
         setCharacterId(undefined);
+    });
+
+    $(document).on('click', '.altgreetings-drawer-toggle', function (e) {
+        var icon = $(this).find('.inline-drawer-icon');
+        icon.toggleClass('down up');
+        icon.toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
+        $(this).closest('.inline-drawer').children('.inline-drawer-content').stop().slideToggle();
+
+        // Set the height of "autoSetHeight" textareas within the inline-drawer to their scroll height
+        $(this).closest('.inline-drawer').find('.inline-drawer-content textarea.autoSetHeight').each(function () {
+            resetScrollHeight($(this));
+        });
     });
 
     // Trigger when the modal is closed to reset some global parameters
