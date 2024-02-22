@@ -25,12 +25,29 @@
                     <hr id="char-sep" style="display:none">
                     <div id="char-details" style="display:none">
                         <div id="char-details-block"></div>
-                        <div class="divider"></div>
-                        <div class="char-details-desc">
-                            <div class="desc_div">
-                                <span data-i18n="Character Description">Description</span>
+                        <div id="char-details-desc">
+                            <div class="desc_container">
+                                <div class="inline-drawer">
+                                    <div id="desc_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
+                                        <b>Description</b>
+                                        <span id="desc_Tokens"></span>
+                                        <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+                                    </div>
+                                    <div class="inline-drawer-content">
+                                        <textarea readonly id="desc_zone"></textarea>
+                                    </div>
+                                </div>
+                                <div class="inline-drawer">
+                                    <div id="firstMes_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
+                                        <b>First Message</b>
+                                        <span id="firstMess_tokens"></span>
+                                        <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+                                    </div>
+                                    <div class="inline-drawer-content">
+                                        <textarea readonly id="firstMes_zone"></textarea>
+                                    </div>
+                                </div>
                             </div>
-                            <textarea readonly id="desc_zone"></textarea>
                         </div>
                     </div>
                     <hr>

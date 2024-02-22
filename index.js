@@ -11,6 +11,8 @@ import {
     event_types,
 } from '../../../../script.js';
 
+import { getTokenCount } from '../../../tokenizers.js';
+
 import { getTagsList, createTagInput } from '../../../tags.js';
 
 // Initializing some variables
@@ -35,6 +37,9 @@ function buildCharAR() {
             name: entity.item.name,
             avatar: entity.item.avatar,
             description: entity.item.description,
+            descTokens: getTokenCount(entity.item.description),
+            firstMes: entity.item.first_mes,
+            firstTokens: getTokenCount(entity.item.first_mes),
             creatorcomment: entity.item.creatorcomment !== undefined ? entity.item.creatorcomment : entity.item.data.creator_notes,
             tags: getTagsList(entity.item.avatar),
             dateAdded: entity.item.date_added,
@@ -123,7 +128,12 @@ function fillDetails(item) {
                                     </div>
                                 </div>`;
     createTagInput('#input_tag', '#tag_List');
+    //document.getElementById('desc_header').querySelector('div').insertAdjacentText('beforebegin', `Tokens: ${item.descTokens}`);
+    document.getElementById('desc_Tokens').innerHTML = `Tokens: ${item.descTokens}`;
     document.getElementById('desc_zone').value = item.description;
+    //document.getElementById('firstMes_header').querySelector('div').insertAdjacentText('beforebegin', `Tokens: ${item.firstTokens}`);
+    document.getElementById('firstMess_tokens').innerHTML = `Tokens: ${item.firstTokens}`;
+    document.getElementById('firstMes_zone').value = item.firstMes;
 }
 
 // Function to refresh the character list based on search and sorting parameters
