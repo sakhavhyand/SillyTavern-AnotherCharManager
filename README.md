@@ -37,9 +37,10 @@ You also have access to a search bar and the Manage Tags menu.
 
 ![image](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/b29097e0-e1bf-4b84-8124-129d9404ccc5)
 
-When you select a character, basic information about the character is displayed at the bottom, including its tags and description (read-only).
+When you select a character, basic information about the character is displayed at the bottom, including its tags, description and greetings(read-only).
 
-![image](https://github.com/sakhavhyand/SillyTavern-TagManager/assets/23568313/8b431995-d3e0-4109-9eaf-12accc79ca59)
+![Screenshot_20240222_172819](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/c5577e84-8110-45fe-b130-40fbe763d0bc)
+
 
 You can now add, remove or create tags as you would in the classic interface.
 
