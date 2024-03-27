@@ -150,6 +150,10 @@
     box-shadow: 0 0 5px var(--black50a);
 }
 
+.char_name {
+    font-size: calc(var(--mainFontSize) - 2px);
+}
+
 .char_selected {
     background-color: rgb(0, 0, 0);
 }
