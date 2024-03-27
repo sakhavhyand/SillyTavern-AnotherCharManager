@@ -90,7 +90,7 @@ function getCharBlock(item) {
                     <div class="avatar_item">
                         <img src="${this_avatar}" alt="${item.avatar}">
                     </div>
-                    <div>${item.name} : ${item.tags.length}</div>
+                    <div class="char_name">${item.name} : ${item.tags.length}</div>
                 </div>`;
 }
 
