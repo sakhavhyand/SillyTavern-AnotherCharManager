@@ -196,14 +196,27 @@
     text-align: left;
 }
 
-.ch_name_details {
+#ch_name_details {
     font-weight: bolder;
     margin-bottom: 10px;
 }
 
-.crea_comment {
+#crea_comment {
     overflow-y: auto;
     max-height: 115px;
+}
+
+#atm_details_buttons_block {
+    display: flex;
+    flex: 1;
+    gap: 5px;
+    align-items: center;
+    justify-content: start;
+    flex-wrap: wrap;
+}
+
+#atm_delete_button:hover {
+    background-color: var(--fullred) !important;
 }
 
 .char-details-tags {
