@@ -85,8 +85,10 @@
     column-gap: 5px;
 }
 
-#atm_tags_view.tags_view {
-    margin: 5px;
+#atm_tags_view.tags_view, #atm_character_import_button, #atm_external_import_button {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 2px;
 }
 
 .sortText {
