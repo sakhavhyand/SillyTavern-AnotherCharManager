@@ -318,4 +318,12 @@ jQuery(async () => {
             $('#atm_popup').removeClass('wide_dialogue_popup');
         }, 125);
     });
+
+    $('#atm_character_import_button').click(function () {
+        $('#character_import_file').click();
+    });
+
+    $('#atm_external_import_button').click(function () {
+        $('#external_import_button').click();
+    });
 });
