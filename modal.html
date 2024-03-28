@@ -26,7 +26,26 @@
                     </div>
                     <hr id="char-sep" style="display:none">
                     <div id="char-details" style="display:none">
-                        <div id="char-details-block"></div>
+                        <div id="char-details-block">
+                            <div class="char-details-summary">
+                                <div id="avatar_title">
+                                    <img id="avatar_img" class="char-details-img" src="">
+                                </div>
+                                <div class="char-details-summary-desc">
+                                    <div id="ch_name_details"></div>
+                                    <div id="crea_comment"></div>
+                                </div>
+                            </div>
+                            <div id="atm_details_buttons_block">
+                                <div id="atm_delete_button" class="menu_button fa-solid fa-skull " title="Delete Character" data-i18n="[title]Delete Character" style="display: flex;"></div>
+                            </div>
+                            <div class="char-details-tags">
+                                <div class="tag-searchbar">
+                                    <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
+                                </div>
+                                <div id="tag_List" class="tags"></div>
+                            </div>
+                        </div>
                         <div id="char-details-desc">
                             <div class="desc_container">
                                 <div class="inline-drawer">
