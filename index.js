@@ -135,29 +135,16 @@ function fillDetails(item) {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
 
-    // Filling details block
-    document.getElementById('char-details-block').innerHTML = `<div class="char-details-summary">
-                                    <div title="${item.avatar}">
-                                        <img class="char-details-img" src="${this_avatar}">
-                                    </div>
-                                    <div class="char-details-summary-desc">
-                                        <div class="ch_name_details">${item.name}</div>
-                                        <div class="crea_comment">${item.creatorcomment}</div>
-                                    </div>
-                                </div>
-                                <div class="char-details-tags">
-                                    <div class="tag-searchbar">
-                                        <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
-                                    </div>
-                                    <div id="tag_List" class="tags">
-                                        ${item.tags.map((tag) => displayTag(tag)).join('')}
-                                    </div>
-                                </div>`;
+    $('#avatar_title').attr("title", item.avatar);
+    $('#avatar_img').attr("src", this_avatar);
+    document.getElementById('ch_name_details').innerHTML = item.name;
+    document.getElementById('crea_comment').innerHTML = item.creatorcomment;
+    document.getElementById('tag_List').innerHTML = `${item.tags.map((tag) => displayTag(tag)).join('')}`;
     createTagInput('#input_tag', '#tag_List');
     document.getElementById('desc_Tokens').innerHTML = `Tokens: ${getTokenCount(item.description)}`;
-    document.getElementById('desc_zone').value = item.description;
+    $('#desc_zone').val(item.description);
     document.getElementById('firstMess_tokens').innerHTML = `Tokens: ${getTokenCount(item.firstMes)}`;
-    document.getElementById('firstMes_zone').value = item.firstMes;
+    $('#firstMes_zone').val(item.firstMes);
     document.getElementById('altGreetings_number').innerHTML = `Numbers: ${item.alternateGreetings.length}`;
     document.getElementById('altGreetings_content').innerHTML = displayAltGreetings(item);
 }
@@ -209,6 +196,7 @@ function closeDetails() {
     document.getElementById(`CharDID${this_chid}`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
+    setCharacterId(undefined);
 }
 
 // Function to build the modal
@@ -238,6 +226,8 @@ function openModal() {
 
     // Add listener to refresh the display on characters edit
     eventSource.on(event_types.SETTINGS_UPDATED, function () {buildCharAR(); refreshCharList();});
+    // Add listener to refresh the display on characters delete
+    eventSource.on('characterDeleted', function () {closeDetails(); setCharacterId(undefined);});
 
     const charSortOrderSelect = document.getElementById('char_sort_order');
     Array.from(charSortOrderSelect.options).forEach(option => {
@@ -317,5 +307,20 @@ jQuery(async () => {
             $('#atm_popup').removeClass('large_dialogue_popup');
             $('#atm_popup').removeClass('wide_dialogue_popup');
         }, 125);
+    });
+
+    // Import characters by file
+    $('#atm_character_import_button').click(function () {
+        $('#character_import_file').click();
+    });
+
+    // Import characters by URL
+    $('#atm_external_import_button').click(function () {
+        $('#external_import_button').click();
+    });
+
+    // Delete characters
+    $('#atm_delete_button').click(function () {
+        $('#delete_button').click();
     });
 });

@@ -85,8 +85,10 @@
     column-gap: 5px;
 }
 
-#atm_tags_view.tags_view {
-    margin: 5px;
+#atm_tags_view.tags_view, #atm_character_import_button, #atm_external_import_button {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 2px;
 }
 
 .sortText {
@@ -194,14 +196,27 @@
     text-align: left;
 }
 
-.ch_name_details {
+#ch_name_details {
     font-weight: bolder;
     margin-bottom: 10px;
 }
 
-.crea_comment {
+#crea_comment {
     overflow-y: auto;
     max-height: 115px;
+}
+
+#atm_details_buttons_block {
+    display: flex;
+    flex: 1;
+    gap: 5px;
+    align-items: center;
+    justify-content: start;
+    flex-wrap: wrap;
+}
+
+#atm_delete_button:hover {
+    background-color: var(--fullred) !important;
 }
 
 .char-details-tags {
