@@ -4,7 +4,7 @@
             <div id="atm_popup_text">
                 <div class="list-character-wrapper flexFlowColumn">
                     <div class="sortAndFilter">
-                        <form class="form_sort_filter" action="javascript:void(null);">
+                        <form class="form_sort_filter" action="javascript:voidnull;">
                             <div id="atm_tags_view" class="menu_button tags_view fa-solid fa-tags" title="View all tags" data-i18n="[title]View all tags"></div>
                             <div id="atm_character_import_button" class="menu_button fa-solid fa-file-import faSmallFontSquareFix" title="Import Character from File" data-i18n="[title]Import Character from File"></div>
                             <div id="atm_external_import_button" class="menu_button fa-solid fa-cloud-arrow-down faSmallFontSquareFix" title="Import content from external URL" data-i18n="[title]Import content from external URL"></div>
@@ -14,9 +14,9 @@
                                 <option data-field="name" data-order="desc" data-i18n="Z-A">Z-A</option>
                                 <option data-field="tags" data-order="asc">Least Tags</option>
                                 <option data-field="tags" data-order="desc">Most Tags</option>
-                                <option data-field="dateLastChat" data-order="asc">Recent</option>
-                                <option data-field="dateAdded" data-order="asc">Newest</option>
-                                <option data-field="dateAdded" data-order="desc">Oldest</option>
+                                <option data-field="date_last_chat" data-order="asc">Recent</option>
+                                <option data-field="date_added" data-order="asc">Newest</option>
+                                <option data-field="date_added" data-order="desc">Oldest</option>
                             </select>
                             <input id="char_search_bar" class="text_pole width100p" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
                         </form>
@@ -37,6 +37,7 @@
                                 </div>
                             </div>
                             <div id="atm_details_buttons_block">
+                                <div id="atm_save_button" class="menu_button fa-solid fa-floppy-disk " title="Save Character" data-i18n="[title]Save Character" style="display: flex;"></div>
                                 <div id="atm_delete_button" class="menu_button fa-solid fa-skull " title="Delete Character" data-i18n="[title]Delete Character" style="display: flex;"></div>
                             </div>
                             <div class="char-details-tags">
@@ -55,7 +56,7 @@
                                         <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
                                     </div>
                                     <div class="inline-drawer-content">
-                                        <textarea readonly id="desc_zone" class="autoSetHeight"></textarea>
+                                        <textarea id="desc_zone" class="autoSetHeight"></textarea>
                                     </div>
                                 </div>
                                 <div class="inline-drawer">
@@ -65,7 +66,7 @@
                                         <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
                                     </div>
                                     <div class="inline-drawer-content">
-                                        <textarea readonly id="firstMes_zone" class="autoSetHeight"></textarea>
+                                        <textarea id="firstMes_zone" class="autoSetHeight"></textarea>
                                     </div>
                                 </div>
                                 <div id="altGreetings_drawer" class="inline-drawer">
