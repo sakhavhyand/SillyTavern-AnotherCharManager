@@ -1,55 +1,37 @@
 // An extension that allows you to manage tags.
 import {
-    getEntitiesList,
     getThumbnailUrl,
     setMenuType,
+    setCharacterId,
+    getOneCharacter,
     menu_type,
     default_avatar,
     this_chid,
-    setCharacterId,
     eventSource,
     event_types,
+    characters,
+    depth_prompt_role_default,
 } from '../../../../script.js';
 
 import { getTokenCount } from '../../../tokenizers.js';
 
-import { resetScrollHeight } from '../../../utils.js';
+import { debounce, resetScrollHeight } from '../../../utils.js';
 
 import { getTagsList, createTagInput } from '../../../tags.js';
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
+const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 100);
+const editCharDebounced = debounce(() => { editChar(); }, 1000);
+const editUrl = '/api/characters/edit';
 let charsList = [];
 let mem_chid;
 let mem_menu;
 let sortOrder = 'asc';
 let sortData = 'name';
 let searchValue = '';
-let charNumber;
 
-// Function to build the character array based on entities
-function buildCharAR() {
-
-    const entities = getEntitiesList({ doFilter: false }).filter(item => item.type === 'character');
-
-    charsList = entities.map(entity => {
-        return {
-            id: entity.id,
-            name: entity.item.name,
-            avatar: entity.item.avatar,
-            description: entity.item.description,
-            firstMes: entity.item.first_mes,
-            alternateGreetings: entity.item.data.alternate_greetings,
-            creatorcomment: entity.item.creatorcomment !== undefined ? entity.item.creatorcomment : entity.item.data.creator_notes,
-            tags: getTagsList(entity.item.avatar),
-            dateAdded: entity.item.date_added,
-            dateLastChat: entity.item.date_last_chat,
-        };
-    });
-
-    charNumber = charsList.length;
-}
 
 // Function to sort the character array based on specified property and order
 function sortCharAR(chars, sort_data, sort_order) {
@@ -61,12 +43,12 @@ function sortCharAR(chars, sort_data, sort_order) {
                 comparison = a[sort_data].localeCompare(b[sort_data]);
                 break;
             case 'tags':
-                comparison = a[sort_data].length - b[sort_data].length;
+                comparison = getTagsList(a.avatar).length - getTagsList(b.avatar).length;
                 break;
-            case 'dateLastChat':
+            case 'date_last_chat':
                 comparison = b[sort_data] - a[sort_data];
                 break;
-            case 'dateAdded':
+            case 'date_added':
                 comparison = b[sort_data] - a[sort_data];
                 break;
         }
@@ -76,21 +58,21 @@ function sortCharAR(chars, sort_data, sort_order) {
 }
 
 // Function to generate the HTML block for a character
-function getCharBlock(item) {
+function getCharBlock(id) {
 
     let this_avatar = default_avatar;
-    if (item.avatar != 'none') {
-        this_avatar = getThumbnailUrl('avatar', item.avatar);
+    if (characters[id].avatar !== 'none') {
+        this_avatar = getThumbnailUrl('avatar', characters[id].avatar);
     }
 
     const parsedThis_chid = this_chid !== undefined ? parseInt(this_chid, 10) : undefined;
-    const charClass = (parsedThis_chid !== undefined && parsedThis_chid === item.id) ? 'char_selected' : 'char_select';
+    const charClass = (parsedThis_chid !== undefined && parsedThis_chid === id) ? 'char_selected' : 'char_select';
 
-    return `<div class="character_item ${charClass}" chid="${item.id}" id="CharDID${item.id}">
+    return `<div class="character_item ${charClass}" chid="${id}" id="CharDID${id}">
                     <div class="avatar_item">
-                        <img src="${this_avatar}" alt="${item.avatar}">
+                        <img src="${this_avatar}" alt="${characters[id].avatar}">
                     </div>
-                    <div class="char_name">${item.name} : ${item.tags.length}</div>
+                    <div class="char_name">${characters[id].name} : ${getTagsList(characters[id].avatar).length}</div>
                 </div>`;
 }
 
@@ -106,20 +88,20 @@ function displayAltGreetings(item) {
 
     let altGreetingsHTML = '';
 
-    if(item.alternateGreetings.length == 0){
+    if(item.length === 0){
         return '<span>Nothing here but chickens!!</span>';
     }
     else {
-        for (let i = 0; i < item.alternateGreetings.length; i++) {
+        for (let i = 0; i < item.length; i++) {
             let greetingNumber = i + 1;
             altGreetingsHTML += `<div class="inline-drawer">
                 <div id="altGreetDrawer${greetingNumber}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
                     <b>Greeting #${greetingNumber}</b>
-                    <span>Tokens: ${getTokenCount(item.alternateGreetings[i])}</span>
+                    <span>Tokens: ${getTokenCount(item[i])}</span>
                     <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
                 </div>
                 <div class="inline-drawer-content">
-                    <textarea readonly class="altGreeting_zone autoSetHeight">${item.alternateGreetings[i]}</textarea>
+                    <textarea readonly class="altGreeting_zone autoSetHeight">${item[i]}</textarea>
                 </div>
             </div>`;
         }
@@ -131,7 +113,7 @@ function displayAltGreetings(item) {
 function fillDetails(item) {
 
     let this_avatar = default_avatar;
-    if (item.avatar != 'none') {
+    if (item.avatar !== 'none') {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
 
@@ -139,38 +121,114 @@ function fillDetails(item) {
     $('#avatar_img').attr('src', this_avatar);
     document.getElementById('ch_name_details').innerHTML = item.name;
     document.getElementById('crea_comment').innerHTML = item.creatorcomment;
-    document.getElementById('tag_List').innerHTML = `${item.tags.map((tag) => displayTag(tag)).join('')}`;
+    document.getElementById('tag_List').innerHTML = `${getTagsList(item.avatar).map((tag) => displayTag(tag)).join('')}`;
     createTagInput('#input_tag', '#tag_List');
     document.getElementById('desc_Tokens').innerHTML = `Tokens: ${getTokenCount(item.description)}`;
     $('#desc_zone').val(item.description);
-    document.getElementById('firstMess_tokens').innerHTML = `Tokens: ${getTokenCount(item.firstMes)}`;
-    $('#firstMes_zone').val(item.firstMes);
-    document.getElementById('altGreetings_number').innerHTML = `Numbers: ${item.alternateGreetings.length}`;
-    document.getElementById('altGreetings_content').innerHTML = displayAltGreetings(item);
+    document.getElementById('firstMess_tokens').innerHTML = `Tokens: ${getTokenCount(item.first_mes)}`;
+    $('#firstMes_zone').val(item.first_mes);
+    document.getElementById('altGreetings_number').innerHTML = `Numbers: ${item.data.alternate_greetings.length}`;
+    document.getElementById('altGreetings_content').innerHTML = displayAltGreetings(item.data.alternate_greetings);
+}
+
+function buildFormData() {
+    const formData = new FormData();
+
+    formData.append('ch_name', characters[this_chid].name);
+    formData.append('avatar', '');
+    formData.append('fav', characters[this_chid].fav);
+    formData.append('description', $('#desc_zone').val());
+    formData.append('first_mes', $('#firstMes_zone').val());
+    formData.append('json_data', characters[this_chid].json_data);
+    formData.append('avatar_url', characters[this_chid].avatar);
+    formData.append('chat', characters[this_chid].chat);
+    formData.append('create_date', characters[this_chid].create_date);
+    formData.append('last_mes', '');
+    formData.append('world', characters[this_chid].data?.extensions?.world ?? '');
+    formData.append('system_prompt', characters[this_chid].data.system_prompt);
+    formData.append('post_history_instructions', characters[this_chid].data.post_history_instructions);
+    formData.append('creator', characters[this_chid].creator);
+    formData.append('character_version', characters[this_chid].character_version);
+    formData.append('creator_notes', characters[this_chid].creatorcomment !== undefined ? characters[this_chid].creatorcomment : characters[this_chid].data.creator_notes);
+    formData.append('tags', '');
+    formData.append('personality', characters[this_chid].personality);
+    formData.append('scenario', characters[this_chid].scenario);
+    formData.append('depth_prompt_prompt', characters[this_chid].data?.extensions?.depth_prompt?.prompt);
+    formData.append('depth_prompt_depth', characters[this_chid].data?.extensions?.depth_prompt?.depth);
+    formData.append('depth_prompt_role', characters[this_chid].data?.extensions?.depth_prompt?.role ?? depth_prompt_role_default);
+    formData.append('talkativeness', characters[this_chid].data.extensions.talkativeness);
+    formData.append('mes_example', characters[this_chid].mes_example);
+
+    if (this_chid && Array.isArray(characters[this_chid]?.data?.alternate_greetings)) {
+        for (const value of characters[this_chid].data.alternate_greetings) {
+            formData.append('alternate_greetings', value);
+        }
+    }
+    return formData;
+}
+
+async function editChar() {
+    await jQuery.ajax({
+        type: 'POST',
+        url: editUrl,
+        data: buildFormData(),
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: async function () {
+            await getOneCharacter(characters[this_chid].avatar);
+            eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: this_chid, character: characters[this_chid] } });
+        },
+        error: function (jqXHR, exception) {
+            console.log('Error! Either a file with the same name already existed, or the image file provided was in an invalid format. Double check that the image is not a webp.');
+        },
+    });
 }
 
 // Function to refresh the character list based on search and sorting parameters
 function refreshCharList() {
 
-    let filteredChars;
+    let filteredChars = [];
+    let sortedListId = [];
 
     // Filtering only if there is more than three chars in the searchbar
-    if(searchValue !== '' && searchValue.length >= 3){
-        filteredChars = charsList.filter(item => {
+    if(searchValue !== ''){
+        filteredChars = characters.filter(item => {
             return item.description.toLowerCase().includes(searchValue) ||
                 item.name.toLowerCase().includes(searchValue) ||
                 item.creatorcomment.toLowerCase().includes(searchValue);
         });
     }
 
+    if(filteredChars.length > 0){
+        // Iterate over each object in filteredChars
+        filteredChars.forEach(filteredChar => {
+            // Find the index of the corresponding character in the characters array
+            let index = characters.findIndex(character => character.avatar === filteredChar.avatar);
+
+            // If index is found, add an object with 'id' and corresponding filteredChar to the mergedArray
+            if (index !== -1) {
+                sortedListId.push({ id: index, ...filteredChar });
+            }
+        });
+    }
+
     // Sorting the characters
-    const sortedList = sortCharAR((filteredChars == undefined ? charsList : filteredChars), sortData, sortOrder);
+    const sortedList = sortCharAR((sortedListId.length === 0 ? characters : sortedListId), sortData, sortOrder);
 
     // Generating characters HTML
-    const htmlList = sortedList.map((item) => getCharBlock(item)).join('');
+    const htmlList = sortedList.map((item) => {
+        if(sortedListId.length === 0){
+            const index = characters.findIndex(character => character === item);
+            return getCharBlock(index);
+        } else {
+            return getCharBlock(item.id);
+        }
+    }).join('');
 
     document.getElementById('character-list').innerHTML = '';
     document.getElementById('character-list').innerHTML = htmlList;
+    $('#charNumber').empty().append(`Total characters : ${characters.length}`);
 }
 
 // Function to display the selected character
@@ -183,7 +241,7 @@ function selectAndDisplay(id) {
     setMenuType('character_edit');
     setCharacterId(id);
 
-    fillDetails(charsList.filter(item => item.id == id)[0]);
+    fillDetails(characters.filter((item, index )=> index == id)[0]);
 
     document.getElementById(`CharDID${id}`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
@@ -208,37 +266,29 @@ function openModal() {
     setCharacterId(undefined);
 
     // Build our own characters list
-    buildCharAR();
-    charsList = sortCharAR(charsList, sortData, sortOrder);
+    charsList = sortCharAR(characters, sortData, sortOrder);
 
     // Display the modal with our list layout
-    $('#atm_popup').toggleClass('wide_dialogue_popup');
-    $('#atm_popup').toggleClass('large_dialogue_popup');
-    $('#character-list').empty().append(charsList.map((item) => getCharBlock(item)).join(''));
-    $('#atm_shadow_popup').css('display', 'block');
-    $('#charNumber').empty().append(`Total characters : ${charNumber}`);
-
-    $('#atm_shadow_popup').transition({
+    $('#atm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
+    $('#character-list').empty().append(charsList.map((item, index) => getCharBlock(index)).join(''));
+    $('#charNumber').empty().append(`Total characters : ${characters.length}`);
+    $('#atm_shadow_popup').css('display', 'block').transition({
         opacity: 1,
         duration: 125,
         easing: 'ease-in-out',
     });
 
     // Add listener to refresh the display on characters edit
-    eventSource.on(event_types.SETTINGS_UPDATED, function () {buildCharAR(); refreshCharList();});
+    eventSource.on(event_types.SETTINGS_UPDATED, function () {refreshCharListDebounced();});
     // Add listener to refresh the display on characters delete
-    eventSource.on('characterDeleted', function () {closeDetails(); setCharacterId(undefined);});
+    eventSource.on('characterDeleted', function () {closeDetails(); setCharacterId(undefined);refreshCharList();});
 
     const charSortOrderSelect = document.getElementById('char_sort_order');
     Array.from(charSortOrderSelect.options).forEach(option => {
         const field = option.getAttribute('data-field');
         const order = option.getAttribute('data-order');
 
-        if (field === sortData && order === sortOrder) {
-            option.selected = true;
-        } else {
-            option.selected = false;
-        }
+        option.selected = field === sortData && order === sortOrder;
     });
 }
 
@@ -264,13 +314,13 @@ jQuery(async () => {
     $(document).on('change', '#char_sort_order' , function () {
         sortData = $(this).find(':selected').data('field');
         sortOrder = $(this).find(':selected').data('order');
-        refreshCharList();
+        refreshCharListDebounced();
     });
 
     // Trigger when the search bar is used
     $(document).on('input','#char_search_bar', function () {
         searchValue = String($(this).val()).toLowerCase();
-        refreshCharList();
+        refreshCharListDebounced();
     });
 
     // Trigger when clicking on the separator to close the character details
@@ -279,8 +329,9 @@ jQuery(async () => {
         setCharacterId(undefined);
     });
 
-    $(document).on('click', '.altgreetings-drawer-toggle', function (e) {
-        var icon = $(this).find('.inline-drawer-icon');
+    //$(document).on('click', '.altgreetings-drawer-toggle', function () {
+    $('.altgreetings-drawer-toggle').click( function () {
+        const icon = $(this).find('.inline-drawer-icon');
         icon.toggleClass('down up');
         icon.toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
         $(this).closest('.inline-drawer').children('.inline-drawer-content').stop().slideToggle();
@@ -292,7 +343,8 @@ jQuery(async () => {
     });
 
     // Trigger when the modal is closed to reset some global parameters
-    $(document).on('click', '#atm_popup_close', function () {
+    //$(document).on('click', '#atm_popup_close', function () {
+    $('#atm_popup_close').click( function () {
         closeDetails();
         setCharacterId(mem_chid);
         setMenuType(mem_menu);
@@ -304,23 +356,30 @@ jQuery(async () => {
         });
         setTimeout(function () {
             $('#atm_shadow_popup').css('display', 'none');
-            $('#atm_popup').removeClass('large_dialogue_popup');
-            $('#atm_popup').removeClass('wide_dialogue_popup');
+            $('#atm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
         }, 125);
     });
 
-    // Import characters by file
+    // Import character by file
     $('#atm_character_import_button').click(function () {
         $('#character_import_file').click();
     });
 
-    // Import characters by URL
+    // Import character by URL
     $('#atm_external_import_button').click(function () {
         $('#external_import_button').click();
     });
 
-    // Delete characters
+    // Delete character
     $('#atm_delete_button').click(function () {
         $('#delete_button').click();
+    });
+
+    $('#desc_zone').on('input', function () {
+        editCharDebounced();
+    });
+
+    $('#firstMes_zone').on('input', function () {
+        editCharDebounced();
     });
 });
