@@ -1,23 +1,18 @@
 // An extension that allows you to manage tags.
 import {
     setMenuType,
-    setCharacterId,
+    //setCharacterId,
     getOneCharacter,
-    default_avatar,
+    //default_avatar,
     depth_prompt_role_default,
 } from '../../../../script.js';
 import { resetScrollHeight } from '../../../utils.js';
-import { getTagsList, createTagInput } from '../../../tags.js';
+import { createTagInput } from '../../../tags.js';
 
 const getTokenCount = SillyTavern.getContext().getTokenCount;
 const getThumbnailUrl = SillyTavern.getContext().getThumbnailUrl;
-
-let menu_type = SillyTavern.getContext().menuType;
 const eventSource = SillyTavern.getContext().eventSource;
 const event_types = SillyTavern.getContext().eventTypes;
-let characters = SillyTavern.getContext().characters;
-let tagMap = SillyTavern.getContext().tagMap;
-let tagList = SillyTavern.getContext().tags;
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherTagManager';
@@ -41,6 +36,8 @@ function debounce(func, timeout = 300) {
 
 // Function to sort the character array based on specified property and order
 function sortCharAR(chars, sort_data, sort_order) {
+    const tagMap = SillyTavern.getContext().tagMap;
+
     return chars.sort((a, b) => {
         let comparison = 0;
 
@@ -66,10 +63,9 @@ function sortCharAR(chars, sort_data, sort_order) {
 // Function to generate the HTML block for a character
 function getCharBlock(id) {
     const this_chid = SillyTavern.getContext().characterId;
-    let this_avatar = default_avatar;
-    if (characters[id].avatar !== 'none') {
-        this_avatar = getThumbnailUrl('avatar', characters[id].avatar);
-    }
+    const characters = SillyTavern.getContext().characters;
+    const tagMap = SillyTavern.getContext().tagMap;
+    let this_avatar = getThumbnailUrl('avatar', characters[id].avatar);
 
     const parsedThis_chid = this_chid !== undefined ? parseInt(this_chid, 10) : undefined;
     const charClass = (parsedThis_chid !== undefined && parsedThis_chid === id) ? 'char_selected' : 'char_select';
@@ -83,11 +79,24 @@ function getCharBlock(id) {
 }
 
 // Function to generate the HTML for displaying a tag
-function displayTag({ id, name, color }){
-    return `<span id="${id}" class="tag" style="background-color: ${color};">
+function displayTag( tagId ){
+    const tagList = SillyTavern.getContext().tags;
+    const name = tagList.find(tagList => tagList.id === tagId).name;
+    const color = tagList.find(tagList => tagList.id === tagId).color;
+
+    if(tagList.find(tagList => tagList.id === tagId).color2){
+        const color2 = tagList.find(tagList => tagList.id === tagId).color2;
+
+        return `<span id="${tagId}" class="tag" style="background-color: ${color}; color: ${color2};">
                     <span class="tag_name">${name}</span>
                     <i class="fa-solid fa-circle-xmark tag_remove"></i>
                 </span>`;
+    } else {
+        return `<span id="${tagId}" class="tag" style="background-color: ${color};">
+                    <span class="tag_name">${name}</span>
+                    <i class="fa-solid fa-circle-xmark tag_remove"></i>
+                </span>`;
+    }
 }
 
 function displayAltGreetings(item) {
@@ -116,31 +125,31 @@ function displayAltGreetings(item) {
 }
 
 // Function to fill details in the character details block
-function fillDetails(item) {
+function fillDetails(id) {
 
-    let this_avatar = default_avatar;
-    let avatar = item.avatar;
-    if (avatar !== 'none') {
-        this_avatar = getThumbnailUrl('avatar', avatar);
-    }
+    const characters = SillyTavern.getContext().characters;
+    const tagMap = SillyTavern.getContext().tagMap;
+    const char = characters[id];
+    const this_avatar = getThumbnailUrl('avatar', char.avatar);
 
-    $('#avatar_title').attr('title', avatar);
+    $('#avatar_title').attr('title', char.avatar);
     $('#avatar_img').attr('src', this_avatar);
-    document.getElementById('ch_name_details').innerHTML = item.name;
-    document.getElementById('crea_comment').innerHTML = item.creatorcomment;
-    document.getElementById('tag_List').innerHTML = `${tagMap[avatar].map((tag) => displayTag(tagList.tag)).join('')}`;
+    document.getElementById('ch_name_details').innerHTML = char.name;
+    document.getElementById('crea_comment').innerHTML = char.creatorcomment;
+    document.getElementById('tag_List').innerHTML = `${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`;
     createTagInput('#input_tag', '#tag_List');
-    document.getElementById('desc_Tokens').innerHTML = `Tokens: ${getTokenCount(item.description)}`;
-    $('#desc_zone').val(item.description);
-    document.getElementById('firstMess_tokens').innerHTML = `Tokens: ${getTokenCount(item.first_mes)}`;
-    $('#firstMes_zone').val(item.first_mes);
-    document.getElementById('altGreetings_number').innerHTML = `Numbers: ${item.data.alternate_greetings.length}`;
-    document.getElementById('altGreetings_content').innerHTML = displayAltGreetings(item.data.alternate_greetings);
+    document.getElementById('desc_Tokens').innerHTML = `Tokens: ${getTokenCount(char.description)}`;
+    $('#desc_zone').val(char.description);
+    document.getElementById('firstMess_tokens').innerHTML = `Tokens: ${getTokenCount(char.first_mes)}`;
+    $('#firstMes_zone').val(char.first_mes);
+    document.getElementById('altGreetings_number').innerHTML = `Numbers: ${char.data.alternate_greetings.length}`;
+    document.getElementById('altGreetings_content').innerHTML = displayAltGreetings(char.data.alternate_greetings);
 }
 
 function buildFormData() {
     const formData = new FormData();
     const this_chid = SillyTavern.getContext().characterId;
+    const characters = SillyTavern.getContext().characters;
 
     formData.append('ch_name', characters[this_chid].name);
     formData.append('avatar', '');
@@ -177,6 +186,8 @@ function buildFormData() {
 
 async function editChar() {
     const this_chid = SillyTavern.getContext().characterId;
+    const characters = SillyTavern.getContext().characters;
+
     await jQuery.ajax({
         type: 'POST',
         url: editUrl,
@@ -199,13 +210,14 @@ function refreshCharList() {
 
     let filteredChars = [];
     let sortedListId = [];
+    const characters = SillyTavern.getContext().characters;
 
     // Filtering only if there is more than three chars in the searchbar
     if(searchValue !== ''){
         filteredChars = characters.filter(item => {
-            return item.description.toLowerCase().includes(searchValue) ||
-                item.name.toLowerCase().includes(searchValue) ||
-                item.creatorcomment.toLowerCase().includes(searchValue);
+            return item.description?.toLowerCase().includes(searchValue) ||
+                item.name?.toLowerCase().includes(searchValue) ||
+                item.creatorcomment?.toLowerCase().includes(searchValue);
         });
     }
 
@@ -242,16 +254,16 @@ function refreshCharList() {
 
 // Function to display the selected character
 function selectAndDisplay(id) {
+
     const this_chid = SillyTavern.getContext().characterId;
     // Check if a visible character is already selected
     if(typeof this_chid !== 'undefined' && document.getElementById(`CharDID${this_chid}`) !== null){
         document.getElementById(`CharDID${this_chid}`).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
-    setCharacterId(id);
+    //setCharacterId(id);
 
-    //fillDetails(characters.filter((item, index )=> index == id)[0]);
-    fillDetails(characters[id]);
+    fillDetails(id);
 
     document.getElementById(`CharDID${id}`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
@@ -265,7 +277,7 @@ function closeDetails() {
     document.getElementById(`CharDID${this_chid}`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
-    setCharacterId(undefined);
+    //setCharacterId(undefined);
 }
 
 // Function to build the modal
@@ -273,16 +285,16 @@ function openModal() {
 
     // Memorize some global variables
     mem_chid = SillyTavern.getContext().characterId;
-    mem_menu = menu_type;
-    setCharacterId(undefined);
+    mem_menu = SillyTavern.getContext().menuType;
+    //setCharacterId(undefined);
 
-    // Build our own characters list
-    let charsList = sortCharAR(characters, sortData, sortOrder);
+    // Sort the characters
+    let charsList = sortCharAR(SillyTavern.getContext().characters, sortData, sortOrder);
 
     // Display the modal with our list layout
     $('#atm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
     $('#character-list').empty().append(charsList.map((item, index) => getCharBlock(index)).join(''));
-    $('#charNumber').empty().append(`Total characters : ${characters.length}`);
+    $('#charNumber').empty().append(`Total characters : ${charsList.length}`);
     $('#atm_shadow_popup').css('display', 'block').transition({
         opacity: 1,
         duration: 125,
@@ -290,9 +302,11 @@ function openModal() {
     });
 
     // Add listener to refresh the display on characters edit
-    eventSource.on(event_types.SETTINGS_UPDATED, function () {refreshCharListDebounced();});
+    eventSource.on(event_types.SETTINGS_UPDATED, function () {setTimeout(() => {refreshCharListDebounced();}, 500);});
     // Add listener to refresh the display on characters delete
-    eventSource.on('characterDeleted', function () {closeDetails(); setCharacterId(undefined);refreshCharList();});
+    eventSource.on('characterDeleted', function () {closeDetails();
+        //setCharacterId(undefined);
+        refreshCharList();});
 
     const charSortOrderSelect = document.getElementById('char_sort_order');
     Array.from(charSortOrderSelect.options).forEach(option => {
@@ -337,11 +351,10 @@ jQuery(async () => {
     // Trigger when clicking on the separator to close the character details
     $(document).on('click', '#char-sep', function () {
         closeDetails();
-        setCharacterId(undefined);
+        //setCharacterId(undefined);
     });
 
     $(document).on('click', '.altgreetings-drawer-toggle', function () {
-    //$('.altgreetings-drawer-toggle').click( function () {
         const icon = $(this).find('.inline-drawer-icon');
         icon.toggleClass('down up');
         icon.toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
@@ -357,7 +370,7 @@ jQuery(async () => {
     //$(document).on('click', '#atm_popup_close', function () {
     $('#atm_popup_close').click( function () {
         closeDetails();
-        setCharacterId(mem_chid);
+        //setCharacterId(mem_chid);
         setMenuType(mem_menu);
 
         $('#atm_shadow_popup').transition({
