@@ -1,9 +1,8 @@
 // An extension that allows you to manage tags.
 import {
     setMenuType,
-    //setCharacterId,
+    setCharacterId,
     getOneCharacter,
-    //default_avatar,
     depth_prompt_role_default,
 } from '../../../../script.js';
 import { resetScrollHeight } from '../../../utils.js';
@@ -21,7 +20,10 @@ const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 100);
 const editCharDebounced = debounce(() => { editChar(); }, 1000);
 const editUrl = '/api/characters/edit';
 let mem_chid;
+let selectedId;
 let mem_menu;
+let mem_avatar;
+let displayed;
 let sortOrder = 'asc';
 let sortData = 'name';
 let searchValue = '';
@@ -33,6 +35,12 @@ function debounce(func, timeout = 300) {
         timer = setTimeout(() => { func.apply(this, args); }, timeout);
     };
 }
+
+function getIdByAvatar(avatar){
+    const characters = SillyTavern.getContext().characters;
+    return characters.findIndex(character => character.avatar === avatar);
+}
+
 
 // Function to sort the character array based on specified property and order
 function sortCharAR(chars, sort_data, sort_order) {
@@ -61,20 +69,20 @@ function sortCharAR(chars, sort_data, sort_order) {
 }
 
 // Function to generate the HTML block for a character
-function getCharBlock(id) {
-    const this_chid = SillyTavern.getContext().characterId;
+function getCharBlock(avatar) {
     const characters = SillyTavern.getContext().characters;
     const tagMap = SillyTavern.getContext().tagMap;
-    let this_avatar = getThumbnailUrl('avatar', characters[id].avatar);
+    const id = getIdByAvatar(avatar);
+    const avatarThumb = getThumbnailUrl('avatar', avatar);
 
-    const parsedThis_chid = this_chid !== undefined ? parseInt(this_chid, 10) : undefined;
+    const parsedThis_chid = selectedId !== undefined ? parseInt(selectedId, 10) : undefined;
     const charClass = (parsedThis_chid !== undefined && parsedThis_chid === id) ? 'char_selected' : 'char_select';
 
     return `<div class="character_item ${charClass}" chid="${id}" id="CharDID${id}">
                     <div class="avatar_item">
-                        <img src="${this_avatar}" alt="${characters[id].avatar}">
+                        <img src="${avatarThumb}" alt="${characters[id].avatar}">
                     </div>
-                    <div class="char_name">${characters[id].name} : ${tagMap[characters[id].avatar].length}</div>
+                    <div class="char_name">${characters[id].name} : ${tagMap[avatar].length}</div>
                 </div>`;
 }
 
@@ -255,13 +263,12 @@ function refreshCharList() {
 // Function to display the selected character
 function selectAndDisplay(id) {
 
-    const this_chid = SillyTavern.getContext().characterId;
     // Check if a visible character is already selected
-    if(typeof this_chid !== 'undefined' && document.getElementById(`CharDID${this_chid}`) !== null){
-        document.getElementById(`CharDID${this_chid}`).classList.replace('char_selected','char_select');
+    if(typeof selectedId !== 'undefined' && document.getElementById(`CharDID${selectedId}`) !== null){
+        document.getElementById(`CharDID${selectedId}`).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
-    //setCharacterId(id);
+    selectedId = id;
 
     fillDetails(id);
 
@@ -273,27 +280,30 @@ function selectAndDisplay(id) {
 
 // Function to close the details panel
 function closeDetails() {
-    const this_chid = SillyTavern.getContext().characterId;
-    document.getElementById(`CharDID${this_chid}`)?.classList.replace('char_selected','char_select');
+    //const this_chid = SillyTavern.getContext().characterId;
+    document.getElementById(`CharDID${selectedId}`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
-    //setCharacterId(undefined);
 }
 
 // Function to build the modal
 function openModal() {
 
     // Memorize some global variables
-    mem_chid = SillyTavern.getContext().characterId;
+    //mem_chid = SillyTavern.getContext().characterId;
+    if (SillyTavern.getContext().characterId ?? 0 > 0){
+        mem_avatar = SillyTavern.getContext().characters[SillyTavern.getContext().characterId].avatar;
+    } else { mem_avatar = undefined; }
+
     mem_menu = SillyTavern.getContext().menuType;
-    //setCharacterId(undefined);
+    displayed = true;
 
     // Sort the characters
     let charsList = sortCharAR(SillyTavern.getContext().characters, sortData, sortOrder);
 
     // Display the modal with our list layout
     $('#atm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
-    $('#character-list').empty().append(charsList.map((item, index) => getCharBlock(index)).join(''));
+    $('#character-list').empty().append(charsList.map((item) => getCharBlock(item.avatar)).join(''));
     $('#charNumber').empty().append(`Total characters : ${charsList.length}`);
     $('#atm_shadow_popup').css('display', 'block').transition({
         opacity: 1,
@@ -302,11 +312,17 @@ function openModal() {
     });
 
     // Add listener to refresh the display on characters edit
-    eventSource.on(event_types.SETTINGS_UPDATED, function () {setTimeout(() => {refreshCharListDebounced();}, 500);});
+    eventSource.on(event_types.SETTINGS_UPDATED, function () {
+        if (displayed) {
+            refreshCharListDebounced();
+        }
+    });
     // Add listener to refresh the display on characters delete
-    eventSource.on('characterDeleted', function () {closeDetails();
-        //setCharacterId(undefined);
-        refreshCharList();});
+    eventSource.on('characterDeleted', function () {
+        if (displayed){
+            closeDetails();
+            refreshCharList();
+        }});
 
     const charSortOrderSelect = document.getElementById('char_sort_order');
     Array.from(charSortOrderSelect.options).forEach(option => {
@@ -351,7 +367,6 @@ jQuery(async () => {
     // Trigger when clicking on the separator to close the character details
     $(document).on('click', '#char-sep', function () {
         closeDetails();
-        //setCharacterId(undefined);
     });
 
     $(document).on('click', '.altgreetings-drawer-toggle', function () {
@@ -370,8 +385,9 @@ jQuery(async () => {
     //$(document).on('click', '#atm_popup_close', function () {
     $('#atm_popup_close').click( function () {
         closeDetails();
-        //setCharacterId(mem_chid);
+        setCharacterId(getIdByAvatar(mem_avatar));
         setMenuType(mem_menu);
+        mem_avatar = undefined;
 
         $('#atm_shadow_popup').transition({
             opacity: 0,
@@ -382,6 +398,7 @@ jQuery(async () => {
             $('#atm_shadow_popup').css('display', 'none');
             $('#atm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
         }, 125);
+        displayed = false;
     });
 
     // Import character by file
