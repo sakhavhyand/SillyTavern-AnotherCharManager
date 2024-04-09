@@ -135,8 +135,8 @@ function fillDetails(item) {
         this_avatar = getThumbnailUrl('avatar', item.avatar);
     }
 
-    $('#avatar_title').attr("title", item.avatar);
-    $('#avatar_img').attr("src", this_avatar);
+    $('#avatar_title').attr('title', item.avatar);
+    $('#avatar_img').attr('src', this_avatar);
     document.getElementById('ch_name_details').innerHTML = item.name;
     document.getElementById('crea_comment').innerHTML = item.creatorcomment;
     document.getElementById('tag_List').innerHTML = `${item.tags.map((tag) => displayTag(tag)).join('')}`;
