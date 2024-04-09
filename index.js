@@ -1,23 +1,23 @@
 // An extension that allows you to manage tags.
 import {
-    getThumbnailUrl,
     setMenuType,
     setCharacterId,
     getOneCharacter,
-    menu_type,
     default_avatar,
-    this_chid,
-    eventSource,
-    event_types,
-    characters,
     depth_prompt_role_default,
 } from '../../../../script.js';
-
-import { getTokenCount } from '../../../tokenizers.js';
-
-import { debounce, resetScrollHeight } from '../../../utils.js';
-
+import { resetScrollHeight } from '../../../utils.js';
 import { getTagsList, createTagInput } from '../../../tags.js';
+
+const getTokenCount = SillyTavern.getContext().getTokenCount;
+const getThumbnailUrl = SillyTavern.getContext().getThumbnailUrl;
+
+let menu_type = SillyTavern.getContext().menuType;
+const eventSource = SillyTavern.getContext().eventSource;
+const event_types = SillyTavern.getContext().eventTypes;
+let characters = SillyTavern.getContext().characters;
+let tagMap = SillyTavern.getContext().tagMap;
+let tagList = SillyTavern.getContext().tags;
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherTagManager';
@@ -25,13 +25,19 @@ const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 100);
 const editCharDebounced = debounce(() => { editChar(); }, 1000);
 const editUrl = '/api/characters/edit';
-let charsList = [];
 let mem_chid;
 let mem_menu;
 let sortOrder = 'asc';
 let sortData = 'name';
 let searchValue = '';
 
+function debounce(func, timeout = 300) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+}
 
 // Function to sort the character array based on specified property and order
 function sortCharAR(chars, sort_data, sort_order) {
@@ -43,7 +49,7 @@ function sortCharAR(chars, sort_data, sort_order) {
                 comparison = a[sort_data].localeCompare(b[sort_data]);
                 break;
             case 'tags':
-                comparison = getTagsList(a.avatar).length - getTagsList(b.avatar).length;
+                comparison = tagMap[a.avatar].length - tagMap[b.avatar].length;
                 break;
             case 'date_last_chat':
                 comparison = b[sort_data] - a[sort_data];
@@ -59,7 +65,7 @@ function sortCharAR(chars, sort_data, sort_order) {
 
 // Function to generate the HTML block for a character
 function getCharBlock(id) {
-
+    const this_chid = SillyTavern.getContext().characterId;
     let this_avatar = default_avatar;
     if (characters[id].avatar !== 'none') {
         this_avatar = getThumbnailUrl('avatar', characters[id].avatar);
@@ -72,7 +78,7 @@ function getCharBlock(id) {
                     <div class="avatar_item">
                         <img src="${this_avatar}" alt="${characters[id].avatar}">
                     </div>
-                    <div class="char_name">${characters[id].name} : ${getTagsList(characters[id].avatar).length}</div>
+                    <div class="char_name">${characters[id].name} : ${tagMap[characters[id].avatar].length}</div>
                 </div>`;
 }
 
@@ -113,15 +119,16 @@ function displayAltGreetings(item) {
 function fillDetails(item) {
 
     let this_avatar = default_avatar;
-    if (item.avatar !== 'none') {
-        this_avatar = getThumbnailUrl('avatar', item.avatar);
+    let avatar = item.avatar;
+    if (avatar !== 'none') {
+        this_avatar = getThumbnailUrl('avatar', avatar);
     }
 
-    $('#avatar_title').attr('title', item.avatar);
+    $('#avatar_title').attr('title', avatar);
     $('#avatar_img').attr('src', this_avatar);
     document.getElementById('ch_name_details').innerHTML = item.name;
     document.getElementById('crea_comment').innerHTML = item.creatorcomment;
-    document.getElementById('tag_List').innerHTML = `${getTagsList(item.avatar).map((tag) => displayTag(tag)).join('')}`;
+    document.getElementById('tag_List').innerHTML = `${tagMap[avatar].map((tag) => displayTag(tagList.tag)).join('')}`;
     createTagInput('#input_tag', '#tag_List');
     document.getElementById('desc_Tokens').innerHTML = `Tokens: ${getTokenCount(item.description)}`;
     $('#desc_zone').val(item.description);
@@ -133,6 +140,7 @@ function fillDetails(item) {
 
 function buildFormData() {
     const formData = new FormData();
+    const this_chid = SillyTavern.getContext().characterId;
 
     formData.append('ch_name', characters[this_chid].name);
     formData.append('avatar', '');
@@ -168,6 +176,7 @@ function buildFormData() {
 }
 
 async function editChar() {
+    const this_chid = SillyTavern.getContext().characterId;
     await jQuery.ajax({
         type: 'POST',
         url: editUrl,
@@ -233,7 +242,7 @@ function refreshCharList() {
 
 // Function to display the selected character
 function selectAndDisplay(id) {
-
+    const this_chid = SillyTavern.getContext().characterId;
     // Check if a visible character is already selected
     if(typeof this_chid !== 'undefined' && document.getElementById(`CharDID${this_chid}`) !== null){
         document.getElementById(`CharDID${this_chid}`).classList.replace('char_selected','char_select');
@@ -241,7 +250,8 @@ function selectAndDisplay(id) {
     setMenuType('character_edit');
     setCharacterId(id);
 
-    fillDetails(characters.filter((item, index )=> index == id)[0]);
+    //fillDetails(characters.filter((item, index )=> index == id)[0]);
+    fillDetails(characters[id]);
 
     document.getElementById(`CharDID${id}`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
@@ -251,6 +261,7 @@ function selectAndDisplay(id) {
 
 // Function to close the details panel
 function closeDetails() {
+    const this_chid = SillyTavern.getContext().characterId;
     document.getElementById(`CharDID${this_chid}`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
@@ -261,12 +272,12 @@ function closeDetails() {
 function openModal() {
 
     // Memorize some global variables
-    mem_chid = this_chid;
+    mem_chid = SillyTavern.getContext().characterId;
     mem_menu = menu_type;
     setCharacterId(undefined);
 
     // Build our own characters list
-    charsList = sortCharAR(characters, sortData, sortOrder);
+    let charsList = sortCharAR(characters, sortData, sortOrder);
 
     // Display the modal with our list layout
     $('#atm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
@@ -329,8 +340,8 @@ jQuery(async () => {
         setCharacterId(undefined);
     });
 
-    //$(document).on('click', '.altgreetings-drawer-toggle', function () {
-    $('.altgreetings-drawer-toggle').click( function () {
+    $(document).on('click', '.altgreetings-drawer-toggle', function () {
+    //$('.altgreetings-drawer-toggle').click( function () {
         const icon = $(this).find('.inline-drawer-icon');
         icon.toggleClass('down up');
         icon.toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
