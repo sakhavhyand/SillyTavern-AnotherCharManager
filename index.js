@@ -19,6 +19,7 @@ const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 100);
 const editCharDebounced = debounce(() => { editChar(); }, 1000);
 let selectedId;
+let selectedChar;
 let mem_menu;
 let mem_avatar;
 let displayed;
@@ -73,10 +74,10 @@ function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
 
-    const parsedThis_chid = selectedId !== undefined ? parseInt(selectedId, 10) : undefined;
-    const charClass = (parsedThis_chid !== undefined && parsedThis_chid === id) ? 'char_selected' : 'char_select';
+    const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
+    const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
 
-    return `<div class="character_item ${charClass}" chid="${id}" id="CharDID${id}">
+    return `<div class="character_item ${charClass}" chid="${id}" avatar="${avatar}" id="CharDID${id}">
                     <div class="avatar_item">
                         <img src="${avatarThumb}" alt="${characters[id].avatar}">
                     </div>
@@ -158,7 +159,7 @@ function fillDetails(id) {
 function refreshCharList() {
 
     let filteredChars = [];
-    let sortedListId = [];
+    // let sortedListId = [];
     const characters = SillyTavern.getContext().characters;
 
     // Filtering only if there is more than three chars in the searchbar
@@ -170,32 +171,7 @@ function refreshCharList() {
         });
     }
 
-    // if(filteredChars.length > 0){
-    //     // Iterate over each object in filteredChars
-    //     filteredChars.forEach(filteredChar => {
-    //         // Find the index of the corresponding character in the characters array
-    //         let index = characters.findIndex(character => character.avatar === filteredChar.avatar);
-    //
-    //         // If index is found, add an object with 'id' and corresponding filteredChar to the mergedArray
-    //         if (index !== -1) {
-    //             sortedListId.push({ id: index, ...filteredChar });
-    //         }
-    //     });
-    // }
-
-    // Sorting the characters
-    //const sortedList = sortCharAR((sortedListId.length === 0 ? characters : sortedListId), sortData, sortOrder);
     const sortedList = sortCharAR((filteredChars.length === 0 ? characters : filteredChars), sortData, sortOrder);
-
-    // Generating characters HTML
-    // const htmlList = sortedList.map((item) => {
-    //     if(sortedListId.length === 0){
-    //         const index = characters.findIndex(character => character === item);
-    //         return getCharBlock(index);
-    //     } else {
-    //         return getCharBlock(item.id);
-    //     }
-    // }).join('');
 
     const htmlList = sortedList.map((item) => getCharBlock(item.avatar)).join('');
 
@@ -205,7 +181,7 @@ function refreshCharList() {
 }
 
 // Function to display the selected character
-function selectAndDisplay(id) {
+function selectAndDisplay(id, avatar) {
 
     // Check if a visible character is already selected
     if(typeof selectedId !== 'undefined' && document.getElementById(`CharDID${selectedId}`) !== null){
@@ -213,6 +189,7 @@ function selectAndDisplay(id) {
     }
     setMenuType('character_edit');
     selectedId = id;
+    selectedChar = avatar;
 
     fillDetails(id);
 
@@ -224,7 +201,6 @@ function selectAndDisplay(id) {
 
 // Function to close the details panel
 function closeDetails() {
-    //const this_chid = SillyTavern.getContext().characterId;
     document.getElementById(`CharDID${selectedId}`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
@@ -292,7 +268,7 @@ jQuery(async () => {
 
     // Trigger when a character is selected in the list
     $(document).on('click', '.char_select', function () {
-        selectAndDisplay($(this).attr('chid'));
+        selectAndDisplay($(this).attr('chid'), $(this).attr('avatar'));
     });
 
     // Trigger when the sort dropdown is used
@@ -326,7 +302,6 @@ jQuery(async () => {
     });
 
     // Trigger when the modal is closed to reset some global parameters
-    //$(document).on('click', '#atm_popup_close', function () {
     $('#atm_popup_close').click( function () {
         closeDetails();
         setCharacterId(getIdByAvatar(mem_avatar));
