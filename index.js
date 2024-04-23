@@ -1,17 +1,16 @@
 // An extension that allows you to manage tags.
-import {
-    setMenuType,
-    setCharacterId,
-} from '../../../../script.js';
+import { getRequestHeaders, setCharacterId, setMenuType } from '../../../../script.js';
 import { resetScrollHeight } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
-
-import { editChar } from './src/atm_characters.js';
+import { editChar, dupeChar } from './src/atm_characters.js';
 
 const getTokenCount = SillyTavern.getContext().getTokenCount;
 const getThumbnailUrl = SillyTavern.getContext().getThumbnailUrl;
+const callPopup = SillyTavern.getContext().callPopup;
 const eventSource = SillyTavern.getContext().eventSource;
 const event_types = SillyTavern.getContext().eventTypes;
+const characters = SillyTavern.getContext().characters;
+const tagMap = SillyTavern.getContext().tagMap;
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherTagManager';
@@ -36,15 +35,12 @@ function debounce(func, timeout = 300) {
 }
 
 function getIdByAvatar(avatar){
-    const characters = SillyTavern.getContext().characters;
     return characters.findIndex(character => character.avatar === avatar);
 }
 
 
 // Function to sort the character array based on specified property and order
 function sortCharAR(chars, sort_data, sort_order) {
-    const tagMap = SillyTavern.getContext().tagMap;
-
     return chars.sort((a, b) => {
         let comparison = 0;
 
@@ -69,8 +65,6 @@ function sortCharAR(chars, sort_data, sort_order) {
 
 // Function to generate the HTML block for a character
 function getCharBlock(avatar) {
-    const characters = SillyTavern.getContext().characters;
-    const tagMap = SillyTavern.getContext().tagMap;
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
 
@@ -107,7 +101,6 @@ function displayTag( tagId ){
 }
 
 function displayAltGreetings(item) {
-
     let altGreetingsHTML = '';
 
     if(item.length === 0){
@@ -133,9 +126,6 @@ function displayAltGreetings(item) {
 
 // Function to fill details in the character details block
 function fillDetails(id) {
-
-    const characters = SillyTavern.getContext().characters;
-    const tagMap = SillyTavern.getContext().tagMap;
     const char = characters[id];
     const this_avatar = getThumbnailUrl('avatar', char.avatar);
 
@@ -153,13 +143,10 @@ function fillDetails(id) {
     document.getElementById('altGreetings_content').innerHTML = displayAltGreetings(char.data.alternate_greetings);
 }
 
-
-
 // Function to refresh the character list based on search and sorting parameters
 function refreshCharList() {
 
     let filteredChars = [];
-    // let sortedListId = [];
     const charactersCopy = [...SillyTavern.getContext().characters];
 
     // Filtering only if there is more than three chars in the searchbar
@@ -172,11 +159,7 @@ function refreshCharList() {
     }
 
     const sortedList = sortCharAR((filteredChars.length === 0 ? charactersCopy : filteredChars), sortData, sortOrder);
-
-    const htmlList = sortedList.map((item) => getCharBlock(item.avatar)).join('');
-
-    document.getElementById('character-list').innerHTML = '';
-    document.getElementById('character-list').innerHTML = htmlList;
+    document.getElementById('character-list').innerHTML = sortedList.map((item) => getCharBlock(item.avatar)).join('');
     $('#charNumber').empty().append(`Total characters : ${charactersCopy.length}`);
 }
 
@@ -192,6 +175,8 @@ function selectAndDisplay(id, avatar) {
     selectedChar = avatar;
     setCharacterId(getIdByAvatar(avatar));
 
+    $('#atm_export_format_popup').hide();
+
     fillDetails(id);
 
     document.getElementById(`CharDID${id}`).classList.replace('char_select','char_selected');
@@ -204,6 +189,9 @@ function selectAndDisplay(id, avatar) {
 function closeDetails() {
     setCharacterId(getIdByAvatar(mem_avatar));
     selectedChar = undefined;
+
+    $('#atm_export_format_popup').hide();
+
     document.getElementById(`CharDID${selectedId}`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
@@ -214,7 +202,7 @@ function openModal() {
 
     // Memorize some global variables
     if (SillyTavern.getContext().characterId !== undefined && SillyTavern.getContext().characterId >= 0) {
-        mem_avatar = SillyTavern.getContext().characters[SillyTavern.getContext().characterId].avatar;
+        mem_avatar = characters[SillyTavern.getContext().characterId].avatar;
     } else {
         mem_avatar = undefined;
     }
@@ -235,17 +223,28 @@ function openModal() {
     });
 
     // Add listener to refresh the display on characters edit
-    eventSource.on(event_types.SETTINGS_UPDATED, function () {
+    eventSource.on(event_types.CHARACTER_EDITED, function () {
         if (displayed) {
             refreshCharListDebounced();
         }
     });
+    // Add listener to refresh the display on tags edit
+    eventSource.on('character_page_loaded', function () {
+        if (displayed){
+            refreshCharListDebounced();
+        }});
     // Add listener to refresh the display on characters delete
     eventSource.on('characterDeleted', function () {
         if (displayed){
             closeDetails();
-            refreshCharList();
+            refreshCharListDebounced();
         }});
+    // Add listener to refresh the display on characters duplication
+    eventSource.on(event_types.CHARACTER_DUPLICATED, function () {
+        if (displayed) {
+            refreshCharListDebounced();
+        }
+    });
 
     const charSortOrderSelect = document.getElementById('char_sort_order');
     Array.from(charSortOrderSelect.options).forEach(option => {
@@ -261,6 +260,10 @@ jQuery(async () => {
     // Create the shadow div
     const modalHtml = await $.get(`${extensionFolderPath}/modal.html`);
     $('#background_template').after(modalHtml);
+
+    let atmExportPopper = Popper.createPopper(document.getElementById('atm_export_button'), document.getElementById('atm_export_format_popup'), {
+        placement: 'left',
+    });
 
     // Put the button before rm_button_group_chats in the form_character_search_form
     // on hover, should say "Open Tag Manager"
@@ -331,6 +334,62 @@ jQuery(async () => {
     // Import character by URL
     $('#atm_external_import_button').click(function () {
         $('#external_import_button').click();
+    });
+
+    // Export character
+    $('#atm_export_button').click(function () {
+        $('#atm_export_format_popup').toggle();
+        atmExportPopper.update();
+    });
+
+    $(document).on('click', '.atm_export_format', async function () {
+        const format = $(this).data('format');
+
+        if (!format) {
+            return;
+        }
+
+        // Save before exporting
+        const body = { format, avatar_url: selectedChar };
+
+        const response = await fetch('/api/characters/export', {
+            method: 'POST',
+            headers: getRequestHeaders(),
+            body: JSON.stringify(body),
+        });
+
+        if (response.ok) {
+            const filename = selectedChar.replace('.png', `.${format}`);
+            const blob = await response.blob();
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.setAttribute('download', filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        $('#atm_export_format_popup').hide();
+    });
+
+    // Duplicate character
+    $('#atm_dupe_button').click(async function () {
+        if (!selectedChar) {
+            toastr.warning('You must first select a character to duplicate!');
+            return;
+        }
+
+        const confirmMessage = `
+            <h3>Are you sure you want to duplicate this character?</h3>
+            <span>If you just want to start a new chat with the same character, use "Start new chat" option in the bottom-left options menu.</span><br><br>`;
+
+        const confirm = await callPopup(confirmMessage, 'confirm');
+
+        if (!confirm) {
+            console.log('User cancelled duplication');
+            return;
+        }
+        await dupeChar(selectedChar);
     });
 
     // Delete character
