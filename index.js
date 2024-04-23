@@ -1,8 +1,8 @@
 // An extension that allows you to manage tags.
-import { getRequestHeaders, setCharacterId, setMenuType } from '../../../../script.js';
+import { setCharacterId, setMenuType } from '../../../../script.js';
 import { resetScrollHeight } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
-import { editChar, dupeChar, renameChar } from './src/atm_characters.js';
+import { editChar, dupeChar, renameChar, exportChar } from './src/atm_characters.js';
 
 const getTokenCount = SillyTavern.getContext().getTokenCount;
 const getThumbnailUrl = SillyTavern.getContext().getThumbnailUrl;
@@ -35,7 +35,8 @@ function debounce(func, timeout = 300) {
 }
 
 function getIdByAvatar(avatar){
-    return characters.findIndex(character => character.avatar === avatar);
+    const index = characters.findIndex(character => character.avatar === avatar);
+    return index !== -1 ? index : undefined;
 }
 
 
@@ -349,34 +350,13 @@ jQuery(async () => {
         atmExportPopper.update();
     });
 
-    $(document).on('click', '.atm_export_format', async function () {
+    $(document).on('click', '.atm_export_format', function () {
         const format = $(this).data('format');
 
         if (!format) {
             return;
         }
-
-        // Save before exporting
-        const body = { format, avatar_url: selectedChar };
-
-        const response = await fetch('/api/characters/export', {
-            method: 'POST',
-            headers: getRequestHeaders(),
-            body: JSON.stringify(body),
-        });
-
-        if (response.ok) {
-            const filename = selectedChar.replace('.png', `.${format}`);
-            const blob = await response.blob();
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.setAttribute('download', filename);
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        $('#atm_export_format_popup').hide();
+        exportChar(format, selectedChar);
     });
 
     // Duplicate character
