@@ -5,7 +5,7 @@ import { renameTagKey } from '../../../../tags.js';
 import { delay } from '../../../../utils.js';
 import { renameGroupMember } from '../../../../group-chats.js';
 
-export { editChar, delChar, dupeChar, renameChar };
+export { editChar, delChar, dupeChar, renameChar, exportChar };
 
 const event_types = SillyTavern.getContext().eventTypes;
 const eventSource = SillyTavern.getContext().eventSource;
@@ -188,4 +188,27 @@ async function renamePastChats(newAvatar, newValue) {
             console.error(error);
         }
     }
+}
+
+async function exportChar (format, avatar) {
+    const body = { format, avatar_url: avatar };
+
+    const response = await fetch('/api/characters/export', {
+        method: 'POST',
+        headers: getRequestHeaders(),
+        body: JSON.stringify(body),
+    });
+
+    if (response.ok) {
+        const filename = avatar.replace('.png', `.${format}`);
+        const blob = await response.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.setAttribute('download', filename);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    $('#atm_export_format_popup').hide();
 }
