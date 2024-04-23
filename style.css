@@ -64,6 +64,11 @@
     cursor: pointer;
 }
 
+#atm_export_format_popup {
+    display: none;
+    z-index: 9100;
+}
+
 
 /* Wrapper */
 .list-character-wrapper {
