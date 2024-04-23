@@ -17,7 +17,7 @@ const event_types = SillyTavern.getContext().eventTypes;
 const extensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 100);
-const editCharDebounced = debounce(() => { editChar(); }, 1000);
+const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
 let selectedId;
 let selectedChar;
 let mem_menu;
@@ -160,24 +160,24 @@ function refreshCharList() {
 
     let filteredChars = [];
     // let sortedListId = [];
-    const characters = SillyTavern.getContext().characters;
+    const charactersCopy = [...SillyTavern.getContext().characters];
 
     // Filtering only if there is more than three chars in the searchbar
     if(searchValue !== ''){
-        filteredChars = characters.filter(item => {
+        filteredChars = charactersCopy.filter(item => {
             return item.description?.toLowerCase().includes(searchValue) ||
                 item.name?.toLowerCase().includes(searchValue) ||
                 item.creatorcomment?.toLowerCase().includes(searchValue);
         });
     }
 
-    const sortedList = sortCharAR((filteredChars.length === 0 ? characters : filteredChars), sortData, sortOrder);
+    const sortedList = sortCharAR((filteredChars.length === 0 ? charactersCopy : filteredChars), sortData, sortOrder);
 
     const htmlList = sortedList.map((item) => getCharBlock(item.avatar)).join('');
 
     document.getElementById('character-list').innerHTML = '';
     document.getElementById('character-list').innerHTML = htmlList;
-    $('#charNumber').empty().append(`Total characters : ${characters.length}`);
+    $('#charNumber').empty().append(`Total characters : ${charactersCopy.length}`);
 }
 
 // Function to display the selected character
@@ -190,6 +190,7 @@ function selectAndDisplay(id, avatar) {
     setMenuType('character_edit');
     selectedId = id;
     selectedChar = avatar;
+    setCharacterId(getIdByAvatar(avatar));
 
     fillDetails(id);
 
@@ -201,6 +202,8 @@ function selectAndDisplay(id, avatar) {
 
 // Function to close the details panel
 function closeDetails() {
+    setCharacterId(getIdByAvatar(mem_avatar));
+    selectedChar = undefined;
     document.getElementById(`CharDID${selectedId}`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
@@ -210,7 +213,7 @@ function closeDetails() {
 function openModal() {
 
     // Memorize some global variables
-    if (SillyTavern.getContext().characterId ?? 0 > 0){
+    if (SillyTavern.getContext().characterId !== undefined && SillyTavern.getContext().characterId >= 0) {
         mem_avatar = SillyTavern.getContext().characters[SillyTavern.getContext().characterId].avatar;
     } else {
         mem_avatar = undefined;
@@ -219,7 +222,7 @@ function openModal() {
     displayed = true;
 
     // Sort the characters
-    let charsList = sortCharAR(SillyTavern.getContext().characters, sortData, sortOrder);
+    let charsList = sortCharAR([...SillyTavern.getContext().characters], sortData, sortOrder);
 
     // Display the modal with our list layout
     $('#atm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
@@ -336,10 +339,24 @@ jQuery(async () => {
     });
 
     $('#desc_zone').on('input', function () {
-        editCharDebounced();
+        const update = {
+            avatar: selectedChar,
+            description: this.value,
+            data: {
+                description: this.value,
+            },
+        };
+        editCharDebounced(update);
     });
 
     $('#firstMes_zone').on('input', function () {
-        editCharDebounced();
+        const update = {
+            avatar: selectedChar,
+            first_mes: this.value,
+            data: {
+                first_mes: this.value,
+            },
+        };
+        editCharDebounced(update);
     });
 });
