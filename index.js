@@ -2,7 +2,7 @@
 import { getRequestHeaders, setCharacterId, setMenuType } from '../../../../script.js';
 import { resetScrollHeight } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
-import { editChar, dupeChar } from './src/atm_characters.js';
+import { editChar, dupeChar, renameChar } from './src/atm_characters.js';
 
 const getTokenCount = SillyTavern.getContext().getTokenCount;
 const getThumbnailUrl = SillyTavern.getContext().getThumbnailUrl;
@@ -334,6 +334,13 @@ jQuery(async () => {
     // Import character by URL
     $('#atm_external_import_button').click(function () {
         $('#external_import_button').click();
+    });
+
+    // Import character by file
+    $('#atm_rename_button').click(async function () {
+        const charID = getIdByAvatar(selectedChar);
+        const newName = await callPopup('<h3>New name:</h3>', 'input', characters[charID].name);
+        renameChar(selectedChar, charID, newName);
     });
 
     // Export character
