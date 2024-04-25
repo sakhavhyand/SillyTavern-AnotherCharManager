@@ -35,11 +35,11 @@ function debounce(func, timeout = 300) {
     };
 }
 
+// Function to get the ID of a character using its avatar
 function getIdByAvatar(avatar){
     const index = characters.findIndex(character => character.avatar === avatar);
-    return index !== -1 ? index : undefined;
+    return index !== -1 ? String(index) : undefined;
 }
-
 
 // Function to sort the character array based on specified property and order
 function sortCharAR(chars, sort_data, sort_order) {
@@ -101,6 +101,7 @@ function displayTag( tagId ){
     }
 }
 
+// Function to Display the AltGreetings if they exists
 function displayAltGreetings(item) {
     let altGreetingsHTML = '';
 
@@ -196,6 +197,7 @@ function closeDetails() {
     document.getElementById(`CharDID${selectedId}`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
+    selectedId = undefined;
 }
 
 // Function to build the modal
