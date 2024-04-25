@@ -6,7 +6,7 @@
 
 ## What is this extension doing?
 
-SillyTavern ATM is an extension which provides a quick and easy way to edits tags cards.
+SillyTavern ATM is an extension which provides a quick and easy way to edits tags cards and some other fields.
 
 I've decided to work on it to have something that better suits my needs, because I have way too many characters and most of them are not/poorly tagged.
 
@@ -15,7 +15,7 @@ I've decided to work on it to have something that better suits my needs, because
 
 ## Prerequisites
 
-This extension has been tested on SillyTavern 1.11.0 and 1.11.1.
+This extension has been tested from SillyTavern 1.11.0 to 1.11.8.
 
 ## Installation
 
@@ -29,20 +29,16 @@ The extension will add a new Tag button just before the Group button.
 
 Clicking on this button will open a pop-up window showing your characters and the number of tags they currently have.
 
-![Screenshot_20240220_111008](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/f2736116-6873-45c4-aa5b-172293c9ce3b)
-
+![Image](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/529ac3dc-01da-4480-87ae-d808b39b6600)
 
 You can sort alphabetically, number of tags, recent chat or date added.<br/>
-You also have access to a search bar and the Manage Tags menu.
+You also have access to a search bar, the Manage Tags menu and import buttons (file and URL).
 
-![image](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/b29097e0-e1bf-4b84-8124-129d9404ccc5)
+When you select a character, basic information about the character is displayed at the bottom, including its tags, description and greetings(Alternative greetings are read-only).
+You can also rename, export, duplicate or delete the selected character.
 
-When you select a character, basic information about the character is displayed at the bottom, including its tags, description and greetings(read-only).
+![Image](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/7602e825-23fd-4872-84d5-838ad23ca505)
 
-![Screenshot_20240222_172819](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/c5577e84-8110-45fe-b130-40fbe763d0bc)
-
-
-You can now add, remove or create tags as you would in the classic interface.
 
 ## Support and Contributions
 
