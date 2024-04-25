@@ -14,9 +14,9 @@ const characters = SillyTavern.getContext().characters;
 const callPopup = SillyTavern.getContext().callPopup;
 const selectCharacterById = SillyTavern.getContext().selectCharacterById;
 
+// Function to edit a single character
 async function editChar(update) {
     const this_chid = SillyTavern.getContext().characterId;
-    const characters = SillyTavern.getContext().characters;
 
     const response = await fetch('/api/characters/merge-attributes', {
         method: 'POST',
@@ -55,6 +55,7 @@ async function delChar(avatar, delChats = true) {
     }
 }
 
+// Function to duplicate a character
 async function dupeChar(avatar) {
     const body = { avatar_url: avatar };
     const response = await fetch('/api/characters/duplicate', {
@@ -71,6 +72,7 @@ async function dupeChar(avatar) {
     }
 }
 
+// Function to rename a character
 async function renameChar(oldAvatar, charID, newName) {
 
     if (newName && newName !== characters[charID].name) {
@@ -137,6 +139,7 @@ async function renameChar(oldAvatar, charID, newName) {
     }
 }
 
+// Function to rename existing chats of a character ( associated with the renameChar function )
 async function renamePastChats(newAvatar, newValue) {
     const pastChats = await getPastCharacterChats();
 
@@ -190,6 +193,7 @@ async function renamePastChats(newAvatar, newValue) {
     }
 }
 
+// Function to export a character
 async function exportChar (format, avatar) {
     const body = { format, avatar_url: avatar };
 
