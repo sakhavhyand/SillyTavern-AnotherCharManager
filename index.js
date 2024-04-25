@@ -11,6 +11,7 @@ const eventSource = SillyTavern.getContext().eventSource;
 const event_types = SillyTavern.getContext().eventTypes;
 const characters = SillyTavern.getContext().characters;
 const tagMap = SillyTavern.getContext().tagMap;
+const tagList = SillyTavern.getContext().tags;
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherTagManager';
@@ -82,7 +83,6 @@ function getCharBlock(avatar) {
 
 // Function to generate the HTML for displaying a tag
 function displayTag( tagId ){
-    const tagList = SillyTavern.getContext().tags;
     const name = tagList.find(tagList => tagList.id === tagId).name;
     const color = tagList.find(tagList => tagList.id === tagId).color;
 
@@ -135,7 +135,7 @@ function fillDetails(id) {
     document.getElementById('ch_name_details').innerHTML = char.name;
     document.getElementById('crea_comment').innerHTML = char.creatorcomment;
     document.getElementById('tag_List').innerHTML = `${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`;
-    createTagInput('#input_tag', '#tag_List');
+    createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
     document.getElementById('desc_Tokens').innerHTML = `Tokens: ${getTokenCount(char.description)}`;
     $('#desc_zone').val(char.description);
     document.getElementById('firstMess_tokens').innerHTML = `Tokens: ${getTokenCount(char.first_mes)}`;
