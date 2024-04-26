@@ -134,7 +134,7 @@ function fillDetails(id) {
     $('#avatar_title').attr('title', char.avatar);
     $('#avatar_img').attr('src', this_avatar);
     document.getElementById('ch_name_details').innerHTML = char.name;
-    document.getElementById('crea_comment').innerHTML = char.creatorcomment;
+    document.getElementById('crea_comment').innerHTML = char.creatorcomment !== undefined ? char.creatorcomment : char.data.creator_notes;
     document.getElementById('tag_List').innerHTML = `${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`;
     createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
     document.getElementById('desc_Tokens').innerHTML = `Tokens: ${getTokenCount(char.description)}`;
