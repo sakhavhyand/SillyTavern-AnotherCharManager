@@ -101,7 +101,7 @@ function displayTag( tagId ){
                 </span>`;
         }
     }
-    else { return '' }
+    else { return ''; }
 }
 
 
