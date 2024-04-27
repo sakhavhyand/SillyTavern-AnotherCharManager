@@ -159,6 +159,11 @@
 
 .char_name {
     font-size: calc(var(--mainFontSize) - 2px);
+    white-space: nowrap;
+    text-wrap-mode: nowrap;
+    overflow: hidden;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
 }
 
 .char_selected {
