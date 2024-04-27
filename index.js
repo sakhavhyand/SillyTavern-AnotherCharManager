@@ -83,23 +83,27 @@ function getCharBlock(avatar) {
 
 // Function to generate the HTML for displaying a tag
 function displayTag( tagId ){
-    const name = tagList.find(tagList => tagList.id === tagId).name;
-    const color = tagList.find(tagList => tagList.id === tagId).color;
+    if (tagList.find(tagList => tagList.id === tagId)) {
+        const name = tagList.find(tagList => tagList.id === tagId).name;
+        const color = tagList.find(tagList => tagList.id === tagId).color;
 
-    if(tagList.find(tagList => tagList.id === tagId).color2){
-        const color2 = tagList.find(tagList => tagList.id === tagId).color2;
+        if (tagList.find(tagList => tagList.id === tagId).color2) {
+            const color2 = tagList.find(tagList => tagList.id === tagId).color2;
 
-        return `<span id="${tagId}" class="tag" style="background-color: ${color}; color: ${color2};">
+            return `<span id="${tagId}" class="tag" style="background-color: ${color}; color: ${color2};">
                     <span class="tag_name">${name}</span>
                     <i class="fa-solid fa-circle-xmark tag_remove"></i>
                 </span>`;
-    } else {
-        return `<span id="${tagId}" class="tag" style="background-color: ${color};">
+        } else {
+            return `<span id="${tagId}" class="tag" style="background-color: ${color};">
                     <span class="tag_name">${name}</span>
                     <i class="fa-solid fa-circle-xmark tag_remove"></i>
                 </span>`;
+        }
     }
+    else { return ''; }
 }
+
 
 // Function to Display the AltGreetings if they exists
 function displayAltGreetings(item) {
