@@ -73,7 +73,7 @@ function getCharBlock(avatar) {
     const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
     const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
 
-    return `<div class="character_item ${charClass}" chid="${id}" avatar="${avatar}" id="CharDID${id}">
+    return `<div class="character_item ${charClass}" chid="${id}" avatar="${avatar}" id="CharDID${id}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
                     <div class="avatar_item">
                         <img src="${avatarThumb}" alt="${characters[id].avatar}">
                     </div>
