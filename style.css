@@ -121,24 +121,17 @@
     align-content: flex-start;
     overflow-y: auto;
     overflow-x: hidden;
-    padding-right: 10px;
-    gap: 5px;
-    flex-direction: row;
-    height: 100%;
 }
 
 .character_item {
     display: flex;
+    flex-direction: column;
     gap: 5px;
-    flex-wrap: wrap;
-    width: min-content;
-    height: min-content;
-    padding: 2px;
-    border-radius: 5px;
-    align-items: flex-start;
-    overflow: hidden;
-    max-width: 100px;
-    flex-direction: row;
+    flex-wrap: nowrap;
+    width: 100px;
+    height: 150px;
+    padding: 5px;
+    border-radius: 10px;
 }
 
 .char_select:hover {
@@ -146,60 +139,26 @@
 }
 
 .avatar_item {
-    /*outline: 0px solid var(--SmartThemeQuoteColor);*/
-    /*box-shadow: 1px 1px 5px var(--SmartThemeQuoteColor);*/
-    --big-avatar-height-factor: 3 !important;
-    --big-avatar-width-factor: 2 !important;
-    --big-avatar-border-factor: 2 !important;
-    flex: unset;
-    height: calc(var(--avatar-base-height) * var(--big-avatar-height-factor));
-    width: unset;
-    border-style: none;
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    align-items: center;
-    overflow: visible;
-    border-radius: calc(var(--avatar-base-border-radius) * var(--big-avatar-border-factor));
     align-self: center;
-    transition: 250ms;
+    border-radius: 50%;
+    flex: unset;
+    border-style: none;
+    width: 95px;
+    height: 100px;
 }
 
 .avatar_item > img {
+    width: 100%;
+    height: 100%;
+    border: none;
+    object-fit: cover;
+    object-position: center center;
     border-radius: 20%;
+    box-shadow: 0 0 5px var(--black50a);
 }
 
 .char_name {
-    width: 100%;
-    max-width: unset !important;
-    justify-content: center;
-    position: relative;
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-}
-
-.char_name_block {
-    width: 100%;
-    flex-direction: column;
-    gap: 0;
-    margin-bottom: 0;
-    display: flex;
-    align-items: baseline;
-}
-
-.char_name_block > span {
-    width: 100%;
-    max-width: 100px;
-    text-align: center;
-    font-size: calc(var(--mainFontSize) * .8);
-    flex: 1 1 auto;
-    white-space: normal;
-    overflow: hidden;
-    text-wrap: wrap;
-    text-overflow: ellipsis;
-    display: block;
-    font-weight: bolder;
+    font-size: calc(var(--mainFontSize) - 2px);
 }
 
 .char_selected {
