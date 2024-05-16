@@ -170,6 +170,7 @@
 }
 
 .char_name {
+<<<<<<< HEAD
     width: 100%;
     max-width: unset !important;
     justify-content: center;
@@ -200,6 +201,14 @@
     text-overflow: ellipsis;
     display: block;
     font-weight: bolder;
+=======
+    font-size: calc(var(--mainFontSize) - 2px);
+    white-space: nowrap;
+    text-wrap-mode: nowrap;
+    overflow: hidden;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+>>>>>>> origin/dev
 }
 
 .char_selected {
