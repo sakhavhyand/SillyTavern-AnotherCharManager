@@ -146,8 +146,6 @@
 }
 
 .avatar_item {
-    /*outline: 0px solid var(--SmartThemeQuoteColor);*/
-    /*box-shadow: 1px 1px 5px var(--SmartThemeQuoteColor);*/
     --big-avatar-height-factor: 3 !important;
     --big-avatar-width-factor: 2 !important;
     --big-avatar-border-factor: 2 !important;
@@ -170,7 +168,6 @@
 }
 
 .char_name {
-<<<<<<< HEAD
     width: 100%;
     max-width: unset !important;
     justify-content: center;
@@ -201,14 +198,12 @@
     text-overflow: ellipsis;
     display: block;
     font-weight: bolder;
-=======
     font-size: calc(var(--mainFontSize) - 2px);
     white-space: nowrap;
     text-wrap-mode: nowrap;
     overflow: hidden;
     text-wrap: nowrap;
     text-overflow: ellipsis;
->>>>>>> origin/dev
 }
 
 .char_selected {
