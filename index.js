@@ -77,7 +77,11 @@ function getCharBlock(avatar) {
                     <div class="avatar_item">
                         <img src="${avatarThumb}" alt="${characters[id].avatar}">
                     </div>
-                    <div class="char_name">${characters[id].name} : ${tagMap[avatar].length}</div>
+                    <div class="char_name">
+                        <div class="char_name_block">
+                            <span>${characters[id].name} : ${tagMap[avatar].length}</span>
+                        </div>
+                    </div>
                 </div>`;
 }
 
@@ -155,12 +159,23 @@ function refreshCharList() {
     let filteredChars = [];
     const charactersCopy = [...SillyTavern.getContext().characters];
 
-    // Filtering only if there is more than three chars in the searchbar
-    if(searchValue !== ''){
+    if (searchValue !== '') {
+        const searchValueLower = searchValue.toLowerCase();
+
+        // Find matching tag IDs based on searchValue
+        const matchingTagIds = tagList
+            .filter(tag => tag.name.toLowerCase().includes(searchValueLower))
+            .map(tag => tag.id);
+
+        // Filter characters by description, name, creatorcomment, or tag
         filteredChars = charactersCopy.filter(item => {
-            return item.description?.toLowerCase().includes(searchValue) ||
-                item.name?.toLowerCase().includes(searchValue) ||
-                item.creatorcomment?.toLowerCase().includes(searchValue);
+            const matchesText = item.description?.toLowerCase().includes(searchValueLower) ||
+                item.name?.toLowerCase().includes(searchValueLower) ||
+                item.creatorcomment?.toLowerCase().includes(searchValueLower);
+
+            const matchesTag = (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
+
+            return matchesText || matchesTag;
         });
     }
 
