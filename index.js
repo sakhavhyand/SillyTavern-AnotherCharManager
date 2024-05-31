@@ -1,4 +1,4 @@
-// An extension that allows you to manage tags.
+// An extension that allows you to manage characters.
 import { setCharacterId, setMenuType } from '../../../../script.js';
 import { resetScrollHeight } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
@@ -17,7 +17,7 @@ const tagList = SillyTavern.getContext().tags;
 const extensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 100);
-const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
+const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 let selectedId;
 let selectedChar;
 let mem_menu;
@@ -39,6 +39,24 @@ function debounce(func, timeout = 300) {
 function getIdByAvatar(avatar){
     const index = characters.findIndex(character => character.avatar === avatar);
     return index !== -1 ? String(index) : undefined;
+}
+
+// Function to generate an Array for the selected character alternative greetings
+function generateGreetingArray() {
+    const textareas = document.querySelectorAll('.altGreeting_zone');
+    const greetingArray = [];
+
+    textareas.forEach(textarea => {
+        greetingArray.push(textarea.value);
+    });
+    return greetingArray;
+}
+
+// Add an event listeners to all alternative greetings textareas displayed
+function addAltGreetingsTrigger(){
+    document.querySelectorAll('.altGreeting_zone').forEach(textarea => {
+        textarea.addEventListener('input', (event) => {saveAltGreetings(event);});
+    });
 }
 
 // Function to sort the character array based on specified property and order
@@ -108,7 +126,6 @@ function displayTag( tagId ){
     else { return ''; }
 }
 
-
 // Function to Display the AltGreetings if they exists
 function displayAltGreetings(item) {
     let altGreetingsHTML = '';
@@ -121,12 +138,18 @@ function displayAltGreetings(item) {
             let greetingNumber = i + 1;
             altGreetingsHTML += `<div class="inline-drawer">
                 <div id="altGreetDrawer${greetingNumber}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                    <b>Greeting #${greetingNumber}</b>
-                    <span>Tokens: ${getTokenCount(item[i])}</span>
-                    <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+                    <strong>
+                        Greeting #
+                        <span class="greeting_index">${greetingNumber}</span>
+                    </strong>
+                    <span class="tokens_count">Tokens: ${getTokenCount(item[i])}</span>
+                    <div class="altGreetings_buttons">
+                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
+                        <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
+                    </div>
                 </div>
                 <div class="inline-drawer-content">
-                    <textarea readonly class="altGreeting_zone autoSetHeight">${item[i]}</textarea>
+                    <textarea class="altGreeting_zone autoSetHeight">${item[i]}</textarea>
                 </div>
             </div>`;
         }
@@ -134,23 +157,99 @@ function displayAltGreetings(item) {
     }
 }
 
+// Function to save added/edited/deleted alternative greetings
+function saveAltGreetings(event = null){
+    const greetings = generateGreetingArray();
+    const update = {
+        avatar: selectedChar,
+        data: {
+            alternate_greetings: greetings,
+        },
+    };
+    editCharDebounced(update);
+    // Update token count if necessary
+    if (event) {
+        const textarea = event.target;
+        const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
+        tokensSpan.textContent = `Tokens: ${getTokenCount(textarea.value)}`;
+    }
+}
+
+// Function to display a new alternative greeting block
+function addAltGreeting(){
+    const drawerContainer = document.getElementById('altGreetings_content');
+
+    // Determine the new greeting index
+    const greetingIndex = drawerContainer.getElementsByClassName('inline-drawer').length + 1;
+
+    // Create the new inline-drawer block
+    const altGreetingDiv = document.createElement('div');
+    altGreetingDiv.className = 'inline-drawer';
+    altGreetingDiv.innerHTML = `<div id="altGreetDrawer${greetingIndex}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
+                    <strong>
+                        Greeting #
+                        <span class="greeting_index">${greetingIndex}</span>
+                    </strong>
+                    <span class="tokens_count">Tokens: 0</span>
+                    <div class="altGreetings_buttons">
+                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
+                        <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
+                    </div>
+                </div>
+                <div class="inline-drawer-content">
+                    <textarea class="altGreeting_zone autoSetHeight"></textarea>
+                </div>
+            </div>`;
+
+    // Add the new inline-drawer block
+    drawerContainer.appendChild(altGreetingDiv);
+
+    // Add the event on the textarea
+    altGreetingDiv.querySelector(`.altGreeting_zone`).addEventListener('input', () => {
+        saveAltGreetings();
+    });
+
+    // Save it
+    saveAltGreetings();
+}
+
+// Function to delete an alternative greetings block
+function delAltGreeting(index, inlineDrawer){
+    // Delete the AltGreeting block
+    inlineDrawer.remove();
+
+    // Update the others AltGreeting blocks
+    $('.altgreetings-drawer-toggle').each(function() {
+        const currentIndex = parseInt($(this).find('.greeting_index').text());
+        if (currentIndex > index) {
+            $(this).find('.greeting_index').text(currentIndex - 1);
+            $(this).attr('id', `altGreetDrawer${currentIndex - 1}`);
+        }
+    });
+
+    // Save it
+    saveAltGreetings();
+}
+
 // Function to fill details in the character details block
-function fillDetails(id) {
-    const char = characters[id];
+function fillDetails(avatar) {
+    const char = characters[getIdByAvatar(avatar)];
     const this_avatar = getThumbnailUrl('avatar', char.avatar);
 
     $('#avatar_title').attr('title', char.avatar);
     $('#avatar_img').attr('src', this_avatar);
     document.getElementById('ch_name_details').innerHTML = char.name;
     document.getElementById('crea_comment').innerHTML = char.creatorcomment !== undefined ? char.creatorcomment : char.data.creator_notes;
-    document.getElementById('tag_List').innerHTML = `${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`;
-    createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
     document.getElementById('desc_Tokens').innerHTML = `Tokens: ${getTokenCount(char.description)}`;
     $('#desc_zone').val(char.description);
     document.getElementById('firstMess_tokens').innerHTML = `Tokens: ${getTokenCount(char.first_mes)}`;
     $('#firstMes_zone').val(char.first_mes);
     document.getElementById('altGreetings_number').innerHTML = `Numbers: ${char.data.alternate_greetings.length}`;
+    document.getElementById('tag_List').innerHTML = `${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`;
+    createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
     document.getElementById('altGreetings_content').innerHTML = displayAltGreetings(char.data.alternate_greetings);
+
+    addAltGreetingsTrigger()
 }
 
 // Function to refresh the character list based on search and sorting parameters
@@ -198,7 +297,7 @@ function selectAndDisplay(id, avatar) {
 
     $('#atm_export_format_popup').hide();
 
-    fillDetails(id);
+    fillDetails(avatar);
 
     document.getElementById(`CharDID${id}`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
@@ -317,8 +416,9 @@ jQuery(async () => {
         closeDetails();
     });
 
+    // Trigger when clicking on a drawer to open/close it
     $(document).on('click', '.altgreetings-drawer-toggle', function () {
-        const icon = $(this).find('.inline-drawer-icon');
+        const icon = $(this).find('.idit');
         icon.toggleClass('down up');
         icon.toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
         $(this).closest('.inline-drawer').children('.inline-drawer-content').stop().slideToggle();
@@ -373,7 +473,6 @@ jQuery(async () => {
 
     $(document).on('click', '.atm_export_format', function () {
         const format = $(this).data('format');
-
         if (!format) {
             return;
         }
@@ -405,6 +504,7 @@ jQuery(async () => {
         $('#delete_button').click();
     });
 
+    // Update character description
     $('#desc_zone').on('input', function () {
         const update = {
             avatar: selectedChar,
@@ -416,6 +516,7 @@ jQuery(async () => {
         editCharDebounced(update);
     });
 
+    // Update character first message
     $('#firstMes_zone').on('input', function () {
         const update = {
             avatar: selectedChar,
@@ -425,5 +526,19 @@ jQuery(async () => {
             },
         };
         editCharDebounced(update);
+    });
+
+    // Add a new alternative greetings
+    $(document).on('click', '.fa-circle-plus', async function (event) {
+        event.stopPropagation();
+        addAltGreeting();
+    });
+
+    // Delete an alternative greetings
+    $(document).on('click', '.fa-circle-minus', function (event) {
+        event.stopPropagation();
+        const inlineDrawer = this.closest('.inline-drawer');
+        const greetingIndex = parseInt(this.closest('.altgreetings-drawer-toggle').querySelector('.greeting_index').textContent);
+        delAltGreeting(greetingIndex, inlineDrawer);
     });
 });

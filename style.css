@@ -290,6 +290,19 @@
     height: 100%;
 }
 
-#desc_zone, #firstMes_zone, .altGreeting_zone {
+.altGreetings_buttons {
+    flex-direction: row;
+    display: flex;
+    align-items: center;
+}
+
+.inline-drawer-icon.fa-circle-plus,
+.inline-drawer-icon.fa-circle-minus {
+    margin-right: 5px;
+}
+
+#desc_zone,
+#firstMes_zone,
+.altGreeting_zone {
     resize: none;
 }
