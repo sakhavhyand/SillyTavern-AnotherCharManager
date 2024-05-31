@@ -1,4 +1,4 @@
-// An extension that allows you to manage tags.
+// An extension that allows you to manage characters.
 import { setCharacterId, setMenuType } from '../../../../script.js';
 import { resetScrollHeight } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
@@ -41,6 +41,7 @@ function getIdByAvatar(avatar){
     return index !== -1 ? String(index) : undefined;
 }
 
+// Function to generate an Array for the selected character alternative greetings
 function generateGreetingArray() {
     const textareas = document.querySelectorAll('.altGreeting_zone');
     const greetingArray = [];
@@ -51,9 +52,10 @@ function generateGreetingArray() {
     return greetingArray;
 }
 
+// Add an event listeners to all alternative greetings textareas displayed
 function addAltGreetingsTrigger(){
     document.querySelectorAll('.altGreeting_zone').forEach(textarea => {
-        textarea.addEventListener('input', () => {saveAltGreetings();});
+        textarea.addEventListener('input', (event) => {saveAltGreetings(event);});
     });
 }
 
@@ -124,7 +126,6 @@ function displayTag( tagId ){
     else { return ''; }
 }
 
-
 // Function to Display the AltGreetings if they exists
 function displayAltGreetings(item) {
     let altGreetingsHTML = '';
@@ -141,7 +142,7 @@ function displayAltGreetings(item) {
                         Greeting #
                         <span class="greeting_index">${greetingNumber}</span>
                     </strong>
-                    <span>Tokens: ${getTokenCount(item[i])}</span>
+                    <span class="tokens_count">Tokens: ${getTokenCount(item[i])}</span>
                     <div class="altGreetings_buttons">
                         <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
                         <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
@@ -156,7 +157,8 @@ function displayAltGreetings(item) {
     }
 }
 
-function saveAltGreetings(){
+// Function to save added/edited/deleted alternative greetings
+function saveAltGreetings(event = null){
     const greetings = generateGreetingArray();
     const update = {
         avatar: selectedChar,
@@ -165,8 +167,15 @@ function saveAltGreetings(){
         },
     };
     editCharDebounced(update);
+    // Update token count if necessary
+    if (event) {
+        const textarea = event.target;
+        const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
+        tokensSpan.textContent = `Tokens: ${getTokenCount(textarea.value)}`;
+    }
 }
 
+// Function to display a new alternative greeting block
 function addAltGreeting(){
     const drawerContainer = document.getElementById('altGreetings_content');
 
@@ -181,7 +190,7 @@ function addAltGreeting(){
                         Greeting #
                         <span class="greeting_index">${greetingIndex}</span>
                     </strong>
-                    <span>Tokens: 0</span>
+                    <span class="tokens_count">Tokens: 0</span>
                     <div class="altGreetings_buttons">
                         <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
                         <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
@@ -204,6 +213,7 @@ function addAltGreeting(){
     saveAltGreetings();
 }
 
+// Function to delete an alternative greetings block
 function delAltGreeting(index, inlineDrawer){
     // Delete the AltGreeting block
     inlineDrawer.remove();
@@ -463,7 +473,6 @@ jQuery(async () => {
 
     $(document).on('click', '.atm_export_format', function () {
         const format = $(this).data('format');
-
         if (!format) {
             return;
         }
@@ -495,6 +504,7 @@ jQuery(async () => {
         $('#delete_button').click();
     });
 
+    // Update character description
     $('#desc_zone').on('input', function () {
         const update = {
             avatar: selectedChar,
@@ -506,6 +516,7 @@ jQuery(async () => {
         editCharDebounced(update);
     });
 
+    // Update character first message
     $('#firstMes_zone').on('input', function () {
         const update = {
             avatar: selectedChar,
@@ -517,11 +528,13 @@ jQuery(async () => {
         editCharDebounced(update);
     });
 
+    // Add a new alternative greetings
     $(document).on('click', '.fa-circle-plus', async function (event) {
         event.stopPropagation();
         addAltGreeting();
     });
 
+    // Delete an alternative greetings
     $(document).on('click', '.fa-circle-minus', function (event) {
         event.stopPropagation();
         const inlineDrawer = this.closest('.inline-drawer');
