@@ -205,8 +205,8 @@ function addAltGreeting(){
     drawerContainer.appendChild(altGreetingDiv);
 
     // Add the event on the textarea
-    altGreetingDiv.querySelector(`.altGreeting_zone`).addEventListener('input', () => {
-        saveAltGreetings();
+    altGreetingDiv.querySelector(`.altGreeting_zone`).addEventListener('input', (event) => {
+        saveAltGreetings(event);
     });
 
     // Save it
