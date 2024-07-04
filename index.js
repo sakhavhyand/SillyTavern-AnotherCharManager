@@ -2,7 +2,7 @@
 import { setCharacterId, setMenuType } from '../../../../script.js';
 import { resetScrollHeight } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
-import { editChar, dupeChar, renameChar, exportChar } from './src/atm_characters.js';
+import { editChar, dupeChar, renameChar, exportChar } from './src/acm_characters.js';
 
 const getTokenCount = SillyTavern.getContext().getTokenCount;
 const getThumbnailUrl = SillyTavern.getContext().getThumbnailUrl;
@@ -14,8 +14,10 @@ const tagMap = SillyTavern.getContext().tagMap;
 const tagList = SillyTavern.getContext().tags;
 
 // Initializing some variables
-const extensionName = 'SillyTavern-AnotherTagManager';
+const extensionName = 'SillyTavern-AnotherCharManager';
+const oldExtensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
+const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 100);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 let selectedId;
@@ -295,7 +297,7 @@ function selectAndDisplay(id, avatar) {
     selectedChar = avatar;
     setCharacterId(getIdByAvatar(avatar));
 
-    $('#atm_export_format_popup').hide();
+    $('#acm_export_format_popup').hide();
 
     fillDetails(avatar);
 
@@ -310,7 +312,7 @@ function closeDetails() {
     setCharacterId(getIdByAvatar(mem_avatar));
     selectedChar = undefined;
 
-    $('#atm_export_format_popup').hide();
+    $('#acm_export_format_popup').hide();
 
     document.getElementById(`CharDID${selectedId}`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
@@ -334,10 +336,10 @@ function openModal() {
     let charsList = sortCharAR([...SillyTavern.getContext().characters], sortData, sortOrder);
 
     // Display the modal with our list layout
-    $('#atm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
+    $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
     $('#character-list').empty().append(charsList.map((item) => getCharBlock(item.avatar)).join(''));
     $('#charNumber').empty().append(`Total characters : ${charsList.length}`);
-    $('#atm_shadow_popup').css('display', 'block').transition({
+    $('#acm_shadow_popup').css('display', 'block').transition({
         opacity: 1,
         duration: 125,
         easing: 'ease-in-out',
@@ -379,10 +381,21 @@ function openModal() {
 jQuery(async () => {
 
     // Create the shadow div
-    const modalHtml = await $.get(`${extensionFolderPath}/modal.html`);
+    let modalHtml;
+    try {
+        modalHtml = await $.get(`${extensionFolderPath}/modal.html`);
+    } catch (error) {
+        console.error(`Error fetching modal.html from ${extensionFolderPath}. This is a normal error if you have the old folder name and you don't have to do anything.`);
+        try {
+            modalHtml = await $.get(`${oldExtensionFolderPath}/modal.html`);
+        } catch (secondError) {
+            console.error(`Error fetching modal.html from ${oldExtensionFolderPath}:`, secondError);
+            return;
+        }
+    }
     $('#background_template').after(modalHtml);
 
-    let atmExportPopper = Popper.createPopper(document.getElementById('atm_export_button'), document.getElementById('atm_export_format_popup'), {
+    let acmExportPopper = Popper.createPopper(document.getElementById('acm_export_button'), document.getElementById('acm_export_format_popup'), {
         placement: 'left',
     });
 
@@ -430,48 +443,48 @@ jQuery(async () => {
     });
 
     // Trigger when the modal is closed to reset some global parameters
-    $('#atm_popup_close').click( function () {
+    $('#acm_popup_close').click( function () {
         closeDetails();
         setCharacterId(getIdByAvatar(mem_avatar));
         setMenuType(mem_menu);
         mem_avatar = undefined;
 
-        $('#atm_shadow_popup').transition({
+        $('#acm_shadow_popup').transition({
             opacity: 0,
             duration: 125,
             easing: 'ease-in-out',
         });
         setTimeout(function () {
-            $('#atm_shadow_popup').css('display', 'none');
-            $('#atm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
+            $('#acm_shadow_popup').css('display', 'none');
+            $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
         }, 125);
         displayed = false;
     });
 
     // Import character by file
-    $('#atm_character_import_button').click(function () {
+    $('#acm_character_import_button').click(function () {
         $('#character_import_file').click();
     });
 
     // Import character by URL
-    $('#atm_external_import_button').click(function () {
+    $('#acm_external_import_button').click(function () {
         $('#external_import_button').click();
     });
 
     // Import character by file
-    $('#atm_rename_button').click(async function () {
+    $('#acm_rename_button').click(async function () {
         const charID = getIdByAvatar(selectedChar);
         const newName = await callPopup('<h3>New name:</h3>', 'input', characters[charID].name);
         renameChar(selectedChar, charID, newName);
     });
 
     // Export character
-    $('#atm_export_button').click(function () {
-        $('#atm_export_format_popup').toggle();
-        atmExportPopper.update();
+    $('#acm_export_button').click(function () {
+        $('#acm_export_format_popup').toggle();
+        acmExportPopper.update();
     });
 
-    $(document).on('click', '.atm_export_format', function () {
+    $(document).on('click', '.acm_export_format', function () {
         const format = $(this).data('format');
         if (!format) {
             return;
@@ -480,7 +493,7 @@ jQuery(async () => {
     });
 
     // Duplicate character
-    $('#atm_dupe_button').click(async function () {
+    $('#acm_dupe_button').click(async function () {
         if (!selectedChar) {
             toastr.warning('You must first select a character to duplicate!');
             return;
@@ -500,7 +513,7 @@ jQuery(async () => {
     });
 
     // Delete character
-    $('#atm_delete_button').click(function () {
+    $('#acm_delete_button').click(function () {
         $('#delete_button').click();
     });
 

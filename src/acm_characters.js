@@ -214,5 +214,5 @@ async function exportChar (format, avatar) {
         document.body.removeChild(a);
     }
 
-    $('#atm_export_format_popup').hide();
+    $('#acm_export_format_popup').hide();
 }
