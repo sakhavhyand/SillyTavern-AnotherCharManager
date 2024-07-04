@@ -1,5 +1,5 @@
 {
-    "display_name": "AnotherTagManager",
+    "display_name": "AnotherCharManager",
     "loading_order": 9,
     "requires": [],
     "optional": [],
@@ -7,5 +7,5 @@
     "css": "style.css",
     "author": "Rendal",
     "version": "1.6",
-    "homePage": "https://github.com/sakhavhyand/SillyTavern-AnotherTagManager"
+    "homePage": "https://github.com/sakhavhyand/SillyTavern-AnotherCharManager"
 }
