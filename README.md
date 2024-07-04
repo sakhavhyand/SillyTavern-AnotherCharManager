@@ -1,4 +1,4 @@
-# SillyTavern-AnotherTagManager
+# SillyTavern-AnotherCharManager
 
 ## DISCLAIMER
 * I'm not a developer, so yes, my code is not perfect (especially the CSS, I hate that).
@@ -6,11 +6,11 @@
 
 ## What is this extension doing?
 
-SillyTavern ATM is an extension which provides a quick and easy way to edits tags cards and some other fields.
+SillyTavern ACM is an extension which provides a quick and easy way to edits tags cards and some other fields.
 
 I've decided to work on it to have something that better suits my needs, because I have way too many characters and most of them are not/poorly tagged.
 
-* With ATM, you can sort by the number of tags characters have, for example, to find those without tags.
+* With ACM, you can sort by the number of tags characters have, for example, to find those without tags.
 * Editing tags on a character does not load their chat, so it won't change the chat recent history.
 
 ## Prerequisites

@@ -1,6 +1,6 @@
 /* Modal */
 
-#atm_shadow_popup {
+#acm_shadow_popup {
     backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 2));
     -webkit-backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 2));
     background-color: var(--black30a);
@@ -13,7 +13,7 @@
     top: 0;
 }
 
-#atm_popup {
+#acm_popup {
     width: 500px;
     max-width: 90svw;
     position: absolute;
@@ -36,7 +36,7 @@
     overflow-y: hidden;
 }
 
-#atm_popup_holder {
+#acm_popup_holder {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -44,24 +44,24 @@
     padding: 0 10px;
 }
 
-#atm_popup_text {
+#acm_popup_text {
     flex-grow: 1;
     overflow-y: auto;
     height: 100%;
 }
 
-#atm_popup_controls {
+#acm_popup_controls {
     display: flex;
     align-self: center;
     gap: 20px;
 }
 
-#atm_popup_close {
+#acm_popup_close {
     background-color: var(--crimson70a);
     cursor: pointer;
 }
 
-#atm_export_format_popup {
+#acm_export_format_popup {
     display: none;
     z-index: 9100;
 }
@@ -87,7 +87,7 @@
     column-gap: 5px;
 }
 
-#atm_tags_view.tags_view, #atm_character_import_button, #atm_external_import_button {
+#acm_tags_view.tags_view, #acm_character_import_button, #acm_external_import_button {
     margin-top: 5px;
     margin-bottom: 5px;
     margin-left: 2px;
@@ -247,7 +247,7 @@
     max-height: 115px;
 }
 
-#atm_details_buttons_block {
+#acm_details_buttons_block {
     display: flex;
     flex: 1;
     gap: 5px;
@@ -256,7 +256,7 @@
     flex-wrap: wrap;
 }
 
-#atm_delete_button:hover {
+#acm_delete_button:hover {
     background-color: var(--fullred) !important;
 }
 
