@@ -400,8 +400,8 @@ jQuery(async () => {
     });
 
     // Put the button before rm_button_group_chats in the form_character_search_form
-    // on hover, should say "Open Tag Manager"
-    $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Open Tag Manager"></button>');
+    // on hover, should say "Open Char Manager"
+    $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Open Char Manager"></button>');
     $('#tag-manager').on('click', function () {
         openModal();
     });
