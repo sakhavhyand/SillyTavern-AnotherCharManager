@@ -265,7 +265,6 @@ function fillAdvancedDefinitions(avatar) {
     $('#acm_post_history_instructions_textarea').val(char.data?.post_history_instructions || '');
     $('#acm_tags_textarea').val(Array.isArray(char.data?.tags) ? char.data.tags.join(', ') : '');
     $('#acm_creator_textarea').val(char.data?.creator);
-    $('#acm_character_version_textarea').val(char.data?.character_version || '');
     $('#acm_personality_textarea').val(char.personality);
     $('#acm_scenario_pole').val(char.scenario);
     $('#acm_depth_prompt_prompt').val(char.data?.extensions?.depth_prompt?.prompt ?? '');
