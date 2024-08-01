@@ -28,6 +28,7 @@ let displayed;
 let sortOrder = 'asc';
 let sortData = 'name';
 let searchValue = '';
+let is_acm_advanced_char_open = false;
 
 function debounce(func, timeout = 300) {
     let timer;
@@ -254,6 +255,27 @@ function fillDetails(avatar) {
     addAltGreetingsTrigger()
 }
 
+function fillAdvancedDefinitions(avatar) {
+    const char = characters[getIdByAvatar(avatar)];
+
+    $('#acm_character_popup-button-h3').text(char.name);
+    $('#acm_creator_notes_textarea').val(char.data?.creator_notes || char.creatorcomment);
+    $('#acm_character_version_textarea').val(char.data?.character_version || '');
+    $('#acm_system_prompt_textarea').val(char.data?.system_prompt || '');
+    $('#acm_post_history_instructions_textarea').val(char.data?.post_history_instructions || '');
+    $('#acm_tags_textarea').val(Array.isArray(char.data?.tags) ? char.data.tags.join(', ') : '');
+    $('#acm_creator_textarea').val(char.data?.creator);
+    $('#acm_character_version_textarea').val(char.data?.character_version || '');
+    $('#acm_personality_textarea').val(char.personality);
+    $('#acm_scenario_pole').val(char.scenario);
+    $('#acm_depth_prompt_prompt').val(char.data?.extensions?.depth_prompt?.prompt ?? '');
+    $('#acm_depth_prompt_depth').val(char.data?.extensions?.depth_prompt?.depth ?? depth_prompt_depth_default);
+    $('#acm_depth_prompt_role').val(char.data?.extensions?.depth_prompt?.role ?? depth_prompt_role_default);
+    $('#acm_talkativeness_slider').val(char.talkativeness || talkativeness_default);
+    $('#acm_mes_example_textarea').val(char.mes_example);
+
+}
+
 // Function to refresh the character list based on search and sorting parameters
 function refreshCharList() {
 
@@ -300,6 +322,7 @@ function selectAndDisplay(id, avatar) {
     $('#acm_export_format_popup').hide();
 
     fillDetails(avatar);
+    fillAdvancedDefinitions(avatar);
 
     document.getElementById(`CharDID${id}`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
@@ -515,6 +538,31 @@ jQuery(async () => {
     // Delete character
     $('#acm_delete_button').click(function () {
         $('#delete_button').click();
+    });
+
+    $('#acm_advanced_div').click(function () {
+        if (!is_acm_advanced_char_open) {
+            is_acm_advanced_char_open = true;
+            $('#acm_character_popup').css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open');
+            $('#acm_character_popup').transition({
+                opacity: 1.0,
+                duration: 125,
+                easing: 'ease-in-out',
+            });
+        } else {
+            is_acm_advanced_char_open = false;
+            $('#acm_character_popup').css('display', 'none').removeClass('open');
+        }
+    });
+
+    $('#acm_character_cross').click(function () {
+        is_acm_advanced_char_open = false;
+        $('#character_popup').transition({
+            opacity: 0,
+            duration: 125,
+            easing: 'ease-in-out',
+        });
+        setTimeout(function () { $('#acm_character_popup').css('display', 'none'); }, 125);
     });
 
     // Update character description
