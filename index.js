@@ -12,6 +12,7 @@ const event_types = SillyTavern.getContext().eventTypes;
 const characters = SillyTavern.getContext().characters;
 const tagMap = SillyTavern.getContext().tagMap;
 const tagList = SillyTavern.getContext().tags;
+const selectCharacterById = SillyTavern.getContext().selectCharacterById;
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherCharManager';
@@ -330,8 +331,8 @@ function selectAndDisplay(id, avatar) {
 }
 
 // Function to close the details panel
-function closeDetails() {
-    setCharacterId(getIdByAvatar(mem_avatar));
+function closeDetails( reset = true ) {
+    if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
     selectedChar = undefined;
 
     $('#acm_export_format_popup').hide();
@@ -465,7 +466,7 @@ jQuery(async () => {
     });
 
     // Trigger when the modal is closed to reset some global parameters
-    $('#acm_popup_close').click( function () {
+    $('#acm_popup_close').on("click", function () {
         closeDetails();
         setCharacterId(getIdByAvatar(mem_avatar));
         setMenuType(mem_menu);
@@ -483,25 +484,43 @@ jQuery(async () => {
         displayed = false;
     });
 
+    $('#acm_open_chat').on('click', function () {
+        setCharacterId(undefined);
+        mem_avatar = undefined;
+        selectCharacterById(selectedId);
+        closeDetails(false);
+
+        $('#acm_shadow_popup').transition({
+            opacity: 0,
+            duration: 125,
+            easing: 'ease-in-out',
+        });
+        setTimeout(function () {
+            $('#acm_shadow_popup').css('display', 'none');
+            $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
+        }, 125);
+        displayed = false;
+    });
+
     // Import character by file
-    $('#acm_character_import_button').click(function () {
+    $('#acm_character_import_button').on("click", function () {
         $('#character_import_file').click();
     });
 
     // Import character by URL
-    $('#acm_external_import_button').click(function () {
+    $('#acm_external_import_button').on("click", function () {
         $('#external_import_button').click();
     });
 
     // Import character by file
-    $('#acm_rename_button').click(async function () {
+    $('#acm_rename_button').on("click", async function () {
         const charID = getIdByAvatar(selectedChar);
         const newName = await callPopup('<h3>New name:</h3>', 'input', characters[charID].name);
-        renameChar(selectedChar, charID, newName);
+        await renameChar(selectedChar, charID, newName);
     });
 
     // Export character
-    $('#acm_export_button').click(function () {
+    $('#acm_export_button').on("click", function () {
         $('#acm_export_format_popup').toggle();
         acmExportPopper.update();
     });
@@ -515,7 +534,7 @@ jQuery(async () => {
     });
 
     // Duplicate character
-    $('#acm_dupe_button').click(async function () {
+    $('#acm_dupe_button').on("click", async function () {
         if (!selectedChar) {
             toastr.warning('You must first select a character to duplicate!');
             return;
@@ -535,11 +554,11 @@ jQuery(async () => {
     });
 
     // Delete character
-    $('#acm_delete_button').click(function () {
+    $('#acm_delete_button').on("click", function () {
         $('#delete_button').click();
     });
 
-    $('#acm_advanced_div').click(function () {
+    $('#acm_advanced_div').on("click", function () {
         if (!is_acm_advanced_char_open) {
             is_acm_advanced_char_open = true;
             $('#acm_character_popup').css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open');
@@ -554,7 +573,7 @@ jQuery(async () => {
         }
     });
 
-    $('#acm_character_cross').click(function () {
+    $('#acm_character_cross').on("click", function () {
         is_acm_advanced_char_open = false;
         $('#character_popup').transition({
             opacity: 0,
@@ -564,28 +583,29 @@ jQuery(async () => {
         setTimeout(function () { $('#acm_character_popup').css('display', 'none'); }, 125);
     });
 
-    // Update character description
-    $('#desc_zone').on('input', function () {
-        const update = {
-            avatar: selectedChar,
-            description: this.value,
-            data: {
-                description: this.value,
-            },
-        };
-        editCharDebounced(update);
-    });
+    // Adding textarea trigger on input
+    const elementsToUpdate = {
+        '#desc_zone': function () { const update = { avatar: selectedChar, description: String($('#desc_zone').val()), data: { description: String($('#desc_zone').val()), },}; editCharDebounced(update);},
+        '#firstMes_zone': function () { const update = { avatar: selectedChar, first_mes: String($('#firstMes_zone').val()), data: { first_mes: String($('#firstMes_zone').val()),},}; editCharDebounced(update);},
+        '#acm_creator_notes_textarea': function () { const update = { avatar: selectedChar, creatorcomment: String($('#acm_creator_notes_textarea').val()), data: { creator_notes: String($('#acm_creator_notes_textarea').val()), },}; editCharDebounced(update);},
+        '#acm_character_version_textarea': function () { const update = { avatar: selectedChar, data: { character_version: String($('#acm_character_version_textarea').val()), },}; editCharDebounced(update);},
+        '#acm_system_prompt_textarea': function () { const update = { avatar: selectedChar, data: { system_prompt: String($('#acm_system_prompt_textarea').val()), },}; editCharDebounced(update);},
+        '#acm_post_history_instructions_textarea': function () { const update = { avatar: selectedChar, data: { post_history_instructions: String($('#acm_post_history_instructions_textarea').val()), },}; editCharDebounced(update);},
+        '#acm_creator_textarea': function () { const update = { avatar: selectedChar, data: { creator: String($('#acm_creator_textarea').val()), },}; editCharDebounced(update);},
+        '#acm_personality_textarea': function () { const update = { avatar: selectedChar, personality: String($('#acm_personality_textarea').val()), data: { personality: String($('#acm_personality_textarea').val()), },}; editCharDebounced(update);},
+        '#acm_scenario_pole': function () { const update = { avatar: selectedChar, scenario: String($('#acm_scenario_pole').val()), data: { scenario: String($('#acm_scenario_pole').val()), },}; editCharDebounced(update);},
+        '#acm_depth_prompt_prompt': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { prompt: String($('#acm_depth_prompt_prompt').val()),}}},}; editCharDebounced(update);},
+        '#acm_depth_prompt_depth': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { depth: $('#acm_depth_prompt_depth').val(),}}},}; editCharDebounced(update);},
+        '#acm_depth_prompt_role': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { role: String($('#acm_depth_prompt_role').val()),}}},}; editCharDebounced(update);},
+        '#acm_talkativeness_slider': function () { const update = { avatar: selectedChar, talkativeness: String($('#acm_talkativeness_slider').val()), data: { extensions: { talkativeness: String($('#acm_talkativeness_slider').val()),}}}; editCharDebounced(update);},
+        '#acm_mes_example_textarea': function () { const update = { avatar: selectedChar, mes_example: String($('#acm_mes_example_textarea').val()), data: { mes_example: String($('#acm_mes_example_textarea').val()), },}; editCharDebounced(update);},
+        '#acm_tags_textarea': function () { const update = { avatar: selectedChar, tags: $('#acm_tags_textarea').val().split(', '), data: { tags: $('#acm_tags_textarea').val().split(', '), },}; editCharDebounced(update);}
+    };
 
-    // Update character first message
-    $('#firstMes_zone').on('input', function () {
-        const update = {
-            avatar: selectedChar,
-            first_mes: this.value,
-            data: {
-                first_mes: this.value,
-            },
-        };
-        editCharDebounced(update);
+    Object.keys(elementsToUpdate).forEach(function (id) {
+        $(id).on('input', function () {
+                elementsToUpdate[id]();
+        });
     });
 
     // Add a new alternative greetings
