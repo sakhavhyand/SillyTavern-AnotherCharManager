@@ -1,5 +1,5 @@
 // An extension that allows you to manage characters.
-import { setCharacterId, setMenuType } from '../../../../script.js';
+import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { resetScrollHeight } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
 import { editChar, dupeChar, renameChar, exportChar } from './src/acm_characters.js';
@@ -91,11 +91,18 @@ function sortCharAR(chars, sort_data, sort_order) {
 function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
+    let isFav;
 
     const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
     const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
+    if ( characters[id].fav || characters[id].data.extensions.fav ) {
+        isFav = 'fav';
+    }
+    else {
+        isFav = '';
+    }
 
-    return `<div class="character_item ${charClass}" chid="${id}" avatar="${avatar}" id="CharDID${id}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
+    return `<div class="character_item ${charClass} ${isFav}" chid="${id}" avatar="${avatar}" id="CharDID${id}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
                     <div class="avatar_item">
                         <img src="${avatarThumb}" alt="${characters[id].avatar}">
                     </div>
@@ -239,6 +246,7 @@ function delAltGreeting(index, inlineDrawer){
 function fillDetails(avatar) {
     const char = characters[getIdByAvatar(avatar)];
     const this_avatar = getThumbnailUrl('avatar', char.avatar);
+    const favoriteButton = document.getElementById('acm_favorite_button');
 
     $('#avatar_title').attr('title', char.avatar);
     $('#avatar_img').attr('src', this_avatar);
@@ -252,6 +260,8 @@ function fillDetails(avatar) {
     document.getElementById('tag_List').innerHTML = `${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`;
     createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
     document.getElementById('altGreetings_content').innerHTML = displayAltGreetings(char.data.alternate_greetings);
+    favoriteButton.classList.toggle('fav_on', char.fav || char.data.extensions.fav);
+    favoriteButton.classList.toggle('fav_off', !(char.fav || char.data.extensions.fav));
 
     addAltGreetingsTrigger()
 }
@@ -488,6 +498,20 @@ jQuery(async () => {
             $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
         }, 125);
         displayed = false;
+    });
+
+    $('#acm_favorite_button').on('click', function() {
+        const id = getIdByAvatar(selectedChar);
+        if (characters[id].fav || characters[id].data.extensions.fav) {
+            const update = { avatar: selectedChar, fav: false, data: { extensions: { fav: false }}};
+            editCharDebounced(update);
+            $('#acm_favorite_button')[0].classList.replace('fav_on', 'fav_off');
+        }
+        else {
+            const update = { avatar: selectedChar, fav: true, data: { extensions: { fav: true }}};
+            editCharDebounced(update);
+            $('#acm_favorite_button')[0].classList.replace('fav_off', 'fav_on');
+        }
     });
 
     $('#acm_open_chat').on('click', function () {
