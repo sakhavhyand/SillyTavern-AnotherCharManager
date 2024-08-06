@@ -123,7 +123,7 @@
                 <textarea id="acm_system_prompt_textarea" name="system_prompt" data-i18n="[placeholder]Any contents here will replace the default Main Prompt used for this character. (v2 spec: system_prompt)" placeholder="Any contents here will replace the default Main Prompt used for this character.
 (v2 spec: system_prompt)" class="text_pole" autocomplete="off" rows="3" maxlength="50000"></textarea>
                 <div class="extension_token_counter">
-                    <span data-i18n="extension_token_counter">Tokens:</span> <span>0</span>
+                    <span id="acm_main_prompt_tokens"></span>
                 </div>
             </div>
             <div>
@@ -131,7 +131,7 @@
                 <textarea id="acm_post_history_instructions_textarea" name="post_history_instructions" data-i18n="[placeholder]Any contents here will replace the default Post-History Instructions used for this character. (v2 spec: post_history_instructions)" placeholder="Any contents here will replace the default Post-History Instructions used for this character.
 (v2 spec: post_history_instructions)" class="text_pole" autocomplete="off" rows="3" maxlength="50000"></textarea>
                 <div class="extension_token_counter">
-                    <span data-i18n="extension_token_counter">Tokens:</span> <span>0</span>
+                    <span id="acm_post_tokens"></span>
                 </div>
             </div>
         </div>
@@ -177,7 +177,7 @@
         </h4>
         <textarea id="acm_personality_textarea" name="personality" data-i18n="[placeholder](A brief description of the personality)" placeholder="(A brief description of the personality)" class="text_pole" autocomplete="off" rows="4" maxlength="50000"></textarea>
         <div class="extension_token_counter">
-            <span data-i18n="extension_token_counter">Tokens:</span> <span>0</span>
+            <span id="acm_personality_tokens"></span>
         </div>
     </div>
     <div id="acm_scenario_div">
@@ -189,7 +189,7 @@
         </h4>
         <textarea id="acm_scenario_pole" name="scenario" data-i18n="[placeholder](Circumstances and context of the interaction)" placeholder="(Circumstances and context of the interaction)" class="text_pole" maxlength="50000" value="" autocomplete="off" rows="4"></textarea>
         <div class="extension_token_counter">
-            <span data-i18n="extension_token_counter">Tokens:</span> <span>0</span>
+            <span id="acm_scenario_tokens"></span>
         </div>
     </div>
     <div id="acm_depth_prompt_div" class="flex-container">
@@ -219,7 +219,7 @@
                 <option value="assistant" data-i18n="Assistant">Assistant</option>
             </select>
             <div class="extension_token_counter">
-                <span data-i18n="extension_token_counter">Tokens:</span> <span>0</span>
+                <span id="acm_char_notes_tokens"></span>
             </div>
         </div>
     </div>
@@ -243,7 +243,7 @@
         </div>
         <textarea id="acm_mes_example_textarea" class="flexGrow" name="mes_example" data-i18n="[placeholder](Examples of chat dialog. Begin each example with START on a new line.)" placeholder="(Examples of chat dialog. Begin each example with <START> on a new line.)" maxlength="50000" rows="6"></textarea>
         <div class="extension_token_counter">
-            <span data-i18n="extension_token_counter">Tokens:</span> <span>0</span>
+            <span id="acm_messages_examples"></span>
         </div>
     </div>
     <div id="acm_character_popup_ok" class="menu_button interactable" data-i18n="Save">Save</div>
