@@ -251,6 +251,10 @@
     border-radius: 20%;
 }
 
+.fav .avatar_item > img {
+    border: 2px solid goldenrod;
+}
+
 .char_name {
     width: 100%;
     max-width: unset !important;
