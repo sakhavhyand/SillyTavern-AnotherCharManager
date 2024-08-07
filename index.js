@@ -21,15 +21,12 @@ const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 100);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
-let selectedId;
-let selectedChar;
-let mem_menu;
-let mem_avatar;
-let displayed;
+let selectedId, selectedChar, mem_menu, mem_avatar, displayed;
 let sortOrder = 'asc';
 let sortData = 'name';
 let searchValue = '';
 let is_acm_advanced_char_open = false;
+let fav_only = false;
 
 function debounce(func, timeout = 300) {
     let timer;
@@ -142,7 +139,7 @@ function displayAltGreetings(item) {
     let altGreetingsHTML = '';
 
     if(item.length === 0){
-        return '<span>Nothing here but chickens!!</span>';
+        return '<span id="chicken">Nothing here but chickens!!</span>';
     }
     else {
         for (let i = 0; i < item.length; i++) {
@@ -184,6 +181,9 @@ function saveAltGreetings(event = null){
         const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
         tokensSpan.textContent = `Tokens: ${getTokenCount(textarea.value)}`;
     }
+
+    // Edit the Alt Greetings number on the main drawer
+    document.getElementById('altGreetings_number').innerHTML = `Numbers: ${greetings.length}`;
 }
 
 // Function to display a new alternative greeting block
@@ -213,6 +213,10 @@ function addAltGreeting(){
             </div>`;
 
     // Add the new inline-drawer block
+    if ($('#chicken').length > 0) {
+        $('#chicken').remove();
+    }
+
     drawerContainer.appendChild(altGreetingDiv);
 
     // Add the event on the textarea
@@ -230,13 +234,20 @@ function delAltGreeting(index, inlineDrawer){
     inlineDrawer.remove();
 
     // Update the others AltGreeting blocks
-    $('.altgreetings-drawer-toggle').each(function() {
-        const currentIndex = parseInt($(this).find('.greeting_index').text());
-        if (currentIndex > index) {
-            $(this).find('.greeting_index').text(currentIndex - 1);
-            $(this).attr('id', `altGreetDrawer${currentIndex - 1}`);
-        }
-    });
+    const $altGreetingsToggle = $('.altgreetings-drawer-toggle');
+
+    if ($('div[id^="altGreetDrawer"]').length === 0) {
+        $('#altGreetings_content').html('<span id="chicken">Nothing here but chickens!!</span>');
+    }
+    else {
+        $altGreetingsToggle.each(function() {
+            const currentIndex = parseInt($(this).find('.greeting_index').text());
+            if (currentIndex > index) {
+                $(this).find('.greeting_index').text(currentIndex - 1);
+                $(this).attr('id', `altGreetDrawer${currentIndex - 1}`);
+            }
+        });
+    }
 
     // Save it
     saveAltGreetings();
@@ -296,7 +307,9 @@ function fillAdvancedDefinitions(avatar) {
 function refreshCharList() {
 
     let filteredChars = [];
-    const charactersCopy = [...SillyTavern.getContext().characters];
+    const charactersCopy = fav_only
+        ? [...SillyTavern.getContext().characters].filter(character => character.fav === true || character.data.extensions.fav === true)
+        : [...SillyTavern.getContext().characters];
 
     if (searchValue !== '') {
         const searchValueLower = searchValue.toLowerCase();
@@ -316,10 +329,20 @@ function refreshCharList() {
 
             return matchesText || matchesTag;
         });
+
+        if(filteredChars.length === 0){
+            document.getElementById('character-list').innerHTML = `<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`;
+        }
+        else {
+            const sortedList = sortCharAR(filteredChars, sortData, sortOrder);
+            document.getElementById('character-list').innerHTML = sortedList.map((item) => getCharBlock(item.avatar)).join('');
+        }
+    }
+    else {
+        const sortedList = sortCharAR(charactersCopy, sortData, sortOrder);
+        document.getElementById('character-list').innerHTML = sortedList.map((item) => getCharBlock(item.avatar)).join('');
     }
 
-    const sortedList = sortCharAR((filteredChars.length === 0 ? charactersCopy : filteredChars), sortData, sortOrder);
-    document.getElementById('character-list').innerHTML = sortedList.map((item) => getCharBlock(item.avatar)).join('');
     $('#charNumber').empty().append(`Total characters : ${charactersCopy.length}`);
 }
 
@@ -462,6 +485,17 @@ jQuery(async () => {
         searchValue = String($(this).val()).toLowerCase();
         refreshCharListDebounced();
     });
+
+    $('#favOnly_checkbox').change(function() {
+        if (this.checked) {
+            fav_only = true;
+            refreshCharListDebounced();
+        } else {
+            fav_only = false;
+            refreshCharListDebounced();
+        }
+    });
+
 
     // Trigger when clicking on the separator to close the character details
     $(document).on('click', '#char-sep', function () {

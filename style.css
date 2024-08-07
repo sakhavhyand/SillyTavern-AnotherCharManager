@@ -189,6 +189,16 @@
     margin: 5px;
 }
 
+.acm_checkbox {
+    display: flex;
+    flex-direction: row;
+    column-gap: 5px;
+    align-items: center;
+    white-space: nowrap;
+    margin: 5px;
+}
+
+
 #charNumber {
     padding: 7px 2px;
     min-width: fit-content;
@@ -215,7 +225,7 @@
     display: flex;
     gap: 5px;
     flex-wrap: wrap;
-    width: min-content;
+    /* width: min-content; */
     height: min-content;
     padding: 2px;
     border-radius: 5px;
