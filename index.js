@@ -1,5 +1,5 @@
 // An extension that allows you to manage characters.
-import { setCharacterId, setMenuType } from '../../../../script.js';
+import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { resetScrollHeight } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
 import { editChar, dupeChar, renameChar, exportChar } from './src/acm_characters.js';
@@ -12,6 +12,7 @@ const event_types = SillyTavern.getContext().eventTypes;
 const characters = SillyTavern.getContext().characters;
 const tagMap = SillyTavern.getContext().tagMap;
 const tagList = SillyTavern.getContext().tags;
+const selectCharacterById = SillyTavern.getContext().selectCharacterById;
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherCharManager';
@@ -20,14 +21,12 @@ const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 100);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
-let selectedId;
-let selectedChar;
-let mem_menu;
-let mem_avatar;
-let displayed;
+let selectedId, selectedChar, mem_menu, mem_avatar, displayed;
 let sortOrder = 'asc';
 let sortData = 'name';
 let searchValue = '';
+let is_acm_advanced_char_open = false;
+let fav_only = false;
 
 function debounce(func, timeout = 300) {
     let timer;
@@ -89,11 +88,18 @@ function sortCharAR(chars, sort_data, sort_order) {
 function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
+    let isFav;
 
     const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
     const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
+    if ( characters[id].fav || characters[id].data.extensions.fav ) {
+        isFav = 'fav';
+    }
+    else {
+        isFav = '';
+    }
 
-    return `<div class="character_item ${charClass}" chid="${id}" avatar="${avatar}" id="CharDID${id}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
+    return `<div class="character_item ${charClass} ${isFav}" chid="${id}" avatar="${avatar}" id="CharDID${id}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
                     <div class="avatar_item">
                         <img src="${avatarThumb}" alt="${characters[id].avatar}">
                     </div>
@@ -133,7 +139,7 @@ function displayAltGreetings(item) {
     let altGreetingsHTML = '';
 
     if(item.length === 0){
-        return '<span>Nothing here but chickens!!</span>';
+        return '<span id="chicken">Nothing here but chickens!!</span>';
     }
     else {
         for (let i = 0; i < item.length; i++) {
@@ -175,6 +181,9 @@ function saveAltGreetings(event = null){
         const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
         tokensSpan.textContent = `Tokens: ${getTokenCount(textarea.value)}`;
     }
+
+    // Edit the Alt Greetings number on the main drawer
+    document.getElementById('altGreetings_number').innerHTML = `Numbers: ${greetings.length}`;
 }
 
 // Function to display a new alternative greeting block
@@ -204,6 +213,10 @@ function addAltGreeting(){
             </div>`;
 
     // Add the new inline-drawer block
+    if ($('#chicken').length > 0) {
+        $('#chicken').remove();
+    }
+
     drawerContainer.appendChild(altGreetingDiv);
 
     // Add the event on the textarea
@@ -221,13 +234,20 @@ function delAltGreeting(index, inlineDrawer){
     inlineDrawer.remove();
 
     // Update the others AltGreeting blocks
-    $('.altgreetings-drawer-toggle').each(function() {
-        const currentIndex = parseInt($(this).find('.greeting_index').text());
-        if (currentIndex > index) {
-            $(this).find('.greeting_index').text(currentIndex - 1);
-            $(this).attr('id', `altGreetDrawer${currentIndex - 1}`);
-        }
-    });
+    const $altGreetingsToggle = $('.altgreetings-drawer-toggle');
+
+    if ($('div[id^="altGreetDrawer"]').length === 0) {
+        $('#altGreetings_content').html('<span id="chicken">Nothing here but chickens!!</span>');
+    }
+    else {
+        $altGreetingsToggle.each(function() {
+            const currentIndex = parseInt($(this).find('.greeting_index').text());
+            if (currentIndex > index) {
+                $(this).find('.greeting_index').text(currentIndex - 1);
+                $(this).attr('id', `altGreetDrawer${currentIndex - 1}`);
+            }
+        });
+    }
 
     // Save it
     saveAltGreetings();
@@ -237,6 +257,7 @@ function delAltGreeting(index, inlineDrawer){
 function fillDetails(avatar) {
     const char = characters[getIdByAvatar(avatar)];
     const this_avatar = getThumbnailUrl('avatar', char.avatar);
+    const favoriteButton = document.getElementById('acm_favorite_button');
 
     $('#avatar_title').attr('title', char.avatar);
     $('#avatar_img').attr('src', this_avatar);
@@ -250,15 +271,45 @@ function fillDetails(avatar) {
     document.getElementById('tag_List').innerHTML = `${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`;
     createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
     document.getElementById('altGreetings_content').innerHTML = displayAltGreetings(char.data.alternate_greetings);
+    favoriteButton.classList.toggle('fav_on', char.fav || char.data.extensions.fav);
+    favoriteButton.classList.toggle('fav_off', !(char.fav || char.data.extensions.fav));
 
     addAltGreetingsTrigger()
+}
+
+function fillAdvancedDefinitions(avatar) {
+    const char = characters[getIdByAvatar(avatar)];
+
+    $('#acm_character_popup-button-h3').text(char.name);
+    $('#acm_creator_notes_textarea').val(char.data?.creator_notes || char.creatorcomment);
+    $('#acm_character_version_textarea').val(char.data?.character_version || '');
+    $('#acm_system_prompt_textarea').val(char.data?.system_prompt || '');
+    $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(char.data?.system_prompt || '')}`);
+    $('#acm_post_history_instructions_textarea').val(char.data?.post_history_instructions || '');
+    $('#acm_post_tokens').text(`Tokens: ${getTokenCount(char.data?.post_history_instructions || '')}`);
+    $('#acm_tags_textarea').val(Array.isArray(char.data?.tags) ? char.data.tags.join(', ') : '');
+    $('#acm_creator_textarea').val(char.data?.creator);
+    $('#acm_personality_textarea').val(char.personality);
+    $('#acm_personality_tokens').text(`Tokens: ${getTokenCount(char.personality)}`);
+    $('#acm_scenario_pole').val(char.scenario);
+    $('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(char.scenario)}`);
+    $('#acm_depth_prompt_prompt').val(char.data?.extensions?.depth_prompt?.prompt ?? '');
+    $('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(char.data?.extensions?.depth_prompt?.prompt ?? '')}`);
+    $('#acm_depth_prompt_depth').val(char.data?.extensions?.depth_prompt?.depth ?? depth_prompt_depth_default);
+    $('#acm_depth_prompt_role').val(char.data?.extensions?.depth_prompt?.role ?? depth_prompt_role_default);
+    $('#acm_talkativeness_slider').val(char.talkativeness || talkativeness_default);
+    $('#acm_mes_example_textarea').val(char.mes_example);
+    $('#acm_messages_examples').text(`Tokens: ${getTokenCount(char.mes_example)}`);
+
 }
 
 // Function to refresh the character list based on search and sorting parameters
 function refreshCharList() {
 
     let filteredChars = [];
-    const charactersCopy = [...SillyTavern.getContext().characters];
+    const charactersCopy = fav_only
+        ? [...SillyTavern.getContext().characters].filter(character => character.fav === true || character.data.extensions.fav === true)
+        : [...SillyTavern.getContext().characters];
 
     if (searchValue !== '') {
         const searchValueLower = searchValue.toLowerCase();
@@ -278,10 +329,20 @@ function refreshCharList() {
 
             return matchesText || matchesTag;
         });
+
+        if(filteredChars.length === 0){
+            document.getElementById('character-list').innerHTML = `<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`;
+        }
+        else {
+            const sortedList = sortCharAR(filteredChars, sortData, sortOrder);
+            document.getElementById('character-list').innerHTML = sortedList.map((item) => getCharBlock(item.avatar)).join('');
+        }
+    }
+    else {
+        const sortedList = sortCharAR(charactersCopy, sortData, sortOrder);
+        document.getElementById('character-list').innerHTML = sortedList.map((item) => getCharBlock(item.avatar)).join('');
     }
 
-    const sortedList = sortCharAR((filteredChars.length === 0 ? charactersCopy : filteredChars), sortData, sortOrder);
-    document.getElementById('character-list').innerHTML = sortedList.map((item) => getCharBlock(item.avatar)).join('');
     $('#charNumber').empty().append(`Total characters : ${charactersCopy.length}`);
 }
 
@@ -300,6 +361,7 @@ function selectAndDisplay(id, avatar) {
     $('#acm_export_format_popup').hide();
 
     fillDetails(avatar);
+    fillAdvancedDefinitions(avatar);
 
     document.getElementById(`CharDID${id}`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
@@ -308,8 +370,8 @@ function selectAndDisplay(id, avatar) {
 }
 
 // Function to close the details panel
-function closeDetails() {
-    setCharacterId(getIdByAvatar(mem_avatar));
+function closeDetails( reset = true ) {
+    if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
     selectedChar = undefined;
 
     $('#acm_export_format_popup').hide();
@@ -400,8 +462,8 @@ jQuery(async () => {
     });
 
     // Put the button before rm_button_group_chats in the form_character_search_form
-    // on hover, should say "Open Tag Manager"
-    $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Open Tag Manager"></button>');
+    // on hover, should say "Open Char Manager"
+    $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Open Char Manager"></button>');
     $('#tag-manager').on('click', function () {
         openModal();
     });
@@ -424,6 +486,17 @@ jQuery(async () => {
         refreshCharListDebounced();
     });
 
+    $('#favOnly_checkbox').change(function() {
+        if (this.checked) {
+            fav_only = true;
+            refreshCharListDebounced();
+        } else {
+            fav_only = false;
+            refreshCharListDebounced();
+        }
+    });
+
+
     // Trigger when clicking on the separator to close the character details
     $(document).on('click', '#char-sep', function () {
         closeDetails();
@@ -443,7 +516,7 @@ jQuery(async () => {
     });
 
     // Trigger when the modal is closed to reset some global parameters
-    $('#acm_popup_close').click( function () {
+    $('#acm_popup_close').on("click", function () {
         closeDetails();
         setCharacterId(getIdByAvatar(mem_avatar));
         setMenuType(mem_menu);
@@ -461,25 +534,57 @@ jQuery(async () => {
         displayed = false;
     });
 
+    $('#acm_favorite_button').on('click', function() {
+        const id = getIdByAvatar(selectedChar);
+        if (characters[id].fav || characters[id].data.extensions.fav) {
+            const update = { avatar: selectedChar, fav: false, data: { extensions: { fav: false }}};
+            editCharDebounced(update);
+            $('#acm_favorite_button')[0].classList.replace('fav_on', 'fav_off');
+        }
+        else {
+            const update = { avatar: selectedChar, fav: true, data: { extensions: { fav: true }}};
+            editCharDebounced(update);
+            $('#acm_favorite_button')[0].classList.replace('fav_off', 'fav_on');
+        }
+    });
+
+    $('#acm_open_chat').on('click', function () {
+        setCharacterId(undefined);
+        mem_avatar = undefined;
+        selectCharacterById(selectedId);
+        closeDetails(false);
+
+        $('#acm_shadow_popup').transition({
+            opacity: 0,
+            duration: 125,
+            easing: 'ease-in-out',
+        });
+        setTimeout(function () {
+            $('#acm_shadow_popup').css('display', 'none');
+            $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
+        }, 125);
+        displayed = false;
+    });
+
     // Import character by file
-    $('#acm_character_import_button').click(function () {
+    $('#acm_character_import_button').on("click", function () {
         $('#character_import_file').click();
     });
 
     // Import character by URL
-    $('#acm_external_import_button').click(function () {
+    $('#acm_external_import_button').on("click", function () {
         $('#external_import_button').click();
     });
 
     // Import character by file
-    $('#acm_rename_button').click(async function () {
+    $('#acm_rename_button').on("click", async function () {
         const charID = getIdByAvatar(selectedChar);
         const newName = await callPopup('<h3>New name:</h3>', 'input', characters[charID].name);
-        renameChar(selectedChar, charID, newName);
+        await renameChar(selectedChar, charID, newName);
     });
 
     // Export character
-    $('#acm_export_button').click(function () {
+    $('#acm_export_button').on("click", function () {
         $('#acm_export_format_popup').toggle();
         acmExportPopper.update();
     });
@@ -493,7 +598,7 @@ jQuery(async () => {
     });
 
     // Duplicate character
-    $('#acm_dupe_button').click(async function () {
+    $('#acm_dupe_button').on("click", async function () {
         if (!selectedChar) {
             toastr.warning('You must first select a character to duplicate!');
             return;
@@ -513,32 +618,58 @@ jQuery(async () => {
     });
 
     // Delete character
-    $('#acm_delete_button').click(function () {
+    $('#acm_delete_button').on("click", function () {
         $('#delete_button').click();
     });
 
-    // Update character description
-    $('#desc_zone').on('input', function () {
-        const update = {
-            avatar: selectedChar,
-            description: this.value,
-            data: {
-                description: this.value,
-            },
-        };
-        editCharDebounced(update);
+    $('#acm_advanced_div').on("click", function () {
+        if (!is_acm_advanced_char_open) {
+            is_acm_advanced_char_open = true;
+            $('#acm_character_popup').css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open');
+            $('#acm_character_popup').transition({
+                opacity: 1.0,
+                duration: 125,
+                easing: 'ease-in-out',
+            });
+        } else {
+            is_acm_advanced_char_open = false;
+            $('#acm_character_popup').css('display', 'none').removeClass('open');
+        }
     });
 
-    // Update character first message
-    $('#firstMes_zone').on('input', function () {
-        const update = {
-            avatar: selectedChar,
-            first_mes: this.value,
-            data: {
-                first_mes: this.value,
-            },
-        };
-        editCharDebounced(update);
+    $('#acm_character_cross').on("click", function () {
+        is_acm_advanced_char_open = false;
+        $('#character_popup').transition({
+            opacity: 0,
+            duration: 125,
+            easing: 'ease-in-out',
+        });
+        setTimeout(function () { $('#acm_character_popup').css('display', 'none'); }, 125);
+    });
+
+    // Adding textarea trigger on input
+    const elementsToUpdate = {
+        '#desc_zone': function () { const update = { avatar: selectedChar, description: String($('#desc_zone').val()), data: { description: String($('#desc_zone').val()), },}; editCharDebounced(update); document.getElementById('desc_Tokens').innerHTML = `Tokens: ${getTokenCount(String($('#desc_zone').val()))}`;},
+        '#firstMes_zone': function () { const update = { avatar: selectedChar, first_mes: String($('#firstMes_zone').val()), data: { first_mes: String($('#firstMes_zone').val()),},}; editCharDebounced(update); document.getElementById('firstMess_tokens').innerHTML = `Tokens: ${getTokenCount(String($('#firstMes_zone').val()))}`;},
+        '#acm_creator_notes_textarea': function () { const update = { avatar: selectedChar, creatorcomment: String($('#acm_creator_notes_textarea').val()), data: { creator_notes: String($('#acm_creator_notes_textarea').val()), },}; editCharDebounced(update);},
+        '#acm_character_version_textarea': function () { const update = { avatar: selectedChar, data: { character_version: String($('#acm_character_version_textarea').val()), },}; editCharDebounced(update);},
+        '#acm_system_prompt_textarea': function () { const update = { avatar: selectedChar, data: { system_prompt: String($('#acm_system_prompt_textarea').val()), },}; editCharDebounced(update); $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(String($('#acm_system_prompt_textarea').val()))}`);},
+        '#acm_post_history_instructions_textarea': function () { const update = { avatar: selectedChar, data: { post_history_instructions: String($('#acm_post_history_instructions_textarea').val()), },}; editCharDebounced(update); $('#acm_post_tokens').text(`Tokens: ${getTokenCount(String($('#acm_post_history_instructions_textarea').val()))}`);},
+        '#acm_creator_textarea': function () { const update = { avatar: selectedChar, data: { creator: String($('#acm_creator_textarea').val()), },}; editCharDebounced(update);},
+        '#acm_personality_textarea': function () { const update = { avatar: selectedChar, personality: String($('#acm_personality_textarea').val()), data: { personality: String($('#acm_personality_textarea').val()), },}; editCharDebounced(update); $('#acm_personality_tokens').text(`Tokens: ${getTokenCount(String($('#acm_personality_textarea').val()))}`);},
+        '#acm_scenario_pole': function () { const update = { avatar: selectedChar, scenario: String($('#acm_scenario_pole').val()), data: { scenario: String($('#acm_scenario_pole').val()), },}; editCharDebounced(update); $('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(String($('#acm_scenario_pole').val()))}`);},
+        '#acm_depth_prompt_prompt': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { prompt: String($('#acm_depth_prompt_prompt').val()),}}},}; editCharDebounced(update); $('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(String($('#acm_depth_prompt_prompt').val()))}`);},
+        '#acm_depth_prompt_depth': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { depth: $('#acm_depth_prompt_depth').val(),}}},}; editCharDebounced(update);},
+        '#acm_depth_prompt_role': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { role: String($('#acm_depth_prompt_role').val()),}}},}; editCharDebounced(update);},
+        '#acm_talkativeness_slider': function () { const update = { avatar: selectedChar, talkativeness: String($('#acm_talkativeness_slider').val()), data: { extensions: { talkativeness: String($('#acm_talkativeness_slider').val()),}}}; editCharDebounced(update);},
+        '#acm_mes_example_textarea': function () { const update = { avatar: selectedChar, mes_example: String($('#acm_mes_example_textarea').val()), data: { mes_example: String($('#acm_mes_example_textarea').val()), },}; editCharDebounced(update); $('#acm_messages_examples').text(`Tokens: ${getTokenCount(String($('#acm_mes_example_textarea').val()))}`);},
+        '#acm_tags_textarea': function () { const update = { avatar: selectedChar, tags: $('#acm_tags_textarea').val().split(', '), data: { tags: $('#acm_tags_textarea').val().split(', '), },}; editCharDebounced(update);}
+    };
+
+    Object.keys(elementsToUpdate).forEach(function (id) {
+        $(id).on('input', function () {
+                elementsToUpdate[id]();
+        });
     });
 
     // Add a new alternative greetings
