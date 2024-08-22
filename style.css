@@ -182,11 +182,13 @@
 
 .sortText {
     flex-shrink: 0;
-    margin: 8px;
+    margin: 8px 0 8px 8px;
 }
 
-#char_sort_order {
-    margin: 5px;
+#char_sort_order, #char_search_bar {
+    margin: 5px 0;
+    flex: 1;
+    height: auto;
 }
 
 .acm_checkbox {
@@ -202,7 +204,7 @@
 #charNumber {
     padding: 7px 2px;
     min-width: fit-content;
-    margin: 5px;
+    margin: 7px;
 }
 
 /* Characters List */
@@ -334,17 +336,29 @@
 }
 
 .char-details-summary-desc {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
     text-align: left;
 }
 
 #ch_name_details {
     font-weight: bolder;
-    margin-bottom: 10px;
 }
 
-#crea_comment {
-    overflow-y: auto;
-    max-height: 115px;
+.ch_infos_container {
+    display:flex;
+    justify-content:space-between;
+}
+
+.ch_infos_column {
+    display:flex;
+    flex-direction: column;
+    width:50%;
+}
+
+.ch_infos_item {
+    margin-top: 5px;
 }
 
 #acm_details_buttons_block {
@@ -377,6 +391,21 @@
     padding: 2px 5px;
     border: 1px solid var(--SmartThemeBorderColor);
     transition: all 250ms;
+}
+
+.drawer-header-item {
+    flex-basis: 50%;
+    flex-grow: 0;
+    flex-shrink: 0;
+    text-align: start;
+}
+
+#altGreetings_number {
+    padding-left: 13px;
+}
+
+.tokens_count {
+    padding-left: 13px;
 }
 
 #char-details-desc {

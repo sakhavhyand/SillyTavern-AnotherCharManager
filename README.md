@@ -12,10 +12,13 @@ I've decided to work on it to have something that better suits my needs, because
 
 * With ACM, you can sort by the number of tags characters have, for example, to find those without tags.
 * Editing tags on a character does not load their chat, so it won't change the chat recent history.
+* You can edit description, first message and alternative greetings.
+* Access the advanced definitions window.
+* Open a character chat.
 
 ## Prerequisites
 
-This extension has been tested from SillyTavern 1.11.0 to 1.11.8.
+This extension has been tested from SillyTavern 1.11.0 to 1.12.4.
 
 ## Installation
 
@@ -23,23 +26,25 @@ Utilize SillyTavern's third party extension importer to install like any other e
 
 ## Usage
 
-The extension will add a new Tag button just before the Group button.
+The extension will add a new button just before the Group button.
 
-![image](https://github.com/sakhavhyand/SillyTavern-TagManager/assets/23568313/ee81ab43-b1ea-4a47-97f9-6b0fc948f0d7)
+![01](https://github.com/user-attachments/assets/a862ae25-f069-4efe-a03d-a9488616c2b1)
 
 Clicking on this button will open a pop-up window showing your characters and the number of tags they currently have.
 
-![Image](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/529ac3dc-01da-4480-87ae-d808b39b6600)
+![02](https://github.com/user-attachments/assets/c4ebd6be-8b87-4e17-9f15-942a8dfd3c3c)
 
-You can sort alphabetically, number of tags, recent chat or date added.<br/>
-You also have access to a search bar, the Manage Tags menu and import buttons (file and URL).
+* You can sort alphabetically, number of tags, recent chat or date added.<br/>
+* You also have access to a search bar, the Manage Tags menu and import buttons (file and URL).
+* Favorites are also highlighted and you can filter to only display them.
 
 When you select a character, basic information about the character is displayed at the bottom, including its tags, description and greetings(Alternative greetings are read-only).
-You can also rename, export, duplicate or delete the selected character.
+You can also rename, export, duplicate, delete the selected character among others functionalities.
 
-![Image](https://github.com/sakhavhyand/SillyTavern-AnotherTagManager/assets/23568313/7602e825-23fd-4872-84d5-838ad23ca505)
+![03](https://github.com/user-attachments/assets/1bc4f441-7640-4004-9273-8a62459edc51)
 
 
 ## Support and Contributions
 
 If you encounter any issues while using this extension, please file an issue on GitHub. If you'd like to contribute to this project, feel free to fork the repository and submit a pull request.
+You can also contact me on the extension dedicated post on the Official ST Discord Server.

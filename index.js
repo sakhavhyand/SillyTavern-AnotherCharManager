@@ -6,7 +6,7 @@ import { editChar, dupeChar, renameChar, exportChar } from './src/acm_characters
 
 const getTokenCount = SillyTavern.getContext().getTokenCount;
 const getThumbnailUrl = SillyTavern.getContext().getThumbnailUrl;
-const callPopup = SillyTavern.getContext().callPopup;
+const callPopup = SillyTavern.getContext().callGenericPopup;
 const eventSource = SillyTavern.getContext().eventSource;
 const event_types = SillyTavern.getContext().eventTypes;
 const characters = SillyTavern.getContext().characters;
@@ -101,7 +101,7 @@ function getCharBlock(avatar) {
 
     return `<div class="character_item ${charClass} ${isFav}" chid="${id}" avatar="${avatar}" id="CharDID${id}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
                     <div class="avatar_item">
-                        <img src="${avatarThumb}" alt="${characters[id].avatar}">
+                        <img src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
                     </div>
                     <div class="char_name">
                         <div class="char_name_block">
@@ -146,11 +146,13 @@ function displayAltGreetings(item) {
             let greetingNumber = i + 1;
             altGreetingsHTML += `<div class="inline-drawer">
                 <div id="altGreetDrawer${greetingNumber}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                    <strong>
-                        Greeting #
-                        <span class="greeting_index">${greetingNumber}</span>
-                    </strong>
-                    <span class="tokens_count">Tokens: ${getTokenCount(item[i])}</span>
+                    <div style="display: flex;flex-grow: 1;">
+                        <strong class="drawer-header-item">
+                            Greeting #
+                            <span class="greeting_index">${greetingNumber}</span>
+                        </strong>
+                        <span class="tokens_count drawer-header-item">Tokens: ${getTokenCount(item[i])}</span>
+                    </div>
                     <div class="altGreetings_buttons">
                         <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
                         <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
@@ -183,7 +185,7 @@ function saveAltGreetings(event = null){
     }
 
     // Edit the Alt Greetings number on the main drawer
-    document.getElementById('altGreetings_number').innerHTML = `Numbers: ${greetings.length}`;
+    $('#altGreetings_number').html(`Numbers: ${greetings.length}`);
 }
 
 // Function to display a new alternative greeting block
@@ -197,11 +199,13 @@ function addAltGreeting(){
     const altGreetingDiv = document.createElement('div');
     altGreetingDiv.className = 'inline-drawer';
     altGreetingDiv.innerHTML = `<div id="altGreetDrawer${greetingIndex}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                    <strong>
-                        Greeting #
-                        <span class="greeting_index">${greetingIndex}</span>
-                    </strong>
-                    <span class="tokens_count">Tokens: 0</span>
+                    <div style="display: flex;flex-grow: 1;">
+                        <strong class="drawer-header-item">
+                            Greeting #
+                            <span class="greeting_index">${greetingIndex}</span>
+                        </strong>
+                        <span class="tokens_count drawer-header-item">Tokens: 0</span>
+                    </div>
                     <div class="altGreetings_buttons">
                         <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
                         <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
@@ -213,10 +217,7 @@ function addAltGreeting(){
             </div>`;
 
     // Add the new inline-drawer block
-    if ($('#chicken').length > 0) {
-        $('#chicken').remove();
-    }
-
+    $('#chicken').empty();
     drawerContainer.appendChild(altGreetingDiv);
 
     // Add the event on the textarea
@@ -256,23 +257,44 @@ function delAltGreeting(index, inlineDrawer){
 // Function to fill details in the character details block
 function fillDetails(avatar) {
     const char = characters[getIdByAvatar(avatar)];
-    const this_avatar = getThumbnailUrl('avatar', char.avatar);
-    const favoriteButton = document.getElementById('acm_favorite_button');
 
     $('#avatar_title').attr('title', char.avatar);
-    $('#avatar_img').attr('src', this_avatar);
-    document.getElementById('ch_name_details').innerHTML = char.name;
-    document.getElementById('crea_comment').innerHTML = char.creatorcomment !== undefined ? char.creatorcomment : char.data.creator_notes;
-    document.getElementById('desc_Tokens').innerHTML = `Tokens: ${getTokenCount(char.description)}`;
+    $('#avatar_img').attr('src', getThumbnailUrl('avatar', char.avatar));
+    $('#ch_name_details').text(char.name);
+    $('#ch_infos_creator').text(`Creator: ${char.data.creator ? char.data.creator : (char.data.extensions.chub?.full_path?.split('/')[0] ?? " - ")}`);
+    $('#ch_infos_version').text(`Version: ${char.data.character_version ?? " - "}`);
+    const dateString = char.create_date?.split("@")[0] ?? " - ";
+    const [year, month, day] = dateString.split("-");
+    const formattedDateString = year === " - " ? " - " : `${year}-${month.padStart(2, "0")}-${day.trim().padStart(2, "0")}`;
+    $('#ch_infos_date').text(`Created: ${formattedDateString}`);
+    $('#ch_infos_lastchat').text(`Last chat: ${char.date_last_chat ? new Date(char.date_last_chat).toISOString().substring(0, 10) : " - "}`);
+    $('#ch_infos_adddate').text(`Added: ${char.date_added ? new Date(char.date_added).toISOString().substring(0, 10) : " - "}`);
+    $('#ch_infos_link').html(char.data.extensions.chub?.full_path ? `Link: <a href="https://chub.ai/${char.data.extensions.chub.full_path}" target="_blank">Chub</a>` : "Link: -");
+    const tokens = getTokenCount(char.name) +
+                            getTokenCount(char.description) +
+                            getTokenCount(char.first_mes) +
+                            getTokenCount(char.data?.extensions?.depth_prompt?.prompt ?? '') +
+                            getTokenCount(char.data?.post_history_instructions || '') +
+                            getTokenCount(char.personality) +
+                            getTokenCount(char.scenario) +
+                            getTokenCount(char.data?.extensions?.depth_prompt?.prompt ?? '') +
+                            getTokenCount(char.mes_example);
+    $('#ch_infos_tokens').text(`Tokens: ${tokens}`);
+    const permTokens = getTokenCount(char.name) +
+        getTokenCount(char.description) +
+        getTokenCount(char.personality) +
+        getTokenCount(char.scenario) +
+        getTokenCount(char.data?.extensions?.depth_prompt?.prompt ?? '');
+    $('#ch_infos_permtokens').text(`Perm. Tokens: ${permTokens}`);
+    $('#desc_Tokens').text(`Tokens: ${getTokenCount(char.description)}`);
     $('#desc_zone').val(char.description);
-    document.getElementById('firstMess_tokens').innerHTML = `Tokens: ${getTokenCount(char.first_mes)}`;
+    $('#firstMess_tokens').text(`Tokens: ${getTokenCount(char.first_mes)}`);
     $('#firstMes_zone').val(char.first_mes);
-    document.getElementById('altGreetings_number').innerHTML = `Numbers: ${char.data.alternate_greetings.length}`;
-    document.getElementById('tag_List').innerHTML = `${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`;
+    $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings.length}`);
+    $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
     createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
-    document.getElementById('altGreetings_content').innerHTML = displayAltGreetings(char.data.alternate_greetings);
-    favoriteButton.classList.toggle('fav_on', char.fav || char.data.extensions.fav);
-    favoriteButton.classList.toggle('fav_off', !(char.fav || char.data.extensions.fav));
+    $('#altGreetings_content').html(displayAltGreetings(char.data.alternate_greetings));
+    $('#acm_favorite_button').toggleClass('fav_on', char.fav || char.data.extensions.fav).toggleClass('fav_off', !(char.fav || char.data.extensions.fav));
 
     addAltGreetingsTrigger()
 }
@@ -331,16 +353,16 @@ function refreshCharList() {
         });
 
         if(filteredChars.length === 0){
-            document.getElementById('character-list').innerHTML = `<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`;
+            $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
         }
         else {
             const sortedList = sortCharAR(filteredChars, sortData, sortOrder);
-            document.getElementById('character-list').innerHTML = sortedList.map((item) => getCharBlock(item.avatar)).join('');
+            $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
         }
     }
     else {
         const sortedList = sortCharAR(charactersCopy, sortData, sortOrder);
-        document.getElementById('character-list').innerHTML = sortedList.map((item) => getCharBlock(item.avatar)).join('');
+        $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
     }
 
     $('#charNumber').empty().append(`Total characters : ${charactersCopy.length}`);
@@ -463,7 +485,7 @@ jQuery(async () => {
 
     // Put the button before rm_button_group_chats in the form_character_search_form
     // on hover, should say "Open Char Manager"
-    $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Open Char Manager"></button>');
+    $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-users faSmallFontSquareFix" title="Open Char Manager"></button>');
     $('#tag-manager').on('click', function () {
         openModal();
     });
@@ -486,7 +508,7 @@ jQuery(async () => {
         refreshCharListDebounced();
     });
 
-    $('#favOnly_checkbox').change(function() {
+    $('#favOnly_checkbox').on("change",function() {
         if (this.checked) {
             fav_only = true;
             refreshCharListDebounced();
@@ -505,8 +527,7 @@ jQuery(async () => {
     // Trigger when clicking on a drawer to open/close it
     $(document).on('click', '.altgreetings-drawer-toggle', function () {
         const icon = $(this).find('.idit');
-        icon.toggleClass('down up');
-        icon.toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
+        icon.toggleClass('down up').toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
         $(this).closest('.inline-drawer').children('.inline-drawer-content').stop().slideToggle();
 
         // Set the height of "autoSetHeight" textareas within the inline-drawer to their scroll height
@@ -568,12 +589,12 @@ jQuery(async () => {
 
     // Import character by file
     $('#acm_character_import_button').on("click", function () {
-        $('#character_import_file').click();
+        $('#character_import_file').trigger("click");
     });
 
     // Import character by URL
     $('#acm_external_import_button').on("click", function () {
-        $('#external_import_button').click();
+        $('#external_import_button').trigger("click");
     });
 
     // Import character by file
@@ -619,14 +640,13 @@ jQuery(async () => {
 
     // Delete character
     $('#acm_delete_button').on("click", function () {
-        $('#delete_button').click();
+        $('#delete_button').trigger("click");
     });
 
     $('#acm_advanced_div').on("click", function () {
         if (!is_acm_advanced_char_open) {
             is_acm_advanced_char_open = true;
-            $('#acm_character_popup').css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open');
-            $('#acm_character_popup').transition({
+            $('#acm_character_popup').css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
                 opacity: 1.0,
                 duration: 125,
                 easing: 'ease-in-out',
@@ -649,8 +669,8 @@ jQuery(async () => {
 
     // Adding textarea trigger on input
     const elementsToUpdate = {
-        '#desc_zone': function () { const update = { avatar: selectedChar, description: String($('#desc_zone').val()), data: { description: String($('#desc_zone').val()), },}; editCharDebounced(update); document.getElementById('desc_Tokens').innerHTML = `Tokens: ${getTokenCount(String($('#desc_zone').val()))}`;},
-        '#firstMes_zone': function () { const update = { avatar: selectedChar, first_mes: String($('#firstMes_zone').val()), data: { first_mes: String($('#firstMes_zone').val()),},}; editCharDebounced(update); document.getElementById('firstMess_tokens').innerHTML = `Tokens: ${getTokenCount(String($('#firstMes_zone').val()))}`;},
+        '#desc_zone': function () { const update = { avatar: selectedChar, description: String($('#desc_zone').val()), data: { description: String($('#desc_zone').val()), },}; editCharDebounced(update); $('#desc_Tokens').html(`Tokens: ${getTokenCount(String($('#desc_zone').val()))}`);},
+        '#firstMes_zone': function () { const update = { avatar: selectedChar, first_mes: String($('#firstMes_zone').val()), data: { first_mes: String($('#firstMes_zone').val()),},}; editCharDebounced(update); $('#firstMess_tokens').html(`Tokens: ${getTokenCount(String($('#firstMes_zone').val()))}`);},
         '#acm_creator_notes_textarea': function () { const update = { avatar: selectedChar, creatorcomment: String($('#acm_creator_notes_textarea').val()), data: { creator_notes: String($('#acm_creator_notes_textarea').val()), },}; editCharDebounced(update);},
         '#acm_character_version_textarea': function () { const update = { avatar: selectedChar, data: { character_version: String($('#acm_character_version_textarea').val()), },}; editCharDebounced(update);},
         '#acm_system_prompt_textarea': function () { const update = { avatar: selectedChar, data: { system_prompt: String($('#acm_system_prompt_textarea').val()), },}; editCharDebounced(update); $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(String($('#acm_system_prompt_textarea').val()))}`);},
