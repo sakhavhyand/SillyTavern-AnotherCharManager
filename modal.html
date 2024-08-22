@@ -5,7 +5,7 @@
                 <div class="list-character-wrapper flexFlowColumn">
                     <div class="sortAndFilter">
                         <form class="form_sort_filter" action="javascript:voidnull;">
-                            <div id="acm_tags_view" class="menu_button tags_view fa-solid fa-tags" title="View all tags" data-i18n="[title]View all tags"></div>
+                            <div id="acm_tags_view" class="menu_button tags_view fa-solid fa-tags faSmallFontSquareFix" title="View all tags" data-i18n="[title]View all tags"></div>
                             <div id="acm_character_import_button" class="menu_button fa-solid fa-file-import faSmallFontSquareFix" title="Import Character from File" data-i18n="[title]Import Character from File"></div>
                             <div id="acm_external_import_button" class="menu_button fa-solid fa-cloud-arrow-down faSmallFontSquareFix" title="Import content from external URL" data-i18n="[title]Import content from external URL"></div>
                             <div class="sortText">Sorted by :</div>
@@ -33,11 +33,25 @@
                         <div id="char-details-block">
                             <div class="char-details-summary">
                                 <div id="avatar_title">
-                                    <img id="avatar_img" class="char-details-img" src="">
+                                    <img id="avatar_img" class="char-details-img" src="" alt="Character Avatar" draggable="false">
                                 </div>
                                 <div class="char-details-summary-desc">
-                                    <div id="ch_name_details"></div>
-                                    <div id="crea_comment"></div>
+                                    <span id="ch_name_details"></span>
+                                    <hr>
+                                    <span id="ch_infos_creator" class="ch_infos_item"></span>
+                                    <div class="ch_infos_container">
+                                        <div class="ch_infos_column">
+                                            <span id="ch_infos_version" class="ch_infos_item"></span>
+                                            <span id="ch_infos_date" class="ch_infos_item"></span>
+                                            <span id="ch_infos_tokens" class="ch_infos_item"></span>
+                                            <span id="ch_infos_lastchat" class="ch_infos_item"></span>
+                                        </div>
+                                        <div class="ch_infos_column">
+                                            <span id="ch_infos_link"  class="ch_infos_item"></span>
+                                            <span id="ch_infos_adddate" class="ch_infos_item"></span>
+                                            <span id="ch_infos_permtokens" class="ch_infos_item"></span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div id="acm_details_buttons_block">
@@ -60,8 +74,10 @@
                             <div class="desc_container">
                                 <div class="inline-drawer">
                                     <div id="desc_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <b>Description</b>
-                                        <span id="desc_Tokens"></span>
+                                        <div style="display: flex;flex-grow: 1;">
+                                            <span class="drawer-header-item"><b>Description</b></span>
+                                            <span id="desc_Tokens" class="drawer-header-item"></span>
+                                        </div>
                                         <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
                                     </div>
                                     <div class="inline-drawer-content">
@@ -70,8 +86,10 @@
                                 </div>
                                 <div class="inline-drawer">
                                     <div id="firstMes_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <b>Greeting</b>
-                                        <span id="firstMess_tokens"></span>
+                                        <div style="display: flex;flex-grow: 1;">
+                                            <span class="drawer-header-item"><b>Greeting</b></span>
+                                            <span id="firstMess_tokens" class="drawer-header-item"></span>
+                                        </div>
                                         <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
                                     </div>
                                     <div class="inline-drawer-content">
@@ -80,8 +98,10 @@
                                 </div>
                                 <div id="altGreetings_drawer" class="inline-drawer">
                                     <div id="altGreetings_header" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <b>Alt. Greetings</b>
-                                        <span id="altGreetings_number"></span>
+                                        <div style="display: flex;flex-grow: 1;">
+                                            <span class="drawer-header-item"><b>Alt. Greetings</b></span>
+                                            <span id="altGreetings_number" class="drawer-header-item"></span>
+                                        </div>
                                         <div class="altGreetings_buttons">
                                             <i class="inline-drawer-icon fa-solid fa-circle-plus"></i>
                                             <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
@@ -102,7 +122,7 @@
         </div>
     </div>
 </div>
-<div id="acm_export_format_popup" class="list-group" style="position: absolute; inset: 0px 0px auto auto; margin: 0px; transform: translate(-1920px);" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="left">
+<div id="acm_export_format_popup" class="list-group" style="position: absolute; inset: 0 0 auto auto; margin: 0; transform: translate(-1920px);" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="left">
     <div class="acm_export_format list-group-item" data-format="png">PNG</div>
     <div class="acm_export_format list-group-item" data-format="json">JSON</div>
 </div>
@@ -192,7 +212,7 @@
                 <span class="fa-solid fa-circle-question note-link-span"></span>
             </a>
         </h4>
-        <textarea id="acm_scenario_pole" name="scenario" data-i18n="[placeholder](Circumstances and context of the interaction)" placeholder="(Circumstances and context of the interaction)" class="text_pole" maxlength="50000" value="" autocomplete="off" rows="4"></textarea>
+        <textarea id="acm_scenario_pole" name="scenario" data-i18n="[placeholder](Circumstances and context of the interaction)" placeholder="(Circumstances and context of the interaction)" class="text_pole" maxlength="50000" autocomplete="off" rows="4"></textarea>
         <div class="extension_token_counter">
             <span id="acm_scenario_tokens"></span>
         </div>
