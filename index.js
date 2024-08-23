@@ -1,8 +1,10 @@
 // An extension that allows you to manage characters.
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
-import { resetScrollHeight } from '../../../utils.js';
+import { resetScrollHeight, delay, getBase64Async } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
 import { editChar, dupeChar, renameChar, exportChar } from './src/acm_characters.js';
+import { power_user } from '../../../power-user.js';
+// import { default_avatar, DEFAULT_SAVE_EDIT_TIMEOUT, menu_type, selected_button } from '../../../../public/script';
 
 const getTokenCount = SillyTavern.getContext().getTokenCount;
 const getThumbnailUrl = SillyTavern.getContext().getThumbnailUrl;
@@ -13,6 +15,8 @@ const characters = SillyTavern.getContext().characters;
 const tagMap = SillyTavern.getContext().tagMap;
 const tagList = SillyTavern.getContext().tags;
 const selectCharacterById = SillyTavern.getContext().selectCharacterById;
+const Popup = SillyTavern.getContext().Popup;
+const POPUP_TYPE = SillyTavern.getContext().POPUP_TYPE;
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherCharManager';
@@ -27,6 +31,7 @@ let sortData = 'name';
 let searchValue = '';
 let is_acm_advanced_char_open = false;
 let fav_only = false;
+let crop_data = undefined;
 
 function debounce(func, timeout = 300) {
     let timer;
@@ -391,6 +396,61 @@ function selectAndDisplay(id, avatar) {
 
 }
 
+async function update_avatar(input){
+    if (input.files && input.files[0]) {
+
+        crop_data = undefined;
+        const file = input.files[0];
+        const fileData = await getBase64Async(file);
+
+        if (!power_user.never_resize_avatars) {
+            const dlg = new Popup('Set the crop position of the avatar image', POPUP_TYPE.CROP, '', { cropImage: fileData });
+            const croppedImage = await dlg.show();
+
+            if (!croppedImage) {
+                return;
+            }
+
+            crop_data = dlg.cropData;
+            $('#avatar_load_preview').attr('src', String(croppedImage));
+        } else {
+            $('#avatar_load_preview').attr('src', fileData);
+        }
+
+        // await createOrEditCharacter();
+        // await delay(DEFAULT_SAVE_EDIT_TIMEOUT);
+        //
+        // const formData = new FormData($('#form_create').get(0));
+        // await fetch(getThumbnailUrl('avatar', formData.get('avatar_url')), {
+        //     method: 'GET',
+        //     cache: 'no-cache',
+        //     headers: {
+        //         'pragma': 'no-cache',
+        //         'cache-control': 'no-cache',
+        //     },
+        // });
+        //
+        // $('.mes').each(async function () {
+        //     const nameMatch = $(this).attr('ch_name') == formData.get('ch_name');
+        //     if ($(this).attr('is_system') == 'true' && !nameMatch) {
+        //         return;
+        //     }
+        //     if ($(this).attr('is_user') == 'true') {
+        //         return;
+        //     }
+        //     if (nameMatch) {
+        //         const previewSrc = $('#avatar_load_preview').attr('src');
+        //         const avatar = $(this).find('.avatar img');
+        //         avatar.attr('src', default_avatar);
+        //         await delay(1);
+        //         avatar.attr('src', previewSrc);
+        //     }
+        // });
+
+        console.log('Avatar refreshed');
+    }
+}
+
 // Function to close the details panel
 function closeDetails( reset = true ) {
     if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
@@ -705,4 +765,16 @@ jQuery(async () => {
         const greetingIndex = parseInt(this.closest('.altgreetings-drawer-toggle').querySelector('.greeting_index').textContent);
         delAltGreeting(greetingIndex, inlineDrawer);
     });
+
+    document.getElementById("edit_icon").addEventListener("click", function() {
+        document.getElementById("edit_avatar_button").click();
+    });
+    $('#edit_icon').on('click', function () {
+        document.getElementById('edit_avatar_button').click();
+    });
+
+    // Edit a character avatar
+    // $('#edit_avatar_button').on('click', function () {
+    //     update_avatar(this);
+    // });
 });
