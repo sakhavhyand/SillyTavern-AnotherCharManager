@@ -18,7 +18,9 @@
                                 <option data-field="date_added" data-order="asc">Newest</option>
                                 <option data-field="date_added" data-order="desc">Oldest</option>
                             </select>
-                            <input id="char_search_bar" class="text_pole width100p" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
+                            <label for="char_search_bar" title="Search for specific tags or characters.">
+                                <input id="char_search_bar" class="text_pole width100p" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
+                            </label>
                             <label class="acm_checkbox">
                                 <span>Only Favs</span>
                                 <input id="favOnly_checkbox" type="checkbox">
@@ -33,9 +35,12 @@
                         <div id="char-details-block">
                             <div class="char-details-summary">
                                 <div id="avatar_title">
-                                    <img id="avatar_img" class="char-details-img" src="" alt="Character Avatar" draggable="false">
+                                    <label for="avatar_img" title="Click to select a new avatar for this character" data-i18n="[title]Click to select a new avatar for this character">
+                                        <img id="avatar_img" class="char-details-img" src="" alt="Character Avatar" draggable="false">
+                                    </label>
                                     <span id="edit_icon">
                                         <i class="fas fa-edit"></i>
+                                        <input id="edit_avatar_button" hidden="" type="file" name="avatar" accept="image/*">
                                     </span>
                                 </div>
                                 <div class="char-details-summary-desc">
@@ -68,7 +73,9 @@
                             </div>
                             <div class="char-details-tags">
                                 <div class="tag-searchbar">
-                                    <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
+                                    <label for="input_tag" title="Search or create a tag.">
+                                        <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
+                                    </label>
                                 </div>
                                 <div id="tag_List" class="tags"></div>
                             </div>
