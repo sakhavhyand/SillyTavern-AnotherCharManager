@@ -331,8 +331,27 @@
     padding: 5px;
 }
 
+#avatar_title {
+    position: relative;
+}
+
 .char-details-img {
     border-radius: 20%;
+}
+
+#edit_icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: none;
+}
+
+#edit_icon:hover {
+    color: goldenrod;
+}
+
+#avatar_title:hover #edit_icon {
+    display: block;
 }
 
 .char-details-summary-desc {
