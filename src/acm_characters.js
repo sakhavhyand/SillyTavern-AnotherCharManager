@@ -2,23 +2,24 @@ import {
     getCharacters, getPastCharacterChats, reloadCurrentChat, setCharacterId, system_message_types,
 } from '../../../../../script.js';
 import { renameTagKey } from '../../../../tags.js';
-import { delay } from '../../../../utils.js';
+import { delay, ensureImageFormatSupported, getBase64Async } from '../../../../utils.js';
 import { renameGroupMember } from '../../../../group-chats.js';
 
-export { editChar, delChar, dupeChar, renameChar, exportChar };
+export { editChar, editAvatar, delChar, dupeChar, renameChar, exportChar };
 
 const event_types = SillyTavern.getContext().eventTypes;
 const eventSource = SillyTavern.getContext().eventSource;
 const getRequestHeaders = SillyTavern.getContext().getRequestHeaders;
 const characters = SillyTavern.getContext().characters;
-const callPopup = SillyTavern.getContext().callPopup;
+const callPopup = SillyTavern.getContext().callGenericPopup;
 const selectCharacterById = SillyTavern.getContext().selectCharacterById;
+const this_chid = SillyTavern.getContext().characterId;
 
 // Function to edit a single character
 async function editChar(update) {
-    const this_chid = SillyTavern.getContext().characterId;
+    let url = '/api/characters/merge-attributes';
 
-    const response = await fetch('/api/characters/merge-attributes', {
+    const response = await fetch(url, {
         method: 'POST',
         headers: getRequestHeaders(),
         body: JSON.stringify(update),
@@ -31,6 +32,42 @@ async function editChar(update) {
     } else {
         console.log('Error!');
     }
+}
+
+// Function to edit an avatar
+async function editAvatar(newAvatar, id, crop_data = undefined) {
+    let url = '/api/plugins/avataredit/edit-avatar';
+
+    if (crop_data != undefined) {
+        url += `?crop=${encodeURIComponent(JSON.stringify(crop_data))}`;
+    }
+
+    let formData = new FormData();
+
+    if (newAvatar instanceof File) {
+        const convertedFile = await ensureImageFormatSupported(newAvatar);
+        formData.set('avatar', convertedFile);
+    }
+
+    formData.set('avatar_url', characters[id].avatar);
+
+    await jQuery.ajax({
+        type: 'POST',
+        url: url,
+        data: formData,
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function (){
+            // await getCharacters();
+            // await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: this_chid, character: characters[this_chid] } });
+            console.log('Nothing explode, somehow.');
+        },
+        error: function (jqXHR, exception) {
+            console.log('Error! Get better at coding idiot.');
+            toastr.error('Something went wrong while saving the character, or the image file provided was in an invalid format. Double check that the image is not a webp.');
+        }
+    });
 }
 
 // Function not used at this moment, leaving it here just in case
