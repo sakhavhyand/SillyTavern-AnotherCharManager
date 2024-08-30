@@ -58,9 +58,9 @@ async function editAvatar(newAvatar, id, crop_data = undefined) {
         cache: false,
         contentType: false,
         processData: false,
-        success: function (){
-            // await getCharacters();
-            // await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: this_chid, character: characters[this_chid] } });
+        success: async function (){
+            await getCharacters();
+            await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: this_chid, character: characters[this_chid] } });
             console.log('Nothing explode, somehow.');
         },
         error: function (jqXHR, exception) {

@@ -411,7 +411,6 @@ async function update_avatar(input){
             if (!croppedImage) {
                 return;
             }
-
             crop_data = dlg.cropData;
             editAvatarDebounced(file, selectedId, crop_data);
         } else {
