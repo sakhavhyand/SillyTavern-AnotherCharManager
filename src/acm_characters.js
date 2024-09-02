@@ -5,7 +5,7 @@ import { renameTagKey } from '../../../../tags.js';
 import { delay, ensureImageFormatSupported, getBase64Async } from '../../../../utils.js';
 import { renameGroupMember } from '../../../../group-chats.js';
 
-export { editChar, editAvatar, delChar, dupeChar, renameChar, exportChar };
+export { editChar, editAvatar, delChar, dupeChar, renameChar, exportChar, checkApiAvailability };
 
 const event_types = SillyTavern.getContext().eventTypes;
 const eventSource = SillyTavern.getContext().eventSource;
@@ -14,6 +14,19 @@ const characters = SillyTavern.getContext().characters;
 const callPopup = SillyTavern.getContext().callGenericPopup;
 const selectCharacterById = SillyTavern.getContext().selectCharacterById;
 const this_chid = SillyTavern.getContext().characterId;
+
+
+// Function to check if the avatar plugin is installed
+async function checkApiAvailability() {
+    try {
+        const response = await fetch('/api/plugins/avataredit/probe');
+        return response.status === 204;
+    } catch (err) {
+        console.error('Error checking API availability:', err);
+        return false;
+    }
+}
+
 
 // Function to edit a single character
 async function editChar(update) {
