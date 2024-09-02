@@ -2,9 +2,8 @@
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { resetScrollHeight, delay, getBase64Async } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
-import { editChar, editAvatar, dupeChar, renameChar, exportChar } from './src/acm_characters.js';
+import { editChar, editAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
 import { power_user } from '../../../power-user.js';
-// import { default_avatar, DEFAULT_SAVE_EDIT_TIMEOUT, menu_type, selected_button } from '../../../../public/script';
 
 const getTokenCount = SillyTavern.getContext().getTokenCount;
 const getThumbnailUrl = SillyTavern.getContext().getThumbnailUrl;
@@ -736,6 +735,12 @@ jQuery(async () => {
 
     // Edit a character avatar
     $('#edit_avatar_button').change(function () {
-        update_avatar(this);
+        checkApiAvailability().then(isAvailable => {
+            if (isAvailable) {
+                update_avatar(this);
+            } else {
+                toastr.warning('Please check if the needed plugin is installed! Link in the README.');
+            }
+        });
     });
 });
