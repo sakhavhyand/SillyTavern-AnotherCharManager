@@ -1,6 +1,6 @@
 // An extension that allows you to manage characters.
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
-import { resetScrollHeight, delay, getBase64Async } from '../../../utils.js';
+import { resetScrollHeight, getBase64Async, delay } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
 import { editChar, editAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
 import { power_user } from '../../../power-user.js';
@@ -22,9 +22,8 @@ const extensionName = 'SillyTavern-AnotherCharManager';
 const oldExtensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
-const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 100);
+const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
-const editAvatarDebounced = debounce( (data, id, crop_data) => { editAvatar(data, id, crop_data); }, 1000);
 let selectedId, selectedChar, mem_menu, mem_avatar, displayed;
 let sortOrder = 'asc';
 let sortData = 'name';
@@ -411,9 +410,19 @@ async function update_avatar(input){
                 return;
             }
             crop_data = dlg.cropData;
-            editAvatarDebounced(file, selectedId, crop_data);
+            try {
+                await editAvatar(file, selectedId, crop_data);
+                $('#avatar_img').attr('src', getThumbnailUrl('avatar', selectedChar));
+            } catch {
+                toast.error("Something went wrong.");
+            }
         } else {
-            editAvatarDebounced(file, selectedId);
+            try {
+                await editAvatar(file, selectedId);
+                $('#avatar_img').attr('src', getThumbnailUrl('avatar', selectedChar));
+            } catch {
+                toast.error("Something went wrong.");
+            }
         }
     }
 }
@@ -456,30 +465,6 @@ function openModal() {
         easing: 'ease-in-out',
     });
 
-    // Add listener to refresh the display on characters edit
-    eventSource.on(event_types.CHARACTER_EDITED, function () {
-        if (displayed) {
-            refreshCharListDebounced();
-        }
-    });
-    // Add listener to refresh the display on tags edit
-    eventSource.on('character_page_loaded', function () {
-        if (displayed){
-            refreshCharListDebounced();
-        }});
-    // Add listener to refresh the display on characters delete
-    eventSource.on('characterDeleted', function () {
-        if (displayed){
-            closeDetails();
-            refreshCharListDebounced();
-        }});
-    // Add listener to refresh the display on characters duplication
-    eventSource.on(event_types.CHARACTER_DUPLICATED, function () {
-        if (displayed) {
-            refreshCharListDebounced();
-        }
-    });
-
     const charSortOrderSelect = document.getElementById('char_sort_order');
     Array.from(charSortOrderSelect.options).forEach(option => {
         const field = option.getAttribute('data-field');
@@ -515,6 +500,30 @@ jQuery(async () => {
     $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-users faSmallFontSquareFix" title="Open Char Manager"></button>');
     $('#tag-manager').on('click', function () {
         openModal();
+    });
+
+    // Add listener to refresh the display on characters edit
+    eventSource.on('character_edited',  function () {
+        if (displayed) {
+            refreshCharListDebounced();
+        }
+    });
+    // Add listener to refresh the display on tags edit
+    // eventSource.on('character_page_loaded', function () {
+    //     if (displayed){
+    //         refreshCharListDebounced();
+    //     }});
+    // Add listener to refresh the display on characters delete
+    eventSource.on('characterDeleted', function () {
+        if (displayed){
+            closeDetails();
+            refreshCharListDebounced();
+        }});
+    // Add listener to refresh the display on characters duplication
+    eventSource.on(event_types.CHARACTER_DUPLICATED, function () {
+        if (displayed) {
+            refreshCharListDebounced();
+        }
     });
 
     // Trigger when a character is selected in the list
@@ -627,7 +636,7 @@ jQuery(async () => {
     // Import character by file
     $('#acm_rename_button').on("click", async function () {
         const charID = getIdByAvatar(selectedChar);
-        const newName = await callPopup('<h3>New name:</h3>', 'input', characters[charID].name);
+        const newName = await callPopup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
         await renameChar(selectedChar, charID, newName);
     });
 
@@ -656,7 +665,7 @@ jQuery(async () => {
             <h3>Are you sure you want to duplicate this character?</h3>
             <span>If you just want to start a new chat with the same character, use "Start new chat" option in the bottom-left options menu.</span><br><br>`;
 
-        const confirm = await callPopup(confirmMessage, 'confirm');
+        const confirm = await callPopup(confirmMessage, POPUP_TYPE.CONFIRM);
 
         if (!confirm) {
             console.log('User cancelled duplication');
@@ -735,9 +744,9 @@ jQuery(async () => {
 
     // Edit a character avatar
     $('#edit_avatar_button').change(function () {
-        checkApiAvailability().then(isAvailable => {
+        checkApiAvailability().then(async isAvailable => {
             if (isAvailable) {
-                update_avatar(this);
+                await update_avatar(this);
             } else {
                 toastr.warning('Please check if the needed plugin is installed! Link in the README.');
             }
