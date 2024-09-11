@@ -91,7 +91,8 @@ function sortCharAR(chars, sort_data, sort_order) {
 // Function to generate the HTML block for a character
 function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
-    const avatarThumb = getThumbnailUrl('avatar', avatar);
+    // const avatarThumb = getThumbnailUrl('avatar', avatar);
+    const avatarThumb = getThumbnailUrl('avatar', avatar) + '&t=' + new Date().getTime();
     let isFav;
 
     const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
@@ -261,9 +262,10 @@ function delAltGreeting(index, inlineDrawer){
 // Function to fill details in the character details block
 function fillDetails(avatar) {
     const char = characters[getIdByAvatar(avatar)];
+    const avatarThumb = getThumbnailUrl('avatar', char.avatar) + '&t=' + new Date().getTime();
 
     $('#avatar_title').attr('title', char.avatar);
-    $('#avatar_img').attr('src', getThumbnailUrl('avatar', char.avatar));
+    $('#avatar_img').attr('src', avatarThumb);
     $('#ch_name_details').text(char.name);
     $('#ch_infos_creator').text(`Creator: ${char.data.creator ? char.data.creator : (char.data.extensions.chub?.full_path?.split('/')[0] ?? " - ")}`);
     $('#ch_infos_version').text(`Version: ${char.data.character_version ?? " - "}`);
@@ -410,9 +412,11 @@ async function update_avatar(input){
                 return;
             }
             crop_data = dlg.cropData;
+
             try {
                 await editAvatar(file, selectedId, crop_data);
-                $('#avatar_img').attr('src', getThumbnailUrl('avatar', selectedChar));
+                const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
+                $('#avatar_img').attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
@@ -508,11 +512,6 @@ jQuery(async () => {
             refreshCharListDebounced();
         }
     });
-    // Add listener to refresh the display on tags edit
-    // eventSource.on('character_page_loaded', function () {
-    //     if (displayed){
-    //         refreshCharListDebounced();
-    //     }});
     // Add listener to refresh the display on characters delete
     eventSource.on('characterDeleted', function () {
         if (displayed){

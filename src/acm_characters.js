@@ -1,5 +1,5 @@
 import {
-    getCharacters, getPastCharacterChats, reloadCurrentChat, setCharacterId, system_message_types, getThumbnailUrl, printCharactersDebounced,
+    getCharacters, getPastCharacterChats, reloadCurrentChat, setCharacterId, system_message_types, getThumbnailUrl,
 } from '../../../../../script.js';
 import { renameTagKey } from '../../../../tags.js';
 import { delay, ensureImageFormatSupported } from '../../../../utils.js';
@@ -65,32 +65,33 @@ async function editAvatar(newAvatar, id, crop_data = undefined) {
 
     formData.set('avatar_url', characters[id].avatar);
 
-    await jQuery.ajax({
-        type: 'POST',
-        url: url,
-        data: formData,
-        cache: false,
-        contentType: false,
-        processData: false,
-        success: async function (){
-            toastr.success('Avatar replaced successfully.');
-            await fetch(getThumbnailUrl('avatar', formData.get('avatar_url')), {
-                method: 'GET',
-                cache: 'no-cache',
-                headers: {
-                    'pragma': 'no-cache',
-                    'cache-control': 'no-cache',
-                },
-            });
-            await printCharactersDebounced();
-            await delay(1);
-            await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: id, character: characters[id] }});
-            return true;
-        },
-        error: function (jqXHR, exception) {
-            toastr.error('Something went wrong while saving the character, or the image file provided was in an invalid format. Double check that the image is not a webp.');
-            return false;
-        }
+    return new Promise((resolve, reject) => {
+        jQuery.ajax({
+            type: 'POST',
+            url: url,
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: async function () {
+                toastr.success('Avatar replaced successfully.');
+                await fetch(getThumbnailUrl('avatar', formData.get('avatar_url')), {
+                    method: 'GET',
+                    cache: 'no-cache',
+                    headers: {
+                        'pragma': 'no-cache',
+                        'cache-control': 'no-cache',
+                    },
+                });
+                await getCharacters();
+                await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: id, character: characters[id] } });
+                resolve();
+            },
+            error: function (jqXHR, exception) {
+                toastr.error('Something went wrong while saving the character, or the image file provided was in an invalid format. Double check that the image is not a webp.');
+                reject();
+            }
+        });
     });
 }
 
