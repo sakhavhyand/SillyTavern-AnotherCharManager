@@ -15,10 +15,13 @@ I've decided to work on it to have something that better suits my needs, because
 * You can edit description, first message and alternative greetings.
 * Access the advanced definitions window.
 * Open a character chat.
+* Replace the avatar (check prerequisites)
 
 ## Prerequisites
 
-This extension has been tested from SillyTavern 1.11.0 to 1.12.4.
+This extension has been tested from SillyTavern 1.11.0 to 1.12.5.
+
+To be able to use the replace avatar feature, you will need the [SillyTavern-AvatarEdit](https://github.com/sakhavhyand/SillyTavern-AvatarEdit) plugin.
 
 ## Installation
 
