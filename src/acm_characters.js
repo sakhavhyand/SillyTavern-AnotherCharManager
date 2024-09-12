@@ -5,7 +5,7 @@ import { renameTagKey } from '../../../../tags.js';
 import { delay, ensureImageFormatSupported } from '../../../../utils.js';
 import { renameGroupMember } from '../../../../group-chats.js';
 
-export { editChar, editAvatar, delChar, dupeChar, renameChar, exportChar, checkApiAvailability };
+export { editChar, replaceAvatar, delChar, dupeChar, renameChar, exportChar, checkApiAvailability };
 
 const event_types = SillyTavern.getContext().eventTypes;
 const eventSource = SillyTavern.getContext().eventSource;
@@ -48,8 +48,8 @@ async function editChar(update) {
     }
 }
 
-// Function to edit an avatar
-async function editAvatar(newAvatar, id, crop_data = undefined) {
+// Function to replace an avatar
+async function replaceAvatar(newAvatar, id, crop_data = undefined) {
     let url = '/api/plugins/avataredit/edit-avatar';
 
     if (crop_data != undefined) {

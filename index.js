@@ -2,7 +2,7 @@
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { resetScrollHeight, getBase64Async, delay } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
-import { editChar, editAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
+import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
 import { power_user } from '../../../power-user.js';
 
 const getTokenCount = SillyTavern.getContext().getTokenCount;
@@ -91,7 +91,6 @@ function sortCharAR(chars, sort_data, sort_order) {
 // Function to generate the HTML block for a character
 function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
-    // const avatarThumb = getThumbnailUrl('avatar', avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar) + '&t=' + new Date().getTime();
     let isFav;
 
@@ -397,6 +396,7 @@ function selectAndDisplay(id, avatar) {
 
 }
 
+// Function to replace the avatar by a new one
 async function update_avatar(input){
     if (input.files && input.files[0]) {
 
@@ -414,7 +414,8 @@ async function update_avatar(input){
             crop_data = dlg.cropData;
 
             try {
-                await editAvatar(file, selectedId, crop_data);
+                await replaceAvatar(file, selectedId, crop_data);
+                // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
             } catch {
@@ -422,8 +423,10 @@ async function update_avatar(input){
             }
         } else {
             try {
-                await editAvatar(file, selectedId);
-                $('#avatar_img').attr('src', getThumbnailUrl('avatar', selectedChar));
+                await replaceAvatar(file, selectedId);
+                // Firefox tricks
+                const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
+                $('#avatar_img').attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
