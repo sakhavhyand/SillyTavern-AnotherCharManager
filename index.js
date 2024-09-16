@@ -1,6 +1,6 @@
 // An extension that allows you to manage characters.
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
-import { resetScrollHeight, getBase64Async, delay } from '../../../utils.js';
+import { resetScrollHeight, getBase64Async } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
 import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
 import { power_user } from '../../../power-user.js';
@@ -24,13 +24,11 @@ const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
-let selectedId, selectedChar, mem_menu, mem_avatar, displayed;
+let selectedId, selectedChar, mem_menu, mem_avatar;
 let sortOrder = 'asc';
 let sortData = 'name';
 let searchValue = '';
-let is_acm_advanced_char_open = false;
 let fav_only = false;
-let crop_data = undefined;
 
 function debounce(func, timeout = 300) {
     let timer;
@@ -400,7 +398,7 @@ function selectAndDisplay(id, avatar) {
 async function update_avatar(input){
     if (input.files && input.files[0]) {
 
-        crop_data = undefined;
+        let crop_data = undefined;
         const file = input.files[0];
         const fileData = await getBase64Async(file);
 
@@ -457,15 +455,14 @@ function openModal() {
         mem_avatar = undefined;
     }
     mem_menu = SillyTavern.getContext().menuType;
-    displayed = true;
 
     // Sort the characters
-    let charsList = sortCharAR([...SillyTavern.getContext().characters], sortData, sortOrder);
+    // let charsList = sortCharAR([...SillyTavern.getContext().characters], sortData, sortOrder);
 
     // Display the modal with our list layout
     $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
-    $('#character-list').empty().append(charsList.map((item) => getCharBlock(item.avatar)).join(''));
-    $('#charNumber').empty().append(`Total characters : ${charsList.length}`);
+    // $('#character-list').empty().append(charsList.map((item) => getCharBlock(item.avatar)).join(''));
+    // $('#charNumber').empty().append(`Total characters : ${charsList.length}`);
     $('#acm_shadow_popup').css('display', 'block').transition({
         opacity: 1,
         duration: 125,
@@ -511,21 +508,26 @@ jQuery(async () => {
 
     // Add listener to refresh the display on characters edit
     eventSource.on('character_edited',  function () {
-        if (displayed) {
             refreshCharListDebounced();
-        }
     });
     // Add listener to refresh the display on characters delete
     eventSource.on('characterDeleted', function () {
-        if (displayed){
-            closeDetails();
-            refreshCharListDebounced();
-        }});
-    // Add listener to refresh the display on characters duplication
-    eventSource.on(event_types.CHARACTER_DUPLICATED, function () {
-        if (displayed) {
+        let charDetailsState = document.getElementById('char-details');
+        if (charDetailsState.style.display === 'none') {
             refreshCharListDebounced();
         }
+        else {
+            closeDetails();
+            refreshCharListDebounced();
+        }
+    });
+    // Add listener to refresh the display on characters duplication
+    eventSource.on(event_types.CHARACTER_DUPLICATED, function () {
+            refreshCharListDebounced();
+    });
+    // Load the characters list in background when ST launch
+    eventSource.on('character_page_loaded', function () {
+            refreshCharList();
     });
 
     // Trigger when a character is selected in the list
@@ -555,7 +557,6 @@ jQuery(async () => {
             refreshCharListDebounced();
         }
     });
-
 
     // Trigger when clicking on the separator to close the character details
     $(document).on('click', '#char-sep', function () {
@@ -590,7 +591,6 @@ jQuery(async () => {
             $('#acm_shadow_popup').css('display', 'none');
             $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
         }, 125);
-        displayed = false;
     });
 
     $('#acm_favorite_button').on('click', function() {
@@ -622,7 +622,6 @@ jQuery(async () => {
             $('#acm_shadow_popup').css('display', 'none');
             $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
         }, 125);
-        displayed = false;
     });
 
     // Import character by file
@@ -682,21 +681,18 @@ jQuery(async () => {
     });
 
     $('#acm_advanced_div').on("click", function () {
-        if (!is_acm_advanced_char_open) {
-            is_acm_advanced_char_open = true;
+        if ($('#acm_character_popup').css('display') === 'none') {
             $('#acm_character_popup').css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
                 opacity: 1.0,
                 duration: 125,
                 easing: 'ease-in-out',
             });
         } else {
-            is_acm_advanced_char_open = false;
             $('#acm_character_popup').css('display', 'none').removeClass('open');
         }
     });
 
     $('#acm_character_cross').on("click", function () {
-        is_acm_advanced_char_open = false;
         $('#character_popup').transition({
             opacity: 0,
             duration: 125,
