@@ -1,8 +1,9 @@
 // An extension that allows you to manage characters.
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
-import { resetScrollHeight } from '../../../utils.js';
+import { resetScrollHeight, getBase64Async } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
-import { editChar, dupeChar, renameChar, exportChar } from './src/acm_characters.js';
+import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
+import { power_user } from '../../../power-user.js';
 
 const getTokenCount = SillyTavern.getContext().getTokenCount;
 const getThumbnailUrl = SillyTavern.getContext().getThumbnailUrl;
@@ -13,19 +14,20 @@ const characters = SillyTavern.getContext().characters;
 const tagMap = SillyTavern.getContext().tagMap;
 const tagList = SillyTavern.getContext().tags;
 const selectCharacterById = SillyTavern.getContext().selectCharacterById;
+const Popup = SillyTavern.getContext().Popup;
+const POPUP_TYPE = SillyTavern.getContext().POPUP_TYPE;
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherCharManager';
 const oldExtensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
-const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 100);
+const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
-let selectedId, selectedChar, mem_menu, mem_avatar, displayed;
+let selectedId, selectedChar, mem_menu, mem_avatar;
 let sortOrder = 'asc';
 let sortData = 'name';
 let searchValue = '';
-let is_acm_advanced_char_open = false;
 let fav_only = false;
 
 function debounce(func, timeout = 300) {
@@ -87,7 +89,7 @@ function sortCharAR(chars, sort_data, sort_order) {
 // Function to generate the HTML block for a character
 function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
-    const avatarThumb = getThumbnailUrl('avatar', avatar);
+    const avatarThumb = getThumbnailUrl('avatar', avatar) + '&t=' + new Date().getTime();
     let isFav;
 
     const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
@@ -257,9 +259,10 @@ function delAltGreeting(index, inlineDrawer){
 // Function to fill details in the character details block
 function fillDetails(avatar) {
     const char = characters[getIdByAvatar(avatar)];
+    const avatarThumb = getThumbnailUrl('avatar', char.avatar) + '&t=' + new Date().getTime();
 
     $('#avatar_title').attr('title', char.avatar);
-    $('#avatar_img').attr('src', getThumbnailUrl('avatar', char.avatar));
+    $('#avatar_img').attr('src', avatarThumb);
     $('#ch_name_details').text(char.name);
     $('#ch_infos_creator').text(`Creator: ${char.data.creator ? char.data.creator : (char.data.extensions.chub?.full_path?.split('/')[0] ?? " - ")}`);
     $('#ch_infos_version').text(`Version: ${char.data.character_version ?? " - "}`);
@@ -391,6 +394,44 @@ function selectAndDisplay(id, avatar) {
 
 }
 
+// Function to replace the avatar by a new one
+async function update_avatar(input){
+    if (input.files && input.files[0]) {
+
+        let crop_data = undefined;
+        const file = input.files[0];
+        const fileData = await getBase64Async(file);
+
+        if (!power_user.never_resize_avatars) {
+            const dlg = new Popup('Set the crop position of the avatar image', POPUP_TYPE.CROP, '', { cropImage: fileData });
+            const croppedImage = await dlg.show();
+
+            if (!croppedImage) {
+                return;
+            }
+            crop_data = dlg.cropData;
+
+            try {
+                await replaceAvatar(file, selectedId, crop_data);
+                // Firefox tricks
+                const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
+                $('#avatar_img').attr('src', newImageUrl);
+            } catch {
+                toast.error("Something went wrong.");
+            }
+        } else {
+            try {
+                await replaceAvatar(file, selectedId);
+                // Firefox tricks
+                const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
+                $('#avatar_img').attr('src', newImageUrl);
+            } catch {
+                toast.error("Something went wrong.");
+            }
+        }
+    }
+}
+
 // Function to close the details panel
 function closeDetails( reset = true ) {
     if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
@@ -414,43 +455,18 @@ function openModal() {
         mem_avatar = undefined;
     }
     mem_menu = SillyTavern.getContext().menuType;
-    displayed = true;
 
     // Sort the characters
-    let charsList = sortCharAR([...SillyTavern.getContext().characters], sortData, sortOrder);
+    // let charsList = sortCharAR([...SillyTavern.getContext().characters], sortData, sortOrder);
 
     // Display the modal with our list layout
     $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
-    $('#character-list').empty().append(charsList.map((item) => getCharBlock(item.avatar)).join(''));
-    $('#charNumber').empty().append(`Total characters : ${charsList.length}`);
+    // $('#character-list').empty().append(charsList.map((item) => getCharBlock(item.avatar)).join(''));
+    // $('#charNumber').empty().append(`Total characters : ${charsList.length}`);
     $('#acm_shadow_popup').css('display', 'block').transition({
         opacity: 1,
         duration: 125,
         easing: 'ease-in-out',
-    });
-
-    // Add listener to refresh the display on characters edit
-    eventSource.on(event_types.CHARACTER_EDITED, function () {
-        if (displayed) {
-            refreshCharListDebounced();
-        }
-    });
-    // Add listener to refresh the display on tags edit
-    eventSource.on('character_page_loaded', function () {
-        if (displayed){
-            refreshCharListDebounced();
-        }});
-    // Add listener to refresh the display on characters delete
-    eventSource.on('characterDeleted', function () {
-        if (displayed){
-            closeDetails();
-            refreshCharListDebounced();
-        }});
-    // Add listener to refresh the display on characters duplication
-    eventSource.on(event_types.CHARACTER_DUPLICATED, function () {
-        if (displayed) {
-            refreshCharListDebounced();
-        }
     });
 
     const charSortOrderSelect = document.getElementById('char_sort_order');
@@ -490,6 +506,30 @@ jQuery(async () => {
         openModal();
     });
 
+    // Add listener to refresh the display on characters edit
+    eventSource.on('character_edited',  function () {
+            refreshCharListDebounced();
+    });
+    // Add listener to refresh the display on characters delete
+    eventSource.on('characterDeleted', function () {
+        let charDetailsState = document.getElementById('char-details');
+        if (charDetailsState.style.display === 'none') {
+            refreshCharListDebounced();
+        }
+        else {
+            closeDetails();
+            refreshCharListDebounced();
+        }
+    });
+    // Add listener to refresh the display on characters duplication
+    eventSource.on(event_types.CHARACTER_DUPLICATED, function () {
+            refreshCharListDebounced();
+    });
+    // Load the characters list in background when ST launch
+    eventSource.on('character_page_loaded', function () {
+            refreshCharList();
+    });
+
     // Trigger when a character is selected in the list
     $(document).on('click', '.char_select', function () {
         selectAndDisplay($(this).attr('chid'), $(this).attr('avatar'));
@@ -517,7 +557,6 @@ jQuery(async () => {
             refreshCharListDebounced();
         }
     });
-
 
     // Trigger when clicking on the separator to close the character details
     $(document).on('click', '#char-sep', function () {
@@ -552,7 +591,6 @@ jQuery(async () => {
             $('#acm_shadow_popup').css('display', 'none');
             $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
         }, 125);
-        displayed = false;
     });
 
     $('#acm_favorite_button').on('click', function() {
@@ -584,7 +622,6 @@ jQuery(async () => {
             $('#acm_shadow_popup').css('display', 'none');
             $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
         }, 125);
-        displayed = false;
     });
 
     // Import character by file
@@ -600,7 +637,7 @@ jQuery(async () => {
     // Import character by file
     $('#acm_rename_button').on("click", async function () {
         const charID = getIdByAvatar(selectedChar);
-        const newName = await callPopup('<h3>New name:</h3>', 'input', characters[charID].name);
+        const newName = await callPopup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
         await renameChar(selectedChar, charID, newName);
     });
 
@@ -629,7 +666,7 @@ jQuery(async () => {
             <h3>Are you sure you want to duplicate this character?</h3>
             <span>If you just want to start a new chat with the same character, use "Start new chat" option in the bottom-left options menu.</span><br><br>`;
 
-        const confirm = await callPopup(confirmMessage, 'confirm');
+        const confirm = await callPopup(confirmMessage, POPUP_TYPE.CONFIRM);
 
         if (!confirm) {
             console.log('User cancelled duplication');
@@ -644,21 +681,18 @@ jQuery(async () => {
     });
 
     $('#acm_advanced_div').on("click", function () {
-        if (!is_acm_advanced_char_open) {
-            is_acm_advanced_char_open = true;
+        if ($('#acm_character_popup').css('display') === 'none') {
             $('#acm_character_popup').css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
                 opacity: 1.0,
                 duration: 125,
                 easing: 'ease-in-out',
             });
         } else {
-            is_acm_advanced_char_open = false;
             $('#acm_character_popup').css('display', 'none').removeClass('open');
         }
     });
 
     $('#acm_character_cross').on("click", function () {
-        is_acm_advanced_char_open = false;
         $('#character_popup').transition({
             opacity: 0,
             duration: 125,
@@ -704,5 +738,16 @@ jQuery(async () => {
         const inlineDrawer = this.closest('.inline-drawer');
         const greetingIndex = parseInt(this.closest('.altgreetings-drawer-toggle').querySelector('.greeting_index').textContent);
         delAltGreeting(greetingIndex, inlineDrawer);
+    });
+
+    // Edit a character avatar
+    $('#edit_avatar_button').change(function () {
+        checkApiAvailability().then(async isAvailable => {
+            if (isAvailable) {
+                await update_avatar(this);
+            } else {
+                toastr.warning('Please check if the needed plugin is installed! Link in the README.');
+            }
+        });
     });
 });

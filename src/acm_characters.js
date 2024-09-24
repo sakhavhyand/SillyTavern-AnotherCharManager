@@ -1,24 +1,39 @@
 import {
-    getCharacters, getPastCharacterChats, reloadCurrentChat, setCharacterId, system_message_types,
+    getCharacters, getPastCharacterChats, reloadCurrentChat, setCharacterId, system_message_types, getThumbnailUrl,
 } from '../../../../../script.js';
 import { renameTagKey } from '../../../../tags.js';
-import { delay } from '../../../../utils.js';
+import { delay, ensureImageFormatSupported } from '../../../../utils.js';
 import { renameGroupMember } from '../../../../group-chats.js';
 
-export { editChar, delChar, dupeChar, renameChar, exportChar };
+export { editChar, replaceAvatar, delChar, dupeChar, renameChar, exportChar, checkApiAvailability };
 
 const event_types = SillyTavern.getContext().eventTypes;
 const eventSource = SillyTavern.getContext().eventSource;
 const getRequestHeaders = SillyTavern.getContext().getRequestHeaders;
 const characters = SillyTavern.getContext().characters;
-const callPopup = SillyTavern.getContext().callPopup;
+const callPopup = SillyTavern.getContext().callGenericPopup;
+const POPUP_TYPE = SillyTavern.getContext().POPUP_TYPE;
 const selectCharacterById = SillyTavern.getContext().selectCharacterById;
+const this_chid = SillyTavern.getContext().characterId;
+
+
+// Function to check if the avatar plugin is installed
+async function checkApiAvailability() {
+    try {
+        const response = await fetch('/api/plugins/avataredit/probe', {method: 'POST', headers: getRequestHeaders()});
+        return response.status === 204;
+    } catch (err) {
+        console.error('Error checking API availability:', err);
+        return false;
+    }
+}
+
 
 // Function to edit a single character
 async function editChar(update) {
-    const this_chid = SillyTavern.getContext().characterId;
+    let url = '/api/characters/merge-attributes';
 
-    const response = await fetch('/api/characters/merge-attributes', {
+    const response = await fetch(url, {
         method: 'POST',
         headers: getRequestHeaders(),
         body: JSON.stringify(update),
@@ -31,6 +46,53 @@ async function editChar(update) {
     } else {
         console.log('Error!');
     }
+}
+
+// Function to replace an avatar
+async function replaceAvatar(newAvatar, id, crop_data = undefined) {
+    let url = '/api/plugins/avataredit/edit-avatar';
+
+    if (crop_data != undefined) {
+        url += `?crop=${encodeURIComponent(JSON.stringify(crop_data))}`;
+    }
+
+    let formData = new FormData();
+
+    if (newAvatar instanceof File) {
+        const convertedFile = await ensureImageFormatSupported(newAvatar);
+        formData.set('avatar', convertedFile);
+    }
+
+    formData.set('avatar_url', characters[id].avatar);
+
+    return new Promise((resolve, reject) => {
+        jQuery.ajax({
+            type: 'POST',
+            url: url,
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: async function () {
+                toastr.success('Avatar replaced successfully.');
+                await fetch(getThumbnailUrl('avatar', formData.get('avatar_url')), {
+                    method: 'GET',
+                    cache: 'no-cache',
+                    headers: {
+                        'pragma': 'no-cache',
+                        'cache-control': 'no-cache',
+                    },
+                });
+                await getCharacters();
+                await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: id, character: characters[id] } });
+                resolve();
+            },
+            error: function (jqXHR, exception) {
+                toastr.error('Something went wrong while saving the character, or the image file provided was in an invalid format. Double check that the image is not a webp.');
+                reject();
+            }
+        });
+    });
 }
 
 // Function not used at this moment, leaving it here just in case
@@ -115,7 +177,7 @@ async function renameChar(oldAvatar, charID, newName) {
                     await renameGroupMember(oldAvatar, newAvatar, newName);
                     const renamePastChatsConfirm = await callPopup(`<h3>Character renamed!</h3>
                     <p>Past chats will still contain the old character name. Would you like to update the character name in previous chats as well?</p>
-                    <i><b>Sprites folder (if any) should be renamed manually.</b></i>`, 'confirm');
+                    <i><b>Sprites folder (if any) should be renamed manually.</b></i>`, POPUP_TYPE.CONFIRM);
 
                     if (renamePastChatsConfirm) {
                         await renamePastChats(newAvatar, newName);
@@ -133,7 +195,7 @@ async function renameChar(oldAvatar, charID, newName) {
         }
         catch {
             // Reloading to prevent data corruption
-            await callPopup('Something went wrong. The page will be reloaded.', 'text');
+            await callPopup('Something went wrong. The page will be reloaded.', POPUP_TYPE.TEXT);
             location.reload();
         }
     }
