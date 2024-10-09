@@ -28,7 +28,6 @@ async function checkApiAvailability() {
     }
 }
 
-
 // Function to edit a single character
 async function editChar(update) {
     let url = '/api/characters/merge-attributes';
@@ -278,3 +277,6 @@ async function exportChar (format, avatar) {
 
     $('#acm_export_format_popup').hide();
 }
+
+// Function to import a character by URL
+async function importCharByURL() {}
