@@ -634,7 +634,7 @@ jQuery(async () => {
         $('#external_import_button').trigger("click");
     });
 
-    // Import character by file
+    // Rename a character
     $('#acm_rename_button').on("click", async function () {
         const charID = getIdByAvatar(selectedChar);
         const newName = await callPopup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);

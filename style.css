@@ -207,6 +207,14 @@
     margin: 7px;
 }
 
+#tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    align-content: flex-start;
+    flex-direction: row;
+}
+
 /* Characters List */
 
 #character-list {
