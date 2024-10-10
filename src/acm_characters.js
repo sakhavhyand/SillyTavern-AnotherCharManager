@@ -1,11 +1,12 @@
 import {
-    getCharacters, getPastCharacterChats, reloadCurrentChat, setCharacterId, system_message_types, getThumbnailUrl,
+    getCharacters, getPastCharacterChats, reloadCurrentChat, setCharacterId, system_message_types, getThumbnailUrl, processDroppedFiles
 } from '../../../../../script.js';
 import { renameTagKey } from '../../../../tags.js';
 import { delay, ensureImageFormatSupported } from '../../../../utils.js';
 import { renameGroupMember } from '../../../../group-chats.js';
+import { importWorldInfo } from '../../../../world-info.js';
 
-export { editChar, replaceAvatar, delChar, dupeChar, renameChar, exportChar, checkApiAvailability };
+export { editChar, replaceAvatar, delChar, dupeChar, renameChar, exportChar, checkApiAvailability, importCharByURL };
 
 const event_types = SillyTavern.getContext().eventTypes;
 const eventSource = SillyTavern.getContext().eventSource;
@@ -24,6 +25,16 @@ async function checkApiAvailability() {
         return response.status === 204;
     } catch (err) {
         console.error('Error checking API availability:', err);
+        return false;
+    }
+}
+
+// Function to check if an url is valid
+function isValidUrl(value) {
+    try {
+        new URL(value);
+        return true;
+    } catch (_) {
         return false;
     }
 }
@@ -279,4 +290,51 @@ async function exportChar (format, avatar) {
 }
 
 // Function to import a character by URL
-async function importCharByURL() {}
+async function importCharByURL(input) {
+    // break input into one input per line
+    const inputs = input.split('\n').map(x => x.trim()).filter(x => x.length > 0);
+
+    for (const url of inputs) {
+        let request;
+
+        if (isValidUrl(url)) {
+            console.debug('Custom content import started for URL: ', url);
+            request = await fetch('/api/plugins/avataredit/importURL', {
+                method: 'POST',
+                headers: getRequestHeaders(),
+                body: JSON.stringify({ url }),
+            });
+        } else {
+            console.debug('Custom content import started for Char UUID: ', url);
+            request = await fetch('/api/plugins/avataredit/importUUID', {
+                method: 'POST',
+                headers: getRequestHeaders(),
+                body: JSON.stringify({ url }),
+            });
+        }
+
+        if (!request.ok) {
+            toastr.info(request.statusText, 'Custom content import failed');
+            console.error('Custom content import failed', request.status, request.statusText);
+            return;
+        }
+
+        const data = await request.blob();
+        const customContentType = request.headers.get('X-Custom-Content-Type');
+        const fileName = request.headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '');
+        const file = new File([data], fileName, { type: data.type });
+
+        switch (customContentType) {
+            case 'character':
+                await processDroppedFiles([file]);
+                break;
+            case 'lorebook':
+                await importWorldInfo(file);
+                break;
+            default:
+                toastr.warning('Unknown content type');
+                console.error('Unknown content type', customContentType);
+                break;
+        }
+    }
+}
