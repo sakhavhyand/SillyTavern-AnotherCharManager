@@ -2,7 +2,7 @@
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { resetScrollHeight, getBase64Async } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
-import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
+import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability, importCharByURL } from './src/acm_characters.js';
 import { power_user } from '../../../power-user.js';
 
 const getTokenCount = SillyTavern.getContext().getTokenCount;
@@ -630,8 +630,16 @@ jQuery(async () => {
     });
 
     // Import character by URL
-    $('#acm_external_import_button').on("click", function () {
-        $('#external_import_button').trigger("click");
+    $('#acm_external_import_button').on("click", async function () {
+        //$('#external_import_button').trigger("click");
+        const html = await $.get(`${extensionFolderPath}/importURL.html`);
+        const input = await callPopup(html, POPUP_TYPE.INPUT, '', { wider: true, okButton: $('#popup_template').attr('popup-button-import'), rows: 4 });
+
+        if (!input) {
+            console.debug('URL import cancelled');
+            return;
+        }
+        await importCharByURL(input);
     });
 
     // Rename a character
