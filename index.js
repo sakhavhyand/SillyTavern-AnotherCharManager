@@ -29,6 +29,7 @@ let sortOrder = 'asc';
 let sortData = 'name';
 let searchValue = '';
 let fav_only = false;
+const tagFilterstates = new Map();
 
 function debounce(func, timeout = 300) {
     let timer;
@@ -136,14 +137,56 @@ function displayTag( tagId ){
     else { return ''; }
 }
 
+function generateTagFilter() {
+    let tagBlock='';
+
+    tagList.forEach(tag => {
+        tagBlock += `<span id="${tag.id}" class="acm_tag" tabIndex="0" style="display: inline; background-color: ${tag.color}; color: ${tag.color2};">
+                                <span class="acm_tag_name">${tag.name}</span>
+                     </span>`;
+        tagFilterstates.set(tag.id, 1);
+    });
+
+    $('#tags-list').html(tagBlock);
+}
+function addListenersTagFilter() {
+    const tags = document.querySelectorAll('.acm_tag');
+
+    tags.forEach(tag => {
+        tag.addEventListener('click', () => tagFilterClick(tag));
+    });
+}
+
+function tagFilterClick(tag) {
+    const currentState = tagFilterstates.get(tag.id);
+    let newState;
+
+    if (currentState === 1) {
+        newState = 2;
+        tag.querySelector('.acm_tag_name').textContent = '✔️ ' + tag.querySelector('.acm_tag_name').textContent;
+        tag.style.borderColor = 'green';
+    } else if (currentState === 2) {
+        newState = 3;
+        tag.querySelector('.acm_tag_name').textContent = tag.querySelector('.acm_tag_name').textContent.replace('✔️ ', '');
+        tag.querySelector('.acm_tag_name').textContent = '❌ ' + tag.querySelector('.acm_tag_name').textContent;
+        tag.style.borderColor = 'red';
+    } else {
+        newState = 1;
+        tag.querySelector('.acm_tag_name').textContent = tag.querySelector('.acm_tag_name').textContent.replace(/✔️ |❌ /, '');
+        tag.style.borderColor = '';
+    }
+
+    tagFilterstates.set(tag.id, newState);
+    refreshCharList();
+}
+
 // Function to Display the AltGreetings if they exists
 function displayAltGreetings(item) {
     let altGreetingsHTML = '';
 
-    if(item.length === 0){
+    if (item.length === 0) {
         return '<span id="chicken">Nothing here but chickens!!</span>';
-    }
-    else {
+    } else {
         for (let i = 0; i < item.length; i++) {
             let greetingNumber = i + 1;
             altGreetingsHTML += `<div class="inline-drawer">
@@ -336,6 +379,19 @@ function refreshCharList() {
         ? [...SillyTavern.getContext().characters].filter(character => character.fav === true || character.data.extensions.fav === true)
         : [...SillyTavern.getContext().characters];
 
+    // Filtrer par tags en premier
+    const tagStates = [...tagFilterstates.entries()]; // Récupérer les états de tous les tags
+    const matchingTagIds = tagList
+        .filter(tag => tagStates.find(([id, state]) => id === tag.id && state === 2)) // Tags inclus
+        .map(tag => tag.id);
+
+    filteredChars = charactersCopy.filter(item => {
+        const hasIncludedTag = (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
+        const hasExcludedTag = (tagMap[item.avatar] || []).some(tagId => tagStates.find(([id, state]) => id === tagId && state === 3));
+
+        return (matchingTagIds.length === 0) || (hasIncludedTag && !hasExcludedTag);
+    });
+
     if (searchValue !== '') {
         const searchValueLower = searchValue.toLowerCase();
 
@@ -527,7 +583,9 @@ jQuery(async () => {
     });
     // Load the characters list in background when ST launch
     eventSource.on('character_page_loaded', function () {
-            refreshCharList();
+        refreshCharList();
+        generateTagFilter();
+        addListenersTagFilter();
     });
 
     // Trigger when a character is selected in the list
