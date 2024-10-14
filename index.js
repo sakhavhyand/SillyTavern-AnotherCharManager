@@ -140,6 +140,8 @@ function displayTag( tagId ){
 function generateTagFilter() {
     let tagBlock='';
 
+    tagList.sort((a, b) => a.name.localeCompare(b.name));
+
     tagList.forEach(tag => {
         tagBlock += `<span id="${tag.id}" class="acm_tag" tabIndex="0" style="display: inline; background-color: ${tag.color}; color: ${tag.color2};">
                                 <span class="acm_tag_name">${tag.name}</span>
@@ -379,17 +381,32 @@ function refreshCharList() {
         ? [...SillyTavern.getContext().characters].filter(character => character.fav === true || character.data.extensions.fav === true)
         : [...SillyTavern.getContext().characters];
 
-    // Filtrer par tags en premier
-    const tagStates = [...tagFilterstates.entries()]; // Récupérer les états de tous les tags
-    const matchingTagIds = tagList
-        .filter(tag => tagStates.find(([id, state]) => id === tag.id && state === 2)) // Tags inclus
+    // Récupérer les états des tags
+    const tagStates = [...tagFilterstates.entries()];
+
+    // Séparer les tags inclus et exclus
+    const includedTagIds = tagList
+        .filter(tag => tagStates.find(([id, state]) => id === tag.id && state === 2))
         .map(tag => tag.id);
 
-    filteredChars = charactersCopy.filter(item => {
-        const hasIncludedTag = (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
-        const hasExcludedTag = (tagMap[item.avatar] || []).some(tagId => tagStates.find(([id, state]) => id === tagId && state === 3));
+    const excludedTagIds = tagList
+        .filter(tag => tagStates.find(([id, state]) => id === tag.id && state === 3))
+        .map(tag => tag.id);
 
-        return (matchingTagIds.length === 0) || (hasIncludedTag && !hasExcludedTag);
+    // Filtrage des personnages en fonction des tags inclus et exclus
+    let tagfilteredChars = charactersCopy.filter(item => {
+        const characterTags = tagMap[item.avatar] || [];
+
+        // Vérifier s'il a des tags inclus
+        const hasIncludedTag = includedTagIds.length === 0 || characterTags.some(tagId => includedTagIds.includes(tagId));
+
+        // Vérifier s'il a des tags exclus
+        const hasExcludedTag = characterTags.some(tagId => excludedTagIds.includes(tagId));
+
+        // Retourner vrai si :
+        // 1. Il n'a pas de tags exclus
+        // 2. Il a au moins un tag inclus (s'il y a des tags inclus définis)
+        return hasIncludedTag && !hasExcludedTag;
     });
 
     if (searchValue !== '') {
@@ -401,7 +418,8 @@ function refreshCharList() {
             .map(tag => tag.id);
 
         // Filter characters by description, name, creatorcomment, or tag
-        filteredChars = charactersCopy.filter(item => {
+        //filteredChars = charactersCopy.filter(item => {
+        filteredChars = tagfilteredChars.filter(item => {
             const matchesText = item.description?.toLowerCase().includes(searchValueLower) ||
                 item.name?.toLowerCase().includes(searchValueLower) ||
                 item.creatorcomment?.toLowerCase().includes(searchValueLower);
@@ -420,7 +438,8 @@ function refreshCharList() {
         }
     }
     else {
-        const sortedList = sortCharAR(charactersCopy, sortData, sortOrder);
+        //const sortedList = sortCharAR(charactersCopy, sortData, sortOrder);
+        const sortedList = sortCharAR(tagfilteredChars, sortData, sortOrder);
         $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
     }
 
@@ -583,9 +602,9 @@ jQuery(async () => {
     });
     // Load the characters list in background when ST launch
     eventSource.on('character_page_loaded', function () {
-        refreshCharList();
         generateTagFilter();
         addListenersTagFilter();
+        refreshCharList();
     });
 
     // Trigger when a character is selected in the list
