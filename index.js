@@ -612,6 +612,35 @@ jQuery(async () => {
         selectAndDisplay($(this).attr('chid'), $(this).attr('avatar'));
     });
 
+    document.getElementById('acm_tags_filter').addEventListener('click', function() {
+        const tagsList = document.getElementById('tags-list');
+
+        // Si la div est déjà ouverte
+        if (tagsList.classList.contains('open')) {
+            tagsList.style.height = tagsList.scrollHeight + 'px';  // Définir la hauteur actuelle avant de réduire
+            setTimeout(() => {
+                tagsList.style.height = '0';  // Réduire la hauteur à zéro
+            }, 10);
+        } else {
+            // Si la div est fermée
+            tagsList.style.height = '0';  // Assurez-vous qu'elle est à 0 avant d'ouvrir
+            tagsList.classList.add('open');
+            setTimeout(() => {
+                tagsList.style.height = tagsList.scrollHeight + 'px';  // Ajuster à la hauteur complète
+            }, 10);  // Petit délai pour forcer le recalcul
+        }
+
+        // Basculer la classe après l'animation
+        tagsList.addEventListener('transitionend', function() {
+            if (!tagsList.classList.contains('open')) {
+                tagsList.style.height = '';  // Réinitialiser la hauteur après l'animation
+            }
+        }, { once: true });
+
+        // Basculer la classe `open`
+        tagsList.classList.toggle('open');
+    });
+
     // Trigger when the sort dropdown is used
     $(document).on('change', '#char_sort_order' , function () {
         sortData = $(this).find(':selected').data('field');

@@ -213,6 +213,13 @@
     align-content: flex-start;
     flex-direction: row;
     gap: 0.2rem;
+    height: 0;
+    overflow: hidden;
+    transition: height 0.3s ease-out;
+}
+
+#tags-list.open {
+    height: auto;
 }
 
 .acm_tag {
