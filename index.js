@@ -90,7 +90,8 @@ function sortCharAR(chars, sort_data, sort_order) {
 // Function to generate the HTML block for a character
 function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
-    const avatarThumb = getThumbnailUrl('avatar', avatar) + '&t=' + new Date().getTime();
+    //const avatarThumb = getThumbnailUrl('avatar', avatar) + '&t=' + new Date().getTime();
+    const avatarThumb = getThumbnailUrl('avatar', avatar);
     let isFav;
 
     const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
@@ -304,7 +305,8 @@ function delAltGreeting(index, inlineDrawer){
 // Function to fill details in the character details block
 function fillDetails(avatar) {
     const char = characters[getIdByAvatar(avatar)];
-    const avatarThumb = getThumbnailUrl('avatar', char.avatar) + '&t=' + new Date().getTime();
+    // const avatarThumb = getThumbnailUrl('avatar', char.avatar) + '&t=' + new Date().getTime();
+    const avatarThumb = getThumbnailUrl('avatar', char.avatar) ;
 
     $('#avatar_title').attr('title', char.avatar);
     $('#avatar_img').attr('src', avatarThumb);
