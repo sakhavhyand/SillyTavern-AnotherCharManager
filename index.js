@@ -608,7 +608,7 @@ jQuery(async () => {
     });
 
     // Add trigger to open/close tag list for filtering
-    $('#acm_tags_filter').addEventListener('click', function() {
+    $(document).on('click', '#acm_tags_filter', function() {
         const tagsList = document.getElementById('tags-list');
 
         // Si la div est déjà ouverte
