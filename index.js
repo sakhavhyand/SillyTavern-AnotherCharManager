@@ -493,6 +493,7 @@ async function update_avatar(input){
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
+                $(`#CharDID${id}`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
@@ -502,6 +503,7 @@ async function update_avatar(input){
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
+                $(`#CharDID${id}`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
