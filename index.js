@@ -1,34 +1,35 @@
 // An extension that allows you to manage characters.
-import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
+import { extension_settings, getContext } from "../../../extensions.js";
+import { saveSettingsDebounced, setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { resetScrollHeight, getBase64Async } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
 import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
 import { power_user } from '../../../power-user.js';
 
-const getTokenCount = SillyTavern.getContext().getTokenCount;
-const getThumbnailUrl = SillyTavern.getContext().getThumbnailUrl;
-const callPopup = SillyTavern.getContext().callGenericPopup;
-const eventSource = SillyTavern.getContext().eventSource;
-const event_types = SillyTavern.getContext().eventTypes;
-const characters = SillyTavern.getContext().characters;
-const tagMap = SillyTavern.getContext().tagMap;
-const tagList = SillyTavern.getContext().tags;
-const selectCharacterById = SillyTavern.getContext().selectCharacterById;
-const Popup = SillyTavern.getContext().Popup;
-const POPUP_TYPE = SillyTavern.getContext().POPUP_TYPE;
+const getTokenCount = getContext().getTokenCount;
+const getThumbnailUrl = getContext().getThumbnailUrl;
+const callPopup = getContext().callGenericPopup;
+const eventSource = getContext().eventSource;
+const event_types = getContext().eventTypes;
+const characters = getContext().characters;
+const tagMap = getContext().tagMap;
+const tagList = getContext().tags;
+const selectCharacterById = getContext().selectCharacterById;
+const Popup = getContext().Popup;
+const POPUP_TYPE = getContext().POPUP_TYPE;
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherCharManager';
 const oldExtensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
+const defaultSettings = {sortingField: "name", sortingOrder: "asc", favOnly: false};
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 let selectedId, selectedChar, mem_menu, mem_avatar;
-let sortOrder = 'asc';
-let sortData = 'name';
 let searchValue = '';
 let fav_only = false;
+let extensionSettings;
 const tagFilterstates = new Map();
 
 function debounce(func, timeout = 300) {
@@ -37,6 +38,16 @@ function debounce(func, timeout = 300) {
         clearTimeout(timer);
         timer = setTimeout(() => { func.apply(this, args); }, timeout);
     };
+}
+
+// Loads the extension settings if they exist, otherwise initializes them to the defaults.
+async function loadSettings() {
+    //Create the settings if they don't exist
+    extension_settings.acm = extension_settings.acm || {};
+    if (Object.keys(extension_settings.acm).length === 0) {
+        Object.assign(extension_settings.acm, defaultSettings);
+    }
+    extensionSettings = extension_settings.acm;
 }
 
 // Function to get the ID of a character using its avatar
@@ -90,7 +101,6 @@ function sortCharAR(chars, sort_data, sort_order) {
 // Function to generate the HTML block for a character
 function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
-    //const avatarThumb = getThumbnailUrl('avatar', avatar) + '&t=' + new Date().getTime();
     const avatarThumb = getThumbnailUrl('avatar', avatar);
     let isFav;
 
@@ -305,7 +315,6 @@ function delAltGreeting(index, inlineDrawer){
 // Function to fill details in the character details block
 function fillDetails(avatar) {
     const char = characters[getIdByAvatar(avatar)];
-    // const avatarThumb = getThumbnailUrl('avatar', char.avatar) + '&t=' + new Date().getTime();
     const avatarThumb = getThumbnailUrl('avatar', char.avatar) ;
 
     $('#avatar_title').attr('title', char.avatar);
@@ -379,9 +388,9 @@ function fillAdvancedDefinitions(avatar) {
 function refreshCharList() {
 
     let filteredChars = [];
-    const charactersCopy = fav_only
-        ? [...SillyTavern.getContext().characters].filter(character => character.fav === true || character.data.extensions.fav === true)
-        : [...SillyTavern.getContext().characters];
+    const charactersCopy = extensionSettings.favOnly
+        ? [...getContext().characters].filter(character => character.fav === true || character.data.extensions.fav === true)
+        : [...getContext().characters];
 
     // Récupérer les états des tags
     const tagStates = [...tagFilterstates.entries()];
@@ -412,7 +421,7 @@ function refreshCharList() {
     });
 
     if (searchValue !== '') {
-        const searchValueLower = searchValue.toLowerCase();
+        const searchValueLower = searchValue.trim().toLowerCase();
 
         // Find matching tag IDs based on searchValue
         const matchingTagIds = tagList
@@ -420,7 +429,6 @@ function refreshCharList() {
             .map(tag => tag.id);
 
         // Filter characters by description, name, creatorcomment, or tag
-        //filteredChars = charactersCopy.filter(item => {
         filteredChars = tagfilteredChars.filter(item => {
             const matchesText = item.description?.toLowerCase().includes(searchValueLower) ||
                 item.name?.toLowerCase().includes(searchValueLower) ||
@@ -435,13 +443,12 @@ function refreshCharList() {
             $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
         }
         else {
-            const sortedList = sortCharAR(filteredChars, sortData, sortOrder);
+            const sortedList = sortCharAR(filteredChars, extensionSettings.sortingField, extensionSettings.sortingOrder);
             $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
         }
     }
     else {
-        //const sortedList = sortCharAR(charactersCopy, sortData, sortOrder);
-        const sortedList = sortCharAR(tagfilteredChars, sortData, sortOrder);
+        const sortedList = sortCharAR(tagfilteredChars, extensionSettings.sortingField, extensionSettings.sortingOrder);
         $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
     }
 
@@ -528,12 +535,12 @@ function closeDetails( reset = true ) {
 function openModal() {
 
     // Memorize some global variables
-    if (SillyTavern.getContext().characterId !== undefined && SillyTavern.getContext().characterId >= 0) {
-        mem_avatar = characters[SillyTavern.getContext().characterId].avatar;
+    if (getContext().characterId !== undefined && getContext().characterId >= 0) {
+        mem_avatar = characters[getContext().characterId].avatar;
     } else {
         mem_avatar = undefined;
     }
-    mem_menu = SillyTavern.getContext().menuType;
+    mem_menu = getContext().menuType;
 
     // Display the modal with our list layout
     $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
@@ -548,11 +555,15 @@ function openModal() {
         const field = option.getAttribute('data-field');
         const order = option.getAttribute('data-order');
 
-        option.selected = field === sortData && order === sortOrder;
+        option.selected = field === extensionSettings.sortingField && order === extensionSettings.sortingOrder;
     });
+
+    document.getElementById('favOnly_checkbox').checked = extensionSettings.favOnly;
 }
 
 jQuery(async () => {
+
+    await loadSettings();
 
     // Create the shadow div
     let modalHtml;
@@ -631,8 +642,9 @@ jQuery(async () => {
 
     // Trigger when the sort dropdown is used
     $(document).on('change', '#char_sort_order' , function () {
-        sortData = $(this).find(':selected').data('field');
-        sortOrder = $(this).find(':selected').data('order');
+        extensionSettings.sortingField = $(this).find(':selected').data('field');
+        extensionSettings.sortingOrder = $(this).find(':selected').data('order');
+        saveSettingsDebounced();
         refreshCharListDebounced();
     });
 
@@ -644,10 +656,14 @@ jQuery(async () => {
 
     $('#favOnly_checkbox').on("change",function() {
         if (this.checked) {
-            fav_only = true;
+            //fav_only = true;
+            extensionSettings.favOnly = true;
+            saveSettingsDebounced();
             refreshCharListDebounced();
         } else {
-            fav_only = false;
+            //fav_only = false;
+            extensionSettings.favOnly = false;
+            saveSettingsDebounced();
             refreshCharListDebounced();
         }
     });
