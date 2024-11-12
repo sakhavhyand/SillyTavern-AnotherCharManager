@@ -5,7 +5,7 @@ import { renameTagKey } from '../../../../tags.js';
 import { delay, ensureImageFormatSupported } from '../../../../utils.js';
 import { renameGroupMember } from '../../../../group-chats.js';
 
-export { editChar, replaceAvatar, delChar, dupeChar, renameChar, exportChar, checkApiAvailability };
+export { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability };
 
 const event_types = SillyTavern.getContext().eventTypes;
 const eventSource = SillyTavern.getContext().eventSource;
@@ -96,26 +96,26 @@ async function replaceAvatar(newAvatar, id, crop_data = undefined) {
 }
 
 // Function not used at this moment, leaving it here just in case
-async function delChar(avatar, delChats = true) {
-
-    const toDel = {
-        avatar_url: avatar,
-        delete_chats: delChats,
-    };
-
-    const response = await fetch('/api/characters/delete', {
-        method: 'POST',
-        headers: getRequestHeaders(),
-        body: JSON.stringify(toDel),
-        cache: 'no-cache',
-    });
-
-    if (response.ok) {
-        // TO DO ?
-    } else {
-        console.log('Error!');
-    }
-}
+// async function delChar(avatar, delChats = true) {
+//
+//     const toDel = {
+//         avatar_url: avatar,
+//         delete_chats: delChats,
+//     };
+//
+//     const response = await fetch('/api/characters/delete', {
+//         method: 'POST',
+//         headers: getRequestHeaders(),
+//         body: JSON.stringify(toDel),
+//         cache: 'no-cache',
+//     });
+//
+//     if (response.ok) {
+//         // TO DO ?
+//     } else {
+//         console.log('Error!');
+//     }
+// }
 
 // Function to duplicate a character
 async function dupeChar(avatar) {

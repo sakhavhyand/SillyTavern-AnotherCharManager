@@ -1,10 +1,10 @@
 // An extension that allows you to manage characters.
-import { extension_settings, getContext } from "../../../extensions.js";
+import { extension_settings, getContext } from '../../../extensions.js';
 import { saveSettingsDebounced, setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { resetScrollHeight, getBase64Async } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
-import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
 import { power_user } from '../../../power-user.js';
+import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
 
 const getTokenCount = getContext().getTokenCount;
 const getThumbnailUrl = getContext().getThumbnailUrl;
@@ -500,7 +500,7 @@ async function update_avatar(input){
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`#CharDID${id}`).attr('src', newImageUrl);
+                $(`#CharDID${selectedId}`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
@@ -510,7 +510,7 @@ async function update_avatar(input){
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`#CharDID${id}`).attr('src', newImageUrl);
+                $(`#CharDID${selectedId}`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
@@ -626,7 +626,7 @@ jQuery(async () => {
     $(document).on('click', '#acm_tags_filter', function() {
         const tagsList = document.getElementById('tags-list');
 
-        // Si la div est déjà ouverte
+        // Check if div already opened
         if (tagsList.classList.contains('open')) {
             setTimeout(() => {
                 tagsList.style.height = '0';
@@ -656,12 +656,10 @@ jQuery(async () => {
 
     $('#favOnly_checkbox').on("change",function() {
         if (this.checked) {
-            //fav_only = true;
             extensionSettings.favOnly = true;
             saveSettingsDebounced();
             refreshCharListDebounced();
         } else {
-            //fav_only = false;
             extensionSettings.favOnly = false;
             saveSettingsDebounced();
             refreshCharListDebounced();
@@ -851,7 +849,7 @@ jQuery(async () => {
     });
 
     // Edit a character avatar
-    $('#edit_avatar_button').change(function () {
+    $('#edit_avatar_button').on('change', function () {
         checkApiAvailability().then(async isAvailable => {
             if (isAvailable) {
                 await update_avatar(this);
