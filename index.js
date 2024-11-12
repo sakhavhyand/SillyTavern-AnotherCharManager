@@ -17,6 +17,7 @@ const tagList = getContext().tags;
 const selectCharacterById = getContext().selectCharacterById;
 const Popup = getContext().Popup;
 const POPUP_TYPE = getContext().POPUP_TYPE;
+const substituteParams = getContext().substituteParams;
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherCharManager';
@@ -28,7 +29,6 @@ const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 let selectedId, selectedChar, mem_menu, mem_avatar;
 let searchValue = '';
-let fav_only = false;
 let extensionSettings;
 const tagFilterstates = new Map();
 
@@ -209,7 +209,7 @@ function displayAltGreetings(item) {
                             Greeting #
                             <span class="greeting_index">${greetingNumber}</span>
                         </strong>
-                        <span class="tokens_count drawer-header-item">Tokens: ${getTokenCount(item[i])}</span>
+                        <span class="tokens_count drawer-header-item">Tokens: ${getTokenCount(substituteParams(item[i]))}</span>
                     </div>
                     <div class="altGreetings_buttons">
                         <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
@@ -239,7 +239,7 @@ function saveAltGreetings(event = null){
     if (event) {
         const textarea = event.target;
         const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
-        tokensSpan.textContent = `Tokens: ${getTokenCount(textarea.value)}`;
+        tokensSpan.textContent = `Tokens: ${getTokenCount(substituteParams(textarea.value))}`;
     }
 
     // Edit the Alt Greetings number on the main drawer
@@ -329,25 +329,25 @@ function fillDetails(avatar) {
     $('#ch_infos_lastchat').text(`Last chat: ${char.date_last_chat ? new Date(char.date_last_chat).toISOString().substring(0, 10) : " - "}`);
     $('#ch_infos_adddate').text(`Added: ${char.date_added ? new Date(char.date_added).toISOString().substring(0, 10) : " - "}`);
     $('#ch_infos_link').html(char.data.extensions.chub?.full_path ? `Link: <a href="https://chub.ai/${char.data.extensions.chub.full_path}" target="_blank">Chub</a>` : "Link: -");
-    const tokens = getTokenCount(char.name) +
-                            getTokenCount(char.description) +
-                            getTokenCount(char.first_mes) +
-                            getTokenCount(char.data?.extensions?.depth_prompt?.prompt ?? '') +
-                            getTokenCount(char.data?.post_history_instructions || '') +
-                            getTokenCount(char.personality) +
-                            getTokenCount(char.scenario) +
-                            getTokenCount(char.data?.extensions?.depth_prompt?.prompt ?? '') +
-                            getTokenCount(char.mes_example);
+    const tokens = getTokenCount(substituteParams(char.name)) +
+                            getTokenCount(substituteParams(char.description)) +
+                            getTokenCount(substituteParams(char.first_mes)) +
+                            getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? '')) +
+                            getTokenCount(substituteParams(char.data?.post_history_instructions || '')) +
+                            getTokenCount(substituteParams(char.personality)) +
+                            getTokenCount(substituteParams(char.scenario)) +
+                            getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? '')) +
+                            getTokenCount(substituteParams(char.mes_example));
     $('#ch_infos_tokens').text(`Tokens: ${tokens}`);
-    const permTokens = getTokenCount(char.name) +
-        getTokenCount(char.description) +
-        getTokenCount(char.personality) +
-        getTokenCount(char.scenario) +
-        getTokenCount(char.data?.extensions?.depth_prompt?.prompt ?? '');
+    const permTokens = getTokenCount(substituteParams(char.name)) +
+        getTokenCount(substituteParams(char.description)) +
+        getTokenCount(substituteParams(char.personality)) +
+        getTokenCount(substituteParams(char.scenario)) +
+        getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''));
     $('#ch_infos_permtokens').text(`Perm. Tokens: ${permTokens}`);
-    $('#desc_Tokens').text(`Tokens: ${getTokenCount(char.description)}`);
+    $('#desc_Tokens').text(`Tokens: ${getTokenCount(substituteParams(char.description))}`);
     $('#desc_zone').val(char.description);
-    $('#firstMess_tokens').text(`Tokens: ${getTokenCount(char.first_mes)}`);
+    $('#firstMess_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.first_mes))}`);
     $('#firstMes_zone').val(char.first_mes);
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings.length}`);
     $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
@@ -365,22 +365,22 @@ function fillAdvancedDefinitions(avatar) {
     $('#acm_creator_notes_textarea').val(char.data?.creator_notes || char.creatorcomment);
     $('#acm_character_version_textarea').val(char.data?.character_version || '');
     $('#acm_system_prompt_textarea').val(char.data?.system_prompt || '');
-    $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(char.data?.system_prompt || '')}`);
+    $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.data?.system_prompt || ''))}`);
     $('#acm_post_history_instructions_textarea').val(char.data?.post_history_instructions || '');
-    $('#acm_post_tokens').text(`Tokens: ${getTokenCount(char.data?.post_history_instructions || '')}`);
+    $('#acm_post_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.data?.post_history_instructions || ''))}`);
     $('#acm_tags_textarea').val(Array.isArray(char.data?.tags) ? char.data.tags.join(', ') : '');
     $('#acm_creator_textarea').val(char.data?.creator);
     $('#acm_personality_textarea').val(char.personality);
-    $('#acm_personality_tokens').text(`Tokens: ${getTokenCount(char.personality)}`);
+    $('#acm_personality_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.personality))}`);
     $('#acm_scenario_pole').val(char.scenario);
-    $('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(char.scenario)}`);
+    $('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.scenario))}`);
     $('#acm_depth_prompt_prompt').val(char.data?.extensions?.depth_prompt?.prompt ?? '');
-    $('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(char.data?.extensions?.depth_prompt?.prompt ?? '')}`);
+    $('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''))}`);
     $('#acm_depth_prompt_depth').val(char.data?.extensions?.depth_prompt?.depth ?? depth_prompt_depth_default);
     $('#acm_depth_prompt_role').val(char.data?.extensions?.depth_prompt?.role ?? depth_prompt_role_default);
     $('#acm_talkativeness_slider').val(char.talkativeness || talkativeness_default);
     $('#acm_mes_example_textarea').val(char.mes_example);
-    $('#acm_messages_examples').text(`Tokens: ${getTokenCount(char.mes_example)}`);
+    $('#acm_messages_examples').text(`Tokens: ${getTokenCount(substituteParams(char.mes_example))}`);
 
 }
 
@@ -813,20 +813,20 @@ jQuery(async () => {
 
     // Adding textarea trigger on input
     const elementsToUpdate = {
-        '#desc_zone': function () { const update = { avatar: selectedChar, description: String($('#desc_zone').val()), data: { description: String($('#desc_zone').val()), },}; editCharDebounced(update); $('#desc_Tokens').html(`Tokens: ${getTokenCount(String($('#desc_zone').val()))}`);},
-        '#firstMes_zone': function () { const update = { avatar: selectedChar, first_mes: String($('#firstMes_zone').val()), data: { first_mes: String($('#firstMes_zone').val()),},}; editCharDebounced(update); $('#firstMess_tokens').html(`Tokens: ${getTokenCount(String($('#firstMes_zone').val()))}`);},
+        '#desc_zone': function () { const update = { avatar: selectedChar, description: String($('#desc_zone').val()), data: { description: String($('#desc_zone').val()), },}; editCharDebounced(update); $('#desc_Tokens').html(`Tokens: ${getTokenCount(substituteParams(String($('#desc_zone').val())))}`);},
+        '#firstMes_zone': function () { const update = { avatar: selectedChar, first_mes: String($('#firstMes_zone').val()), data: { first_mes: String($('#firstMes_zone').val()),},}; editCharDebounced(update); $('#firstMess_tokens').html(`Tokens: ${getTokenCount(substituteParams(String($('#firstMes_zone').val())))}`);},
         '#acm_creator_notes_textarea': function () { const update = { avatar: selectedChar, creatorcomment: String($('#acm_creator_notes_textarea').val()), data: { creator_notes: String($('#acm_creator_notes_textarea').val()), },}; editCharDebounced(update);},
         '#acm_character_version_textarea': function () { const update = { avatar: selectedChar, data: { character_version: String($('#acm_character_version_textarea').val()), },}; editCharDebounced(update);},
-        '#acm_system_prompt_textarea': function () { const update = { avatar: selectedChar, data: { system_prompt: String($('#acm_system_prompt_textarea').val()), },}; editCharDebounced(update); $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(String($('#acm_system_prompt_textarea').val()))}`);},
-        '#acm_post_history_instructions_textarea': function () { const update = { avatar: selectedChar, data: { post_history_instructions: String($('#acm_post_history_instructions_textarea').val()), },}; editCharDebounced(update); $('#acm_post_tokens').text(`Tokens: ${getTokenCount(String($('#acm_post_history_instructions_textarea').val()))}`);},
+        '#acm_system_prompt_textarea': function () { const update = { avatar: selectedChar, data: { system_prompt: String($('#acm_system_prompt_textarea').val()), },}; editCharDebounced(update); $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(substituteParams(String($('#acm_system_prompt_textarea').val())))}`);},
+        '#acm_post_history_instructions_textarea': function () { const update = { avatar: selectedChar, data: { post_history_instructions: String($('#acm_post_history_instructions_textarea').val()), },}; editCharDebounced(update); $('#acm_post_tokens').text(`Tokens: ${getTokenCount(substituteParams(String($('#acm_post_history_instructions_textarea').val())))}`);},
         '#acm_creator_textarea': function () { const update = { avatar: selectedChar, data: { creator: String($('#acm_creator_textarea').val()), },}; editCharDebounced(update);},
-        '#acm_personality_textarea': function () { const update = { avatar: selectedChar, personality: String($('#acm_personality_textarea').val()), data: { personality: String($('#acm_personality_textarea').val()), },}; editCharDebounced(update); $('#acm_personality_tokens').text(`Tokens: ${getTokenCount(String($('#acm_personality_textarea').val()))}`);},
-        '#acm_scenario_pole': function () { const update = { avatar: selectedChar, scenario: String($('#acm_scenario_pole').val()), data: { scenario: String($('#acm_scenario_pole').val()), },}; editCharDebounced(update); $('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(String($('#acm_scenario_pole').val()))}`);},
-        '#acm_depth_prompt_prompt': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { prompt: String($('#acm_depth_prompt_prompt').val()),}}},}; editCharDebounced(update); $('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(String($('#acm_depth_prompt_prompt').val()))}`);},
+        '#acm_personality_textarea': function () { const update = { avatar: selectedChar, personality: String($('#acm_personality_textarea').val()), data: { personality: String($('#acm_personality_textarea').val()), },}; editCharDebounced(update); $('#acm_personality_tokens').text(`Tokens: ${getTokenCount(substituteParams(String($('#acm_personality_textarea').val())))}`);},
+        '#acm_scenario_pole': function () { const update = { avatar: selectedChar, scenario: String($('#acm_scenario_pole').val()), data: { scenario: String($('#acm_scenario_pole').val()), },}; editCharDebounced(update); $('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(substituteParams(String($('#acm_scenario_pole').val())))}`);},
+        '#acm_depth_prompt_prompt': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { prompt: String($('#acm_depth_prompt_prompt').val()),}}},}; editCharDebounced(update); $('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(substituteParams(String($('#acm_depth_prompt_prompt').val())))}`);},
         '#acm_depth_prompt_depth': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { depth: $('#acm_depth_prompt_depth').val(),}}},}; editCharDebounced(update);},
         '#acm_depth_prompt_role': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { role: String($('#acm_depth_prompt_role').val()),}}},}; editCharDebounced(update);},
         '#acm_talkativeness_slider': function () { const update = { avatar: selectedChar, talkativeness: String($('#acm_talkativeness_slider').val()), data: { extensions: { talkativeness: String($('#acm_talkativeness_slider').val()),}}}; editCharDebounced(update);},
-        '#acm_mes_example_textarea': function () { const update = { avatar: selectedChar, mes_example: String($('#acm_mes_example_textarea').val()), data: { mes_example: String($('#acm_mes_example_textarea').val()), },}; editCharDebounced(update); $('#acm_messages_examples').text(`Tokens: ${getTokenCount(String($('#acm_mes_example_textarea').val()))}`);},
+        '#acm_mes_example_textarea': function () { const update = { avatar: selectedChar, mes_example: String($('#acm_mes_example_textarea').val()), data: { mes_example: String($('#acm_mes_example_textarea').val()), },}; editCharDebounced(update); $('#acm_messages_examples').text(`Tokens: ${getTokenCount(substituteParams(String($('#acm_mes_example_textarea').val())))}`);},
         '#acm_tags_textarea': function () { const update = { avatar: selectedChar, tags: $('#acm_tags_textarea').val().split(', '), data: { tags: $('#acm_tags_textarea').val().split(', '), },}; editCharDebounced(update);}
     };
 
