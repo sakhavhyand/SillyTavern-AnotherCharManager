@@ -1,6 +1,6 @@
 // An extension that allows you to manage characters.
-import { extension_settings, getContext } from '../../../extensions.js';
-import { saveSettingsDebounced, setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
+import { getContext } from '../../../extensions.js';
+import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { resetScrollHeight, getBase64Async } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
 import { power_user } from '../../../power-user.js';
@@ -18,6 +18,8 @@ const selectCharacterById = getContext().selectCharacterById;
 const Popup = getContext().Popup;
 const POPUP_TYPE = getContext().POPUP_TYPE;
 const substituteParams = getContext().substituteParams;
+const extensionSettings = getContext().extensionSettings;
+const saveSettingsDebounced = getContext().saveSettingsDebounced;
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherCharManager';
@@ -29,7 +31,6 @@ const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 let selectedId, selectedChar, mem_menu, mem_avatar;
 let searchValue = '';
-let extensionSettings;
 const tagFilterstates = new Map();
 
 function debounce(func, timeout = 300) {
@@ -43,11 +44,10 @@ function debounce(func, timeout = 300) {
 // Loads the extension settings if they exist, otherwise initializes them to the defaults.
 async function loadSettings() {
     //Create the settings if they don't exist
-    extension_settings.acm = extension_settings.acm || {};
-    if (Object.keys(extension_settings.acm).length === 0) {
-        Object.assign(extension_settings.acm, defaultSettings);
+    extensionSettings.acm = extensionSettings.acm || {};
+    if (Object.keys(extensionSettings.acm).length === 0) {
+        Object.assign(extensionSettings.acm, defaultSettings);
     }
-    extensionSettings = extension_settings.acm;
 }
 
 // Function to get the ID of a character using its avatar
@@ -67,7 +67,7 @@ function generateGreetingArray() {
     return greetingArray;
 }
 
-// Add an event listeners to all alternative greetings textareas displayed
+// Add an event listeners to all alternative greetings text areas displayed
 function addAltGreetingsTrigger(){
     document.querySelectorAll('.altGreeting_zone').forEach(textarea => {
         textarea.addEventListener('input', (event) => {saveAltGreetings(event);});
@@ -93,7 +93,6 @@ function sortCharAR(chars, sort_data, sort_order) {
                 comparison = b[sort_data] - a[sort_data];
                 break;
         }
-
         return sort_order === 'desc' ? comparison * -1 : comparison;
     });
 }
@@ -113,7 +112,7 @@ function getCharBlock(avatar) {
         isFav = '';
     }
 
-    return `<div class="character_item ${charClass} ${isFav}" chid="${id}" avatar="${avatar}" id="CharDID${id}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
+    return `<div class="character_item ${charClass} ${isFav}" id="${avatar}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
                     <div class="avatar_item">
                         <img src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
                     </div>
@@ -388,14 +387,14 @@ function fillAdvancedDefinitions(avatar) {
 function refreshCharList() {
 
     let filteredChars = [];
-    const charactersCopy = extensionSettings.favOnly
+    const charactersCopy = extensionSettings.acm.favOnly
         ? [...getContext().characters].filter(character => character.fav === true || character.data.extensions.fav === true)
         : [...getContext().characters];
 
-    // Récupérer les états des tags
+    // Get tags states
     const tagStates = [...tagFilterstates.entries()];
 
-    // Séparer les tags inclus et exclus
+    // Split included and excluded tags
     const includedTagIds = tagList
         .filter(tag => tagStates.find(([id, state]) => id === tag.id && state === 2))
         .map(tag => tag.id);
@@ -404,19 +403,19 @@ function refreshCharList() {
         .filter(tag => tagStates.find(([id, state]) => id === tag.id && state === 3))
         .map(tag => tag.id);
 
-    // Filtrage des personnages en fonction des tags inclus et exclus
+    // Filtering based on tags states
     let tagfilteredChars = charactersCopy.filter(item => {
         const characterTags = tagMap[item.avatar] || [];
 
-        // Vérifier s'il a des tags inclus
+        // Check if there is included tags
         const hasIncludedTag = includedTagIds.length === 0 || characterTags.some(tagId => includedTagIds.includes(tagId));
 
-        // Vérifier s'il a des tags exclus
+        // Check if there is excluded tags
         const hasExcludedTag = characterTags.some(tagId => excludedTagIds.includes(tagId));
 
-        // Retourner vrai si :
-        // 1. Il n'a pas de tags exclus
-        // 2. Il a au moins un tag inclus (s'il y a des tags inclus définis)
+        // Return true if :
+        // 1. There is no excluded tags
+        // 2. There is at least one included tags
         return hasIncludedTag && !hasExcludedTag;
     });
 
@@ -428,7 +427,7 @@ function refreshCharList() {
             .filter(tag => tag.name.toLowerCase().includes(searchValueLower))
             .map(tag => tag.id);
 
-        // Filter characters by description, name, creatorcomment, or tag
+        // Filter characters by description, name, creator comment, or tag
         filteredChars = tagfilteredChars.filter(item => {
             const matchesText = item.description?.toLowerCase().includes(searchValueLower) ||
                 item.name?.toLowerCase().includes(searchValueLower) ||
@@ -443,12 +442,12 @@ function refreshCharList() {
             $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
         }
         else {
-            const sortedList = sortCharAR(filteredChars, extensionSettings.sortingField, extensionSettings.sortingOrder);
+            const sortedList = sortCharAR(filteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
             $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
         }
     }
     else {
-        const sortedList = sortCharAR(tagfilteredChars, extensionSettings.sortingField, extensionSettings.sortingOrder);
+        const sortedList = sortCharAR(tagfilteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
         $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
     }
 
@@ -456,14 +455,14 @@ function refreshCharList() {
 }
 
 // Function to display the selected character
-function selectAndDisplay(id, avatar) {
+function selectAndDisplay(avatar) {
 
     // Check if a visible character is already selected
-    if(typeof selectedId !== 'undefined' && document.getElementById(`CharDID${selectedId}`) !== null){
-        document.getElementById(`CharDID${selectedId}`).classList.replace('char_selected','char_select');
+    if(typeof selectedId !== 'undefined' && document.getElementById(avatar) !== null){
+        document.getElementById(avatar).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
-    selectedId = id;
+    selectedId = getIdByAvatar(avatar);
     selectedChar = avatar;
     setCharacterId(getIdByAvatar(avatar));
 
@@ -472,7 +471,7 @@ function selectAndDisplay(id, avatar) {
     fillDetails(avatar);
     fillAdvancedDefinitions(avatar);
 
-    document.getElementById(`CharDID${id}`).classList.replace('char_select','char_selected');
+    document.getElementById(avatar).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
     document.getElementById('char-details').style.removeProperty('display');
 
@@ -500,7 +499,7 @@ async function update_avatar(input){
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`#CharDID${selectedId}`).attr('src', newImageUrl);
+                $(`#${selectedChar}`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
@@ -510,7 +509,7 @@ async function update_avatar(input){
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`#CharDID${selectedId}`).attr('src', newImageUrl);
+                $(`#${selectedChar}`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
@@ -521,13 +520,12 @@ async function update_avatar(input){
 // Function to close the details panel
 function closeDetails( reset = true ) {
     if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
-    selectedChar = undefined;
 
     $('#acm_export_format_popup').hide();
-
-    document.getElementById(`CharDID${selectedId}`)?.classList.replace('char_selected','char_select');
+    document.getElementById(selectedChar)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
+    selectedChar = undefined;
     selectedId = undefined;
 }
 
@@ -555,10 +553,9 @@ function openModal() {
         const field = option.getAttribute('data-field');
         const order = option.getAttribute('data-order');
 
-        option.selected = field === extensionSettings.sortingField && order === extensionSettings.sortingOrder;
+        option.selected = field === extensionSettings.acm.sortingField && order === extensionSettings.acm.sortingOrder;
     });
-
-    document.getElementById('favOnly_checkbox').checked = extensionSettings.favOnly;
+    document.getElementById('favOnly_checkbox').checked = extensionSettings.acm.favOnly;
 }
 
 jQuery(async () => {
@@ -619,7 +616,7 @@ jQuery(async () => {
 
     // Trigger when a character is selected in the list
     $(document).on('click', '.char_select', function () {
-        selectAndDisplay($(this).attr('chid'), $(this).attr('avatar'));
+        selectAndDisplay(this.id);
     });
 
     // Add trigger to open/close tag list for filtering
@@ -642,8 +639,8 @@ jQuery(async () => {
 
     // Trigger when the sort dropdown is used
     $(document).on('change', '#char_sort_order' , function () {
-        extensionSettings.sortingField = $(this).find(':selected').data('field');
-        extensionSettings.sortingOrder = $(this).find(':selected').data('order');
+        extensionSettings.acm.sortingField = $(this).find(':selected').data('field');
+        extensionSettings.acm.sortingOrder = $(this).find(':selected').data('order');
         saveSettingsDebounced();
         refreshCharListDebounced();
     });
@@ -656,11 +653,11 @@ jQuery(async () => {
 
     $('#favOnly_checkbox').on("change",function() {
         if (this.checked) {
-            extensionSettings.favOnly = true;
+            extensionSettings.acm.favOnly = true;
             saveSettingsDebounced();
             refreshCharListDebounced();
         } else {
-            extensionSettings.favOnly = false;
+            extensionSettings.acm.favOnly = false;
             saveSettingsDebounced();
             refreshCharListDebounced();
         }
@@ -677,7 +674,7 @@ jQuery(async () => {
         icon.toggleClass('down up').toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
         $(this).closest('.inline-drawer').children('.inline-drawer-content').stop().slideToggle();
 
-        // Set the height of "autoSetHeight" textareas within the inline-drawer to their scroll height
+        // Set the height of "autoSetHeight" text areas within the inline-drawer to their scroll height
         $(this).closest('.inline-drawer').find('.inline-drawer-content textarea.autoSetHeight').each(function () {
             resetScrollHeight($(this));
         });
@@ -701,6 +698,7 @@ jQuery(async () => {
         }, 125);
     });
 
+    // Trigger when the favorites button is clicked
     $('#acm_favorite_button').on('click', function() {
         const id = getIdByAvatar(selectedChar);
         if (characters[id].fav || characters[id].data.extensions.fav) {
@@ -715,6 +713,7 @@ jQuery(async () => {
         }
     });
 
+    // Trigger when the Open Chat button is clicked
     $('#acm_open_chat').on('click', function () {
         setCharacterId(undefined);
         mem_avatar = undefined;
@@ -789,14 +788,15 @@ jQuery(async () => {
     });
 
     $('#acm_advanced_div').on("click", function () {
-        if ($('#acm_character_popup').css('display') === 'none') {
-            $('#acm_character_popup').css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
+        const $popup = $('#acm_character_popup');
+        if ($popup.css('display') === 'none') {
+            $popup.css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
                 opacity: 1.0,
                 duration: 125,
                 easing: 'ease-in-out',
             });
         } else {
-            $('#acm_character_popup').css('display', 'none').removeClass('open');
+            $popup.css('display', 'none').removeClass('open');
         }
     });
 
@@ -811,21 +811,21 @@ jQuery(async () => {
 
     // Adding textarea trigger on input
     const elementsToUpdate = {
-        '#desc_zone': function () { const update = { avatar: selectedChar, description: String($('#desc_zone').val()), data: { description: String($('#desc_zone').val()), },}; editCharDebounced(update); $('#desc_Tokens').html(`Tokens: ${getTokenCount(substituteParams(String($('#desc_zone').val())))}`);},
-        '#firstMes_zone': function () { const update = { avatar: selectedChar, first_mes: String($('#firstMes_zone').val()), data: { first_mes: String($('#firstMes_zone').val()),},}; editCharDebounced(update); $('#firstMess_tokens').html(`Tokens: ${getTokenCount(substituteParams(String($('#firstMes_zone').val())))}`);},
-        '#acm_creator_notes_textarea': function () { const update = { avatar: selectedChar, creatorcomment: String($('#acm_creator_notes_textarea').val()), data: { creator_notes: String($('#acm_creator_notes_textarea').val()), },}; editCharDebounced(update);},
-        '#acm_character_version_textarea': function () { const update = { avatar: selectedChar, data: { character_version: String($('#acm_character_version_textarea').val()), },}; editCharDebounced(update);},
-        '#acm_system_prompt_textarea': function () { const update = { avatar: selectedChar, data: { system_prompt: String($('#acm_system_prompt_textarea').val()), },}; editCharDebounced(update); $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(substituteParams(String($('#acm_system_prompt_textarea').val())))}`);},
-        '#acm_post_history_instructions_textarea': function () { const update = { avatar: selectedChar, data: { post_history_instructions: String($('#acm_post_history_instructions_textarea').val()), },}; editCharDebounced(update); $('#acm_post_tokens').text(`Tokens: ${getTokenCount(substituteParams(String($('#acm_post_history_instructions_textarea').val())))}`);},
-        '#acm_creator_textarea': function () { const update = { avatar: selectedChar, data: { creator: String($('#acm_creator_textarea').val()), },}; editCharDebounced(update);},
-        '#acm_personality_textarea': function () { const update = { avatar: selectedChar, personality: String($('#acm_personality_textarea').val()), data: { personality: String($('#acm_personality_textarea').val()), },}; editCharDebounced(update); $('#acm_personality_tokens').text(`Tokens: ${getTokenCount(substituteParams(String($('#acm_personality_textarea').val())))}`);},
-        '#acm_scenario_pole': function () { const update = { avatar: selectedChar, scenario: String($('#acm_scenario_pole').val()), data: { scenario: String($('#acm_scenario_pole').val()), },}; editCharDebounced(update); $('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(substituteParams(String($('#acm_scenario_pole').val())))}`);},
-        '#acm_depth_prompt_prompt': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { prompt: String($('#acm_depth_prompt_prompt').val()),}}},}; editCharDebounced(update); $('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(substituteParams(String($('#acm_depth_prompt_prompt').val())))}`);},
-        '#acm_depth_prompt_depth': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { depth: $('#acm_depth_prompt_depth').val(),}}},}; editCharDebounced(update);},
-        '#acm_depth_prompt_role': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { role: String($('#acm_depth_prompt_role').val()),}}},}; editCharDebounced(update);},
-        '#acm_talkativeness_slider': function () { const update = { avatar: selectedChar, talkativeness: String($('#acm_talkativeness_slider').val()), data: { extensions: { talkativeness: String($('#acm_talkativeness_slider').val()),}}}; editCharDebounced(update);},
-        '#acm_mes_example_textarea': function () { const update = { avatar: selectedChar, mes_example: String($('#acm_mes_example_textarea').val()), data: { mes_example: String($('#acm_mes_example_textarea').val()), },}; editCharDebounced(update); $('#acm_messages_examples').text(`Tokens: ${getTokenCount(substituteParams(String($('#acm_mes_example_textarea').val())))}`);},
-        '#acm_tags_textarea': function () { const update = { avatar: selectedChar, tags: $('#acm_tags_textarea').val().split(', '), data: { tags: $('#acm_tags_textarea').val().split(', '), },}; editCharDebounced(update);}
+        '#desc_zone': function () {const descZone=$('#desc_zone');const update={avatar:selectedChar,description:String(descZone.val()),data:{description:String(descZone.val()),},};editCharDebounced(update);$('#desc_Tokens').html(`Tokens: ${getTokenCount(substituteParams(String(descZone.val())))}`);},
+        '#firstMes_zone': function () {const firstMesZone=$('#firstMes_zone');const update={avatar:selectedChar,first_mes:String(firstMesZone.val()),data:{first_mes:String(firstMesZone.val()),},};editCharDebounced(update);$('#firstMess_tokens').html(`Tokens: ${getTokenCount(substituteParams(String(firstMesZone.val())))}`);},
+        '#acm_creator_notes_textarea': function () {const creatorNotes=$('#acm_creator_notes_textarea');const update={avatar:selectedChar,creatorcomment:String(creatorNotes.val()),data:{creator_notes:String(creatorNotes.val()),},};editCharDebounced(update);},
+        '#acm_character_version_textarea': function () { const update = {avatar:selectedChar,data:{character_version:String($('#acm_character_version_textarea').val()),},};editCharDebounced(update);},
+        '#acm_system_prompt_textarea': function () {const sysPrompt=$('#acm_system_prompt_textarea');const update={avatar:selectedChar,data:{system_prompt:String(sysPrompt.val()),},};editCharDebounced(update);$('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(sysPrompt.val())))}`);},
+        '#acm_post_history_instructions_textarea': function () {const postHistory=$('#acm_post_history_instructions_textarea');const update={avatar:selectedChar,data:{post_history_instructions:String(postHistory.val()),},};editCharDebounced(update);$('#acm_post_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(postHistory.val())))}`);},
+        '#acm_creator_textarea': function () {const update={ avatar:selectedChar,data:{creator:String($('#acm_creator_textarea').val()),},};editCharDebounced(update);},
+        '#acm_personality_textarea': function () {const personality=$('#acm_personality_textarea');const update={avatar:selectedChar,personality:String(personality.val()),data:{personality:String(personality.val()),},};editCharDebounced(update);$('#acm_personality_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(personality.val())))}`);},
+        '#acm_scenario_pole': function () {const scenario=$('#acm_scenario_pole');const update={avatar:selectedChar,scenario: String(scenario.val()),data:{scenario:String(scenario.val()),},};editCharDebounced(update);$('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(scenario.val())))}`);},
+        '#acm_depth_prompt_prompt': function () {const depthPrompt=$('#acm_depth_prompt_prompt');const update={avatar:selectedChar,data:{ extensions:{depth_prompt:{prompt:String(depthPrompt.val()),}}},};editCharDebounced(update);$('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(depthPrompt.val())))}`);},
+        '#acm_depth_prompt_depth': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{depth:$('#acm_depth_prompt_depth').val(),}}},};editCharDebounced(update);},
+        '#acm_depth_prompt_role': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{role:String($('#acm_depth_prompt_role').val()),}}},};editCharDebounced(update);},
+        '#acm_talkativeness_slider': function () {const talkativeness=$('#acm_talkativeness_slider');const update={avatar:selectedChar,talkativeness:String(talkativeness.val()),data:{extensions:{talkativeness:String(talkativeness.val()),}}};editCharDebounced(update);},
+        '#acm_mes_example_textarea': function () {const example=$('#acm_mes_example_textarea');const update={avatar:selectedChar,mes_example:String(example.val()),data:{mes_example:String(example.val()),},};editCharDebounced(update);$('#acm_messages_examples').text(`Tokens: ${getTokenCount(substituteParams(String(example.val())))}`);},
+        '#acm_tags_textarea': function () {const tagZone=$('#acm_tags_textarea');const update={avatar:selectedChar,tags:tagZone.val().split(', '),data:{tags:tagZone.val().split(', '), },};editCharDebounced(update);}
     };
 
     Object.keys(elementsToUpdate).forEach(function (id) {
