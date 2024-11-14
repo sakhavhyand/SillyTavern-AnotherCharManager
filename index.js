@@ -443,23 +443,29 @@ function refreshCharList() {
         }
         else {
             const sortedList = sortCharAR(filteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
-            $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
             if(extensionSettings.acm.dropdownUI){
-                $('#character-list').prepend("<div class=\"dropdown-container\">\n" +
-                    "    <div class=\"dropdown-title\">Test dropdown</div>\n" +
-                    "    <div class=\"dropdown-content\">");
-                $('#character-list').append("</div></div>");
+                $('#character-list').html(`<div class="dropdown-container">
+                        <div class="dropdown-title">Test dropdown</div>
+                        <div class="dropdown-content">`).append(sortedList.map((item) => getCharBlock(item.avatar)).join('')).append("</div></div>");
+                // $('#character-list').append(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
+                // $('#character-list').append("</div></div>");
+            }
+            else {
+                $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
             }
         }
     }
     else {
         const sortedList = sortCharAR(tagfilteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
-        $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
         if(extensionSettings.acm.dropdownUI){
-            $('#character-list').prepend("<div class=\"dropdown-container\">\n" +
-                "    <div class=\"dropdown-title\">Test dropdown</div>\n" +
-                "    <div class=\"dropdown-content\">");
-            $('#character-list').append("</div></div>");
+            $('#character-list').html(`<div class="dropdown-container">
+                        <div class="dropdown-title">Test dropdown</div>
+                        <div class="dropdown-content">`).append(sortedList.map((item) => getCharBlock(item.avatar)).join('')).append("</div></div>");
+            // $('#character-list').append(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
+            // $('#character-list').append("</div></div>");
+        }
+        else {
+            $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
         }
     }
 
@@ -595,6 +601,10 @@ jQuery(async () => {
         placement: 'left',
     });
 
+    let acmUIPopper = Popper.createPopper(document.getElementById('acm_switch_ui'), document.getElementById('dropdown-ui-menu'), {
+        placement: 'top',
+    });
+
     // Put the button before rm_button_group_chats in the form_character_search_form
     // on hover, should say "Open Char Manager"
     $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-users faSmallFontSquareFix" title="Open Char Manager"></button>');
@@ -712,24 +722,26 @@ jQuery(async () => {
         }, 125);
     });
 
-    document.getElementById('acm_switch_ui').addEventListener('click', function(event) {
-        const dropdownMenu = document.getElementById('dropdown-ui-menu');
-
-        // Toggle l'affichage du menu déroulant
-        dropdownMenu.style.display = dropdownMenu.style.display === 'none' ? 'block' : 'none';
-
-        if (dropdownMenu.style.display === 'block') {
-            // Positionner le menu au-dessus du bouton
-            const buttonRect = this.getBoundingClientRect();
-            dropdownMenu.style.left = `${buttonRect.left}px`;
-            dropdownMenu.style.top = `${buttonRect.top - dropdownMenu.offsetHeight}px`;
-        }
+    // Switch UI
+    $('#acm_switch_ui').on("click", function () {
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
     });
 
-    // Optionnel : Masquer le menu en cliquant à l'extérieur
-    document.addEventListener('click', (event) => {
-        if (!document.getElementById('acm_switch_ui').contains(event.target) && !document.getElementById('dropdown-ui-menu').contains(event.target)) {
-            document.getElementById('dropdown-ui-menu').style.display = 'none';
+    $(document).on('click', '.dropdown-ui-item', function () {
+        const ui = $(this).data('ui');
+        if (!ui) {
+            return;
+        }
+        if(ui === "classic"){
+            extensionSettings.acm.dropdownUI = false;
+            saveSettingsDebounced();
+            refreshCharList();
+        }
+        else {
+            extensionSettings.acm.dropdownUI = true;
+            saveSettingsDebounced();
+            refreshCharList();
         }
     });
 
