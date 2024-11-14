@@ -56,9 +56,76 @@
     gap: 20px;
 }
 
+.dropdown-ui-menu {
+    display: none;
+    position: absolute;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    width: 150px;
+    text-align: left;
+    z-index: 1000;
+}
+
+.dropdown-ui-item {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.dropdown-ui-item:hover {
+    background-color: var(--white50a);
+    color: var(--black70a);
+}
+
 #acm_popup_close {
     background-color: var(--crimson70a);
     cursor: pointer;
+}
+
+/* Style de la div principale */
+.dropdown-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Style du titre (header) */
+.dropdown-title {
+    padding: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #333;
+    text-align: left;
+    position: relative;
+}
+
+/* Ajout du trait horizontal */
+.dropdown-title::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: #ccc;
+}
+
+/* Style du contenu masqué au départ */
+.dropdown-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease;
+    padding: 0 15px;
+}
+
+/* Contenu visible (après l'activation de la classe "open") */
+.dropdown-container.open .dropdown-content {
+    max-height: 500px; /* Largeur arbitraire pour permettre l'animation */
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 #acm_export_format_popup {

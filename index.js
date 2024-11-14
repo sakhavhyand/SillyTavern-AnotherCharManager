@@ -26,7 +26,7 @@ const extensionName = 'SillyTavern-AnotherCharManager';
 const oldExtensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
-const defaultSettings = {sortingField: "name", sortingOrder: "asc", favOnly: false};
+const defaultSettings = {sortingField: "name", sortingOrder: "asc", favOnly: false, dropdownUI: false};
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 let selectedId, selectedChar, mem_menu, mem_avatar;
@@ -112,7 +112,7 @@ function getCharBlock(avatar) {
         isFav = '';
     }
 
-    return `<div class="character_item ${charClass} ${isFav}" id="${avatar}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
+    return `<div class="character_item ${charClass} ${isFav}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]" data-avatar="${avatar}">
                     <div class="avatar_item">
                         <img src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
                     </div>
@@ -444,11 +444,23 @@ function refreshCharList() {
         else {
             const sortedList = sortCharAR(filteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
             $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
+            if(extensionSettings.acm.dropdownUI){
+                $('#character-list').prepend("<div class=\"dropdown-container\">\n" +
+                    "    <div class=\"dropdown-title\">Test dropdown</div>\n" +
+                    "    <div class=\"dropdown-content\">");
+                $('#character-list').append("</div></div>");
+            }
         }
     }
     else {
         const sortedList = sortCharAR(tagfilteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
         $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
+        if(extensionSettings.acm.dropdownUI){
+            $('#character-list').prepend("<div class=\"dropdown-container\">\n" +
+                "    <div class=\"dropdown-title\">Test dropdown</div>\n" +
+                "    <div class=\"dropdown-content\">");
+            $('#character-list').append("</div></div>");
+        }
     }
 
     $('#charNumber').empty().append(`Total characters : ${charactersCopy.length}`);
@@ -458,8 +470,8 @@ function refreshCharList() {
 function selectAndDisplay(avatar) {
 
     // Check if a visible character is already selected
-    if(typeof selectedId !== 'undefined' && document.getElementById(avatar) !== null){
-        document.getElementById(avatar).classList.replace('char_selected','char_select');
+    if(typeof selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${selectedChar}"]`) !== null){
+        document.querySelector(`[data-avatar="${selectedChar}"]`).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
     selectedId = getIdByAvatar(avatar);
@@ -471,7 +483,7 @@ function selectAndDisplay(avatar) {
     fillDetails(avatar);
     fillAdvancedDefinitions(avatar);
 
-    document.getElementById(avatar).classList.replace('char_select','char_selected');
+    document.querySelector(`[data-avatar="${avatar}"]`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
     document.getElementById('char-details').style.removeProperty('display');
 
@@ -499,7 +511,8 @@ async function update_avatar(input){
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`#${selectedChar}`).attr('src', newImageUrl);
+                //$(`#${selectedChar}`).attr('src', newImageUrl);
+                $(`[data-avatar="${selectedChar}"]`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
@@ -509,7 +522,8 @@ async function update_avatar(input){
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`#${selectedChar}`).attr('src', newImageUrl);
+                //$(`#${selectedChar}`).attr('src', newImageUrl);
+                $(`[data-avatar="${selectedChar}"]`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
@@ -522,7 +536,7 @@ function closeDetails( reset = true ) {
     if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
 
     $('#acm_export_format_popup').hide();
-    document.getElementById(selectedChar)?.classList.replace('char_selected','char_select');
+    document.querySelector(`[data-avatar="${selectedChar}"]`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
     selectedChar = undefined;
@@ -616,7 +630,7 @@ jQuery(async () => {
 
     // Trigger when a character is selected in the list
     $(document).on('click', '.char_select', function () {
-        selectAndDisplay(this.id);
+        selectAndDisplay(this.dataset.avatar);
     });
 
     // Add trigger to open/close tag list for filtering
@@ -698,6 +712,27 @@ jQuery(async () => {
         }, 125);
     });
 
+    document.getElementById('acm_switch_ui').addEventListener('click', function(event) {
+        const dropdownMenu = document.getElementById('dropdown-ui-menu');
+
+        // Toggle l'affichage du menu déroulant
+        dropdownMenu.style.display = dropdownMenu.style.display === 'none' ? 'block' : 'none';
+
+        if (dropdownMenu.style.display === 'block') {
+            // Positionner le menu au-dessus du bouton
+            const buttonRect = this.getBoundingClientRect();
+            dropdownMenu.style.left = `${buttonRect.left}px`;
+            dropdownMenu.style.top = `${buttonRect.top - dropdownMenu.offsetHeight}px`;
+        }
+    });
+
+    // Optionnel : Masquer le menu en cliquant à l'extérieur
+    document.addEventListener('click', (event) => {
+        if (!document.getElementById('acm_switch_ui').contains(event.target) && !document.getElementById('dropdown-ui-menu').contains(event.target)) {
+            document.getElementById('dropdown-ui-menu').style.display = 'none';
+        }
+    });
+
     // Trigger when the favorites button is clicked
     $('#acm_favorite_button').on('click', function() {
         const id = getIdByAvatar(selectedChar);
@@ -712,6 +747,16 @@ jQuery(async () => {
             $('#acm_favorite_button')[0].classList.replace('fav_off', 'fav_on');
         }
     });
+
+    if(extensionSettings.acm.dropdownUI){
+        const dropdownContainers = document.querySelectorAll('.dropdown-container');
+        dropdownContainers.forEach(container => {
+            const title = container.querySelector('.dropdown-title');
+            title.addEventListener('click', () => {
+                container.classList.toggle('open');
+            });
+        });
+    }
 
     // Trigger when the Open Chat button is clicked
     $('#acm_open_chat').on('click', function () {
