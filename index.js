@@ -26,7 +26,7 @@ const extensionName = 'SillyTavern-AnotherCharManager';
 const oldExtensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
-const defaultSettings = {sortingField: "name", sortingOrder: "asc", favOnly: false, dropdownUI: false};
+const defaultSettings = {sortingField: "name", sortingOrder: "asc", favOnly: false, dropdownUI: false, dropdownMode: "allTags"};
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 let selectedId, selectedChar, mem_menu, mem_avatar;
@@ -450,7 +450,7 @@ function refreshCharList() {
     }
     else {
         const sortedList = sortCharAR(filteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
-        if(extensionSettings.acm.dropdownUI){
+        if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === "allTags"){
             const html = tagList.map(tag => {
                 const charactersForTag = sortedList
                     .filter(item => tagMap[item.avatar]?.includes(tag.id))
@@ -625,10 +625,23 @@ jQuery(async () => {
         ],
     });
 
+    let acmUISubPopper = Popper.createPopper(document.getElementById('acm_dropdown_sub'), document.getElementById('dropdown-submenu'), {
+        placement: 'right',
+        modifiers: [
+            {
+                name: 'offset',
+                options: {
+                    offset: [8, 0],
+                },
+            },
+        ],
+    });
+
     // Close Popper menu when clicking outside
     document.addEventListener('click', (event) => {
         if (!document.getElementById('dropdown-ui-menu').contains(event.target) && !document.getElementById('acm_switch_ui').contains(event.target)) {
             document.getElementById('dropdown-ui-menu').style.display = 'none';
+            document.getElementById('dropdown-submenu').style.display = 'none';
         }
         if (!document.getElementById('acm_export_format_popup').contains(event.target) && !document.getElementById('acm_export_button').contains(event.target)) {
             document.getElementById('acm_export_format_popup').style.display = 'none';
@@ -769,8 +782,13 @@ jQuery(async () => {
             $('#dropdown-ui-menu').css('display', 'none');
             refreshCharList();
         }
-        else if(ui === "dropdown" && !extensionSettings.acm.dropdownUI){
+        else if(ui === "dropdown"){
+            $('#dropdown-submenu').toggle();
+            acmUISubPopper.update();
+        }
+        else if(ui === "all-tags" && !extensionSettings.acm.dropdownUI){
             extensionSettings.acm.dropdownUI = true;
+            extensionSettings.acm.dropdownMode = "allTags";
             saveSettingsDebounced();
             $('#dropdown-ui-menu').css('display', 'none');
             refreshCharList();

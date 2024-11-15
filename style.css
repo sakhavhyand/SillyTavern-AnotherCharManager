@@ -59,13 +59,6 @@
 .dropdown-ui-menu {
     display: none;
     position: absolute;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 10px;
-    width: 150px;
-    text-align: left;
-    z-index: 1000;
 }
 
 .dropdown-ui-item {
@@ -83,16 +76,13 @@
     cursor: pointer;
 }
 
-/* Style de la div principale */
 .dropdown-container {
     width: 100%;
-    #max-width: 600px;
     margin: 0 auto;
     border-radius: 4px;
     overflow: hidden;
 }
 
-/* Style du titre (header) */
 .dropdown-title {
     padding: 15px;
     cursor: pointer;
@@ -101,7 +91,6 @@
     position: relative;
 }
 
-/* Ajout du trait horizontal */
 .dropdown-title::after {
     content: "";
     position: absolute;
@@ -112,7 +101,6 @@
     background-color: #ccc;
 }
 
-/* Style du contenu masqué au départ */
 .dropdown-content {
     max-height: 0;
     overflow: hidden;
@@ -126,6 +114,25 @@
     padding-bottom: 10px;
     height: 100%;
     overflow-y: auto;
+}
+
+/* Sous-menu */
+.dropdown-submenu {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.dropdown-submenu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+/* Séparateur */
+.dropdown-separator {
+    border: none;
+    border-top: 1px solid #ccc;
+    margin: 8px 0;
 }
 
 #acm_export_format_popup {
