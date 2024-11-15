@@ -383,9 +383,7 @@ function fillAdvancedDefinitions(avatar) {
 
 }
 
-// Function to refresh the character list based on search and sorting parameters
-function refreshCharList() {
-
+function searchAndFilter(){
     let filteredChars = [];
     const charactersCopy = extensionSettings.acm.favOnly
         ? [...getContext().characters].filter(character => character.fav === true || character.data.extensions.fav === true)
@@ -437,39 +435,53 @@ function refreshCharList() {
 
             return matchesText || matchesTag;
         });
-
-        if(filteredChars.length === 0){
-            $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
-        }
-        else {
-            const sortedList = sortCharAR(filteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
-            if(extensionSettings.acm.dropdownUI){
-                $('#character-list').html(`<div class="dropdown-container">
-                        <div class="dropdown-title">Test dropdown</div>
-                        <div class="dropdown-content">`).append(sortedList.map((item) => getCharBlock(item.avatar)).join('')).append("</div></div>");
-                // $('#character-list').append(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
-                // $('#character-list').append("</div></div>");
-            }
-            else {
-                $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
-            }
-        }
+        return filteredChars;
     }
     else {
-        const sortedList = sortCharAR(tagfilteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
+        return tagfilteredChars;
+    }
+}
+
+// Function to refresh the character list based on search and sorting parameters
+function refreshCharList() {
+    const filteredChars = searchAndFilter();
+    if(filteredChars.length === 0){
+        $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
+    }
+    else {
+        const sortedList = sortCharAR(filteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
         if(extensionSettings.acm.dropdownUI){
-            $('#character-list').html(`<div class="dropdown-container">
-                        <div class="dropdown-title">Test dropdown</div>
-                        <div class="dropdown-content">`).append(sortedList.map((item) => getCharBlock(item.avatar)).join('')).append("</div></div>");
-            // $('#character-list').append(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
-            // $('#character-list').append("</div></div>");
+            const html = tagList.map(tag => {
+                const charactersForTag = sortedList
+                    .filter(item => tagMap[item.avatar]?.includes(tag.id))
+                    .map(item => item.avatar);
+
+                if (charactersForTag.length === 0) {
+                    return '';
+                }
+
+                const characterBlocks = charactersForTag.map(character => getCharBlock(character)).join('');
+
+                return `<div class="dropdown-container">
+                            <div class="dropdown-title">${tag.name}</div>
+                            <div class="dropdown-content character-list">
+                                ${characterBlocks}
+                            </div>
+                        </div>`;
+            }).join('');
+            $('#character-list').html(html);
+
+            document.querySelectorAll('.dropdown-container').forEach(container => {
+                container.querySelector('.dropdown-title').addEventListener('click', () => {
+                    container.classList.toggle('open');
+                });
+            });
         }
         else {
             $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
         }
     }
-
-    $('#charNumber').empty().append(`Total characters : ${charactersCopy.length}`);
+    $('#charNumber').empty().append(`Total characters : ${getContext().characters.length}`);
 }
 
 // Function to display the selected character
@@ -603,6 +615,24 @@ jQuery(async () => {
 
     let acmUIPopper = Popper.createPopper(document.getElementById('acm_switch_ui'), document.getElementById('dropdown-ui-menu'), {
         placement: 'top',
+        modifiers: [
+            {
+                name: 'offset',
+                options: {
+                    offset: [0, 8],
+                },
+            },
+        ],
+    });
+
+    // Close Popper menu when clicking outside
+    document.addEventListener('click', (event) => {
+        if (!document.getElementById('dropdown-ui-menu').contains(event.target) && !document.getElementById('acm_switch_ui').contains(event.target)) {
+            document.getElementById('dropdown-ui-menu').style.display = 'none';
+        }
+        if (!document.getElementById('acm_export_format_popup').contains(event.target) && !document.getElementById('acm_export_button').contains(event.target)) {
+            document.getElementById('acm_export_format_popup').style.display = 'none';
+        }
     });
 
     // Put the button before rm_button_group_chats in the form_character_search_form
@@ -733,15 +763,20 @@ jQuery(async () => {
         if (!ui) {
             return;
         }
-        if(ui === "classic"){
+        if(ui === "classic" && extensionSettings.acm.dropdownUI){
             extensionSettings.acm.dropdownUI = false;
             saveSettingsDebounced();
+            $('#dropdown-ui-menu').css('display', 'none');
+            refreshCharList();
+        }
+        else if(ui === "dropdown" && !extensionSettings.acm.dropdownUI){
+            extensionSettings.acm.dropdownUI = true;
+            saveSettingsDebounced();
+            $('#dropdown-ui-menu').css('display', 'none');
             refreshCharList();
         }
         else {
-            extensionSettings.acm.dropdownUI = true;
-            saveSettingsDebounced();
-            refreshCharList();
+            $('#dropdown-ui-menu').css('display', 'none');
         }
     });
 
@@ -759,16 +794,6 @@ jQuery(async () => {
             $('#acm_favorite_button')[0].classList.replace('fav_off', 'fav_on');
         }
     });
-
-    if(extensionSettings.acm.dropdownUI){
-        const dropdownContainers = document.querySelectorAll('.dropdown-container');
-        dropdownContainers.forEach(container => {
-            const title = container.querySelector('.dropdown-title');
-            title.addEventListener('click', () => {
-                container.classList.toggle('open');
-            });
-        });
-    }
 
     // Trigger when the Open Chat button is clicked
     $('#acm_open_chat').on('click', function () {

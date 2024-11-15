@@ -86,7 +86,7 @@
 /* Style de la div principale */
 .dropdown-container {
     width: 100%;
-    max-width: 600px;
+    #max-width: 600px;
     margin: 0 auto;
     border-radius: 4px;
     overflow: hidden;
@@ -97,7 +97,6 @@
     padding: 15px;
     cursor: pointer;
     font-weight: bold;
-    color: #333;
     text-align: left;
     position: relative;
 }
@@ -121,11 +120,12 @@
     padding: 0 15px;
 }
 
-/* Contenu visible (après l'activation de la classe "open") */
 .dropdown-container.open .dropdown-content {
-    max-height: 500px; /* Largeur arbitraire pour permettre l'animation */
+    max-height: fit-content;
     padding-top: 10px;
     padding-bottom: 10px;
+    height: 100%;
+    overflow-y: auto;
 }
 
 #acm_export_format_popup {
@@ -316,7 +316,7 @@
 
 /* Characters List */
 
-#character-list {
+#character-list, .character-list {
     display: flex;
     flex-wrap: wrap;
     flex-grow: 1;
