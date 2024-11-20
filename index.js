@@ -458,8 +458,8 @@ function refreshCharList() {
 function selectAndDisplay(avatar) {
 
     // Check if a visible character is already selected
-    if(typeof selectedId !== 'undefined' && document.getElementById(avatar) !== null){
-        document.getElementById(avatar).classList.replace('char_selected','char_select');
+    if(selectedChar !== avatar && document.getElementById(selectedChar) !== null){
+        document.getElementById(selectedChar).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
     selectedId = getIdByAvatar(avatar);
