@@ -45,8 +45,11 @@ function debounce(func, timeout = 300) {
 async function loadSettings() {
     //Create the settings if they don't exist
     extensionSettings.acm = extensionSettings.acm || {};
-    if (Object.keys(extensionSettings.acm).length === 0) {
-        Object.assign(extensionSettings.acm, defaultSettings);
+    // Add default settings for any missing keys
+    for (const key in defaultSettings) {
+        if (!extensionSettings.acm.hasOwnProperty(key)) {
+            extensionSettings.acm[key] = defaultSettings[key];
+        }
     }
 }
 
