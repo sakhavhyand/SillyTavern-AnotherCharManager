@@ -26,7 +26,19 @@ const extensionName = 'SillyTavern-AnotherCharManager';
 const oldExtensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
-const defaultSettings = {sortingField: "name", sortingOrder: "asc", favOnly: false, dropdownUI: false, dropdownMode: "allTags"};
+const defaultSettings = {
+    sortingField: "name",
+    sortingOrder: "asc",
+    favOnly: false,
+    dropdownUI: false,
+    dropdownMode: "allTags",
+    dropdownPresets: [
+        { name: "Preset 1", categories: [] },
+        { name: "Preset 2", categories: [] },
+        { name: "Preset 3", categories: [] },
+        { name: "Preset 4", categories: [] },
+        { name: "Preset 5", categories: [] }
+    ]};
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 let selectedId, selectedChar, mem_menu, mem_avatar;
@@ -579,6 +591,61 @@ function closeDetails( reset = true ) {
     selectedId = undefined;
 }
 
+// Function to print the categories and associated tags of a specific preset
+function printCategoriesList(catContainer, presetID){
+    catContainer.empty();
+    const preset = extensionSettings.acm.dropdownPresets[presetID];
+    if(preset.categories.length === 0){
+        catContainer.append("No category defined");
+    }
+    else {
+        preset.categories.forEach(cat => {
+            catContainer.append(`<h4>-${cat.name}-</h4>`);
+            cat.members.forEach(tag => {
+                catContainer.append(`<br>${tagList.find(item => item.id == tag)?.name || "Not Found"}</br>`);
+            });
+        });
+    }
+}
+
+// Function to display the Custom Categories Management
+async function manageCustomCategories(){
+    const html = $(document.createElement('div'));
+    html.attr('id', 'acm_custom_catagories');
+    const selectElement = $(`
+        <select id="preset_selector" title="Preset Selector"></select>
+    `);
+    extensionSettings.acm.dropdownPresets.forEach((preset, index) => {
+        selectElement.append(`<option data-preset="${index}">${preset.name}</option>`);
+    });
+    html.append(`
+    <div class="title_restorable alignItemsBaseline">
+        <h3>Custom Categories</h3>
+        <div class="flex-container alignItemsBaseline">
+            ${selectElement.prop('outerHTML')}
+            <div class="menu_button menu_button_icon cat_view_create" title="Create a new category">
+                <i class="fa-solid fa-plus"></i>
+                <span data-i18n="Create">Create</span>
+            </div>
+        </div>
+    </div>
+     <div class="justifyLeft m-b-1">
+         <h4 id="preset_name">${extensionSettings.acm.dropdownPresets[0].name}</h4>
+         <small>
+             Drag handle to reorder. Click name to rename.<br>
+         </small>
+     </div>
+    `);
+
+    const catContainer = $('<div class="ui-sortable"></div>');
+    printCategoriesList(catContainer, '0');
+    // makeTagListDraggable(catContainer);
+
+    html.append(catContainer);
+    await callPopup(html, POPUP_TYPE.TEXT, null, { allowVerticalScrolling: true });
+
+}
+
 // Function to build the modal
 function openModal() {
 
@@ -811,6 +878,9 @@ jQuery(async () => {
             $('#dropdown-ui-menu').css('display', 'none');
             refreshCharList();
         }
+        else if(ui === "manage"){
+            manageCustomCategories();
+        }
         else {
             $('#dropdown-ui-menu').css('display', 'none');
         }
@@ -975,5 +1045,14 @@ jQuery(async () => {
                 toastr.warning('Please check if the needed plugin is installed! Link in the README.');
             }
         });
+    });
+
+    // Display custom categories interface
+    $(document).on("click", ".cat_view_create", async function () {
+        const newCatName = await callPopup('<h3>Category name:</h3>', POPUP_TYPE.INPUT, '');
+        const selectedPreset = $('#preset_selector option:selected').data('preset');
+        extensionSettings.acm.dropdownPresets[selectedPreset].categories.push({ name: newCatName, members: []});
+        saveSettingsDebounced();
+        printCategoriesList();
     });
 });
