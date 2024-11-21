@@ -164,6 +164,7 @@ function generateTagFilter() {
 
     $('#tags-list').html(tagBlock);
 }
+
 function addListenersTagFilter() {
     const tags = document.querySelectorAll('.acm_tag');
 
@@ -466,13 +467,27 @@ function refreshCharList() {
                 const characterBlocks = charactersForTag.map(character => getCharBlock(character)).join('');
 
                 return `<div class="dropdown-container">
-                            <div class="dropdown-title">${tag.name}</div>
+                            <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${tag.name}</div>
                             <div class="dropdown-content character-list">
                                 ${characterBlocks}
                             </div>
                         </div>`;
             }).join('');
-            $('#character-list').html(html);
+
+            const noTagsCharacters = sortedList
+                .filter(item => !tagMap[item.avatar] || tagMap[item.avatar].length === 0)
+                .map(item => item.avatar);
+
+            const noTagsHtml = noTagsCharacters.length > 0
+                ? `<div class="dropdown-container">
+                        <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">No Tags</div>
+                        <div class="dropdown-content character-list">
+                            ${noTagsCharacters.map(character => getCharBlock(character)).join('')}
+                        </div>
+                    </div>`
+                : '';
+
+            $('#character-list').html(html + noTagsHtml);
 
             document.querySelectorAll('.dropdown-container').forEach(container => {
                 container.querySelector('.dropdown-title').addEventListener('click', () => {
