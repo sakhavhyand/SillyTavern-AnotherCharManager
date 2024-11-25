@@ -741,23 +741,22 @@ jQuery(async () => {
     });
 
     // Add listener to refresh the display on characters edit
-    eventSource.on('character_edited',  function () {
-            refreshCharListDebounced();
+    eventSource.on('character_edited', function () {
+        refreshCharListDebounced();
     });
     // Add listener to refresh the display on characters delete
     eventSource.on('characterDeleted', function () {
         let charDetailsState = document.getElementById('char-details');
         if (charDetailsState.style.display === 'none') {
             refreshCharListDebounced();
-        }
-        else {
+        } else {
             closeDetails();
             refreshCharListDebounced();
         }
     });
     // Add listener to refresh the display on characters duplication
     eventSource.on(event_types.CHARACTER_DUPLICATED, function () {
-            refreshCharListDebounced();
+        refreshCharListDebounced();
     });
     // Load the characters list in background when ST launch
     eventSource.on('character_page_loaded', function () {
@@ -772,7 +771,7 @@ jQuery(async () => {
     });
 
     // Add trigger to open/close tag list for filtering
-    $(document).on('click', '#acm_tags_filter', function() {
+    $(document).on('click', '#acm_tags_filter', function () {
         const tagsList = document.getElementById('tags-list');
 
         // Check if div already opened
@@ -790,7 +789,7 @@ jQuery(async () => {
     });
 
     // Trigger when the sort dropdown is used
-    $(document).on('change', '#char_sort_order' , function () {
+    $(document).on('change', '#char_sort_order', function () {
         extensionSettings.acm.sortingField = $(this).find(':selected').data('field');
         extensionSettings.acm.sortingOrder = $(this).find(':selected').data('order');
         saveSettingsDebounced();
@@ -798,12 +797,12 @@ jQuery(async () => {
     });
 
     // Trigger when the search bar is used
-    $(document).on('input','#char_search_bar', function () {
+    $(document).on('input', '#char_search_bar', function () {
         searchValue = String($(this).val()).toLowerCase();
         refreshCharListDebounced();
     });
 
-    $('#favOnly_checkbox').on("change",function() {
+    $('#favOnly_checkbox').on("change", function () {
         if (this.checked) {
             extensionSettings.acm.favOnly = true;
             saveSettingsDebounced();
@@ -861,41 +860,36 @@ jQuery(async () => {
         if (!ui) {
             return;
         }
-        if(ui === "classic" && extensionSettings.acm.dropdownUI){
+        if (ui === "classic" && extensionSettings.acm.dropdownUI) {
             extensionSettings.acm.dropdownUI = false;
             saveSettingsDebounced();
             $('#dropdown-ui-menu').css('display', 'none');
             refreshCharList();
-        }
-        else if(ui === "dropdown"){
+        } else if (ui === "dropdown") {
             $('#dropdown-submenu').toggle();
             acmUISubPopper.update();
-        }
-        else if(ui === "all-tags" && !extensionSettings.acm.dropdownUI){
+        } else if (ui === "all-tags" && !extensionSettings.acm.dropdownUI) {
             extensionSettings.acm.dropdownUI = true;
             extensionSettings.acm.dropdownMode = "allTags";
             saveSettingsDebounced();
             $('#dropdown-ui-menu').css('display', 'none');
             refreshCharList();
-        }
-        else if(ui === "manage"){
+        } else if (ui === "manage") {
             manageCustomCategories();
-        }
-        else {
+        } else {
             $('#dropdown-ui-menu').css('display', 'none');
         }
     });
 
     // Trigger when the favorites button is clicked
-    $('#acm_favorite_button').on('click', function() {
+    $('#acm_favorite_button').on('click', function () {
         const id = getIdByAvatar(selectedChar);
         if (characters[id].fav || characters[id].data.extensions.fav) {
-            const update = { avatar: selectedChar, fav: false, data: { extensions: { fav: false }}};
+            const update = { avatar: selectedChar, fav: false, data: { extensions: { fav: false } } };
             editCharDebounced(update);
             $('#acm_favorite_button')[0].classList.replace('fav_on', 'fav_off');
-        }
-        else {
-            const update = { avatar: selectedChar, fav: true, data: { extensions: { fav: true }}};
+        } else {
+            const update = { avatar: selectedChar, fav: true, data: { extensions: { fav: true } } };
             editCharDebounced(update);
             $('#acm_favorite_button')[0].classList.replace('fav_off', 'fav_on');
         }
@@ -1018,7 +1012,7 @@ jQuery(async () => {
 
     Object.keys(elementsToUpdate).forEach(function (id) {
         $(id).on('input', function () {
-                elementsToUpdate[id]();
+            elementsToUpdate[id]();
         });
     });
 
@@ -1051,7 +1045,7 @@ jQuery(async () => {
     $(document).on("click", ".cat_view_create", async function () {
         const newCatName = await callPopup('<h3>Category name:</h3>', POPUP_TYPE.INPUT, '');
         const selectedPreset = $('#preset_selector option:selected').data('preset');
-        extensionSettings.acm.dropdownPresets[selectedPreset].categories.push({ name: newCatName, members: []});
+        extensionSettings.acm.dropdownPresets[selectedPreset].categories.push({ name: newCatName, members: [] });
         saveSettingsDebounced();
         printCategoriesList();
     });
