@@ -557,3 +557,15 @@
 .altGreeting_zone {
     resize: none;
 }
+
+/* DropdownUI */
+.acm_catList {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.acm_catTagList {
+    display: flex;
+}

@@ -140,7 +140,8 @@ function getCharBlock(avatar) {
 }
 
 // Function to generate the HTML for displaying a tag
-function displayTag( tagId ){
+function displayTag( tagId, removable = true ){
+    const tagClass = removable ? "fa-solid fa-circle-xmark tag_remove" : "fa-solid fa-circle-xmark";
     if (tagList.find(tagList => tagList.id === tagId)) {
         const name = tagList.find(tagList => tagList.id === tagId).name;
         const color = tagList.find(tagList => tagList.id === tagId).color;
@@ -150,12 +151,12 @@ function displayTag( tagId ){
 
             return `<span id="${tagId}" class="tag" style="background-color: ${color}; color: ${color2};">
                     <span class="tag_name">${name}</span>
-                    <i class="fa-solid fa-circle-xmark tag_remove"></i>
+                    <i class="${tagClass}"></i>
                 </span>`;
         } else {
             return `<span id="${tagId}" class="tag" style="background-color: ${color};">
                     <span class="tag_name">${name}</span>
-                    <i class="fa-solid fa-circle-xmark tag_remove"></i>
+                    <i class="${tagClass}"></i>
                 </span>`;
         }
     }
@@ -600,10 +601,23 @@ function printCategoriesList(catContainer, presetID){
     }
     else {
         preset.categories.forEach(cat => {
-            catContainer.append(`<h4>-${cat.name}-</h4>`);
+            const catHTML = `
+                        <div>
+                            <div class="acm_catList">
+                                <h4>-${cat.name}-</h4>
+                                <div style="display:flex;">
+                                    <div class="menu_button fa-solid fa-edit" title="Rename category"></div>
+                                    <div class="menu_button fa-solid fa-trash" title="Delete category"></div>
+                                </div>
+                            </div>
+                            <div class="acm_catTagList"></div>
+                        </div>`;
+            const catElement = $(catHTML);
+            const catTagList = catElement.find('.acm_catTagList');
             cat.members.forEach(tag => {
-                catContainer.append(`<br>${tagList.find(item => item.id == tag)?.name || "Not Found"}</br>`);
+                catTagList.append(displayTag(tag, false));
             });
+            catContainer.append(catElement);
         });
     }
 }
@@ -1041,7 +1055,7 @@ jQuery(async () => {
         });
     });
 
-    // Display custom categories interface
+    // Add new custom category to active preset
     $(document).on("click", ".cat_view_create", async function () {
         const newCatName = await callPopup('<h3>Category name:</h3>', POPUP_TYPE.INPUT, '');
         const selectedPreset = $('#preset_selector option:selected').data('preset');
