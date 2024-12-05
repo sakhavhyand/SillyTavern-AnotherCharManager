@@ -5,6 +5,9 @@ import { resetScrollHeight, getBase64Async } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
 import { power_user } from '../../../power-user.js';
 import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
+import { manageCustomCategories, printCategoriesList } from './src/acm_dropdownUI.js';
+import { displayTag, generateTagFilter, addListenersTagFilter } from './src/acm_tags.js';
+import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/acm_altGreetings.js';
 
 const getTokenCount = getContext().getTokenCount;
 const getThumbnailUrl = getContext().getThumbnailUrl;
@@ -40,10 +43,11 @@ const defaultSettings = {
         { name: "Preset 5", categories: [] }
     ]};
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
-const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
-let selectedId, selectedChar, mem_menu, mem_avatar;
+export const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
+export let selectedChar;
+let selectedId, mem_menu, mem_avatar;
 let searchValue = '';
-const tagFilterstates = new Map();
+export const tagFilterstates = new Map();
 
 function debounce(func, timeout = 300) {
     let timer;
@@ -69,24 +73,6 @@ async function loadSettings() {
 function getIdByAvatar(avatar){
     const index = characters.findIndex(character => character.avatar === avatar);
     return index !== -1 ? String(index) : undefined;
-}
-
-// Function to generate an Array for the selected character alternative greetings
-function generateGreetingArray() {
-    const textareas = document.querySelectorAll('.altGreeting_zone');
-    const greetingArray = [];
-
-    textareas.forEach(textarea => {
-        greetingArray.push(textarea.value);
-    });
-    return greetingArray;
-}
-
-// Add an event listeners to all alternative greetings text areas displayed
-function addAltGreetingsTrigger(){
-    document.querySelectorAll('.altGreeting_zone').forEach(textarea => {
-        textarea.addEventListener('input', (event) => {saveAltGreetings(event);});
-    });
 }
 
 // Function to sort the character array based on specified property and order
@@ -137,195 +123,6 @@ function getCharBlock(avatar) {
                         </div>
                     </div>
                 </div>`;
-}
-
-// Function to generate the HTML for displaying a tag
-function displayTag( tagId, removable = true ){
-    const tagClass = removable ? "fa-solid fa-circle-xmark tag_remove" : "fa-solid fa-circle-xmark";
-    if (tagList.find(tagList => tagList.id === tagId)) {
-        const name = tagList.find(tagList => tagList.id === tagId).name;
-        const color = tagList.find(tagList => tagList.id === tagId).color;
-
-        if (tagList.find(tagList => tagList.id === tagId).color2) {
-            const color2 = tagList.find(tagList => tagList.id === tagId).color2;
-
-            return `<span id="${tagId}" class="tag" style="background-color: ${color}; color: ${color2};">
-                    <span class="tag_name">${name}</span>
-                    <i class="${tagClass}"></i>
-                </span>`;
-        } else {
-            return `<span id="${tagId}" class="tag" style="background-color: ${color};">
-                    <span class="tag_name">${name}</span>
-                    <i class="${tagClass}"></i>
-                </span>`;
-        }
-    }
-    else { return ''; }
-}
-
-function generateTagFilter() {
-    let tagBlock='';
-
-    tagList.sort((a, b) => a.name.localeCompare(b.name));
-
-    tagList.forEach(tag => {
-        tagBlock += `<span id="${tag.id}" class="acm_tag" tabIndex="0" style="display: inline; background-color: ${tag.color}; color: ${tag.color2};">
-                                <span class="acm_tag_name">${tag.name}</span>
-                     </span>`;
-        tagFilterstates.set(tag.id, 1);
-    });
-
-    $('#tags-list').html(tagBlock);
-}
-
-function addListenersTagFilter() {
-    const tags = document.querySelectorAll('.acm_tag');
-
-    tags.forEach(tag => {
-        tag.addEventListener('click', () => tagFilterClick(tag));
-    });
-}
-
-function tagFilterClick(tag) {
-    const currentState = tagFilterstates.get(tag.id);
-    let newState;
-
-    if (currentState === 1) {
-        newState = 2;
-        tag.querySelector('.acm_tag_name').textContent = '✔️ ' + tag.querySelector('.acm_tag_name').textContent;
-        tag.style.borderColor = 'green';
-    } else if (currentState === 2) {
-        newState = 3;
-        tag.querySelector('.acm_tag_name').textContent = tag.querySelector('.acm_tag_name').textContent.replace('✔️ ', '');
-        tag.querySelector('.acm_tag_name').textContent = '❌ ' + tag.querySelector('.acm_tag_name').textContent;
-        tag.style.borderColor = 'red';
-    } else {
-        newState = 1;
-        tag.querySelector('.acm_tag_name').textContent = tag.querySelector('.acm_tag_name').textContent.replace(/✔️ |❌ /, '');
-        tag.style.borderColor = '';
-    }
-
-    tagFilterstates.set(tag.id, newState);
-    refreshCharList();
-}
-
-// Function to Display the AltGreetings if they exists
-function displayAltGreetings(item) {
-    let altGreetingsHTML = '';
-
-    if (item.length === 0) {
-        return '<span id="chicken">Nothing here but chickens!!</span>';
-    } else {
-        for (let i = 0; i < item.length; i++) {
-            let greetingNumber = i + 1;
-            altGreetingsHTML += `<div class="inline-drawer">
-                <div id="altGreetDrawer${greetingNumber}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                    <div style="display: flex;flex-grow: 1;">
-                        <strong class="drawer-header-item">
-                            Greeting #
-                            <span class="greeting_index">${greetingNumber}</span>
-                        </strong>
-                        <span class="tokens_count drawer-header-item">Tokens: ${getTokenCount(substituteParams(item[i]))}</span>
-                    </div>
-                    <div class="altGreetings_buttons">
-                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
-                        <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
-                    </div>
-                </div>
-                <div class="inline-drawer-content">
-                    <textarea class="altGreeting_zone autoSetHeight">${item[i]}</textarea>
-                </div>
-            </div>`;
-        }
-        return altGreetingsHTML;
-    }
-}
-
-// Function to save added/edited/deleted alternative greetings
-function saveAltGreetings(event = null){
-    const greetings = generateGreetingArray();
-    const update = {
-        avatar: selectedChar,
-        data: {
-            alternate_greetings: greetings,
-        },
-    };
-    editCharDebounced(update);
-    // Update token count if necessary
-    if (event) {
-        const textarea = event.target;
-        const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
-        tokensSpan.textContent = `Tokens: ${getTokenCount(substituteParams(textarea.value))}`;
-    }
-
-    // Edit the Alt Greetings number on the main drawer
-    $('#altGreetings_number').html(`Numbers: ${greetings.length}`);
-}
-
-// Function to display a new alternative greeting block
-function addAltGreeting(){
-    const drawerContainer = document.getElementById('altGreetings_content');
-
-    // Determine the new greeting index
-    const greetingIndex = drawerContainer.getElementsByClassName('inline-drawer').length + 1;
-
-    // Create the new inline-drawer block
-    const altGreetingDiv = document.createElement('div');
-    altGreetingDiv.className = 'inline-drawer';
-    altGreetingDiv.innerHTML = `<div id="altGreetDrawer${greetingIndex}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                    <div style="display: flex;flex-grow: 1;">
-                        <strong class="drawer-header-item">
-                            Greeting #
-                            <span class="greeting_index">${greetingIndex}</span>
-                        </strong>
-                        <span class="tokens_count drawer-header-item">Tokens: 0</span>
-                    </div>
-                    <div class="altGreetings_buttons">
-                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
-                        <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
-                    </div>
-                </div>
-                <div class="inline-drawer-content">
-                    <textarea class="altGreeting_zone autoSetHeight"></textarea>
-                </div>
-            </div>`;
-
-    // Add the new inline-drawer block
-    $('#chicken').empty();
-    drawerContainer.appendChild(altGreetingDiv);
-
-    // Add the event on the textarea
-    altGreetingDiv.querySelector(`.altGreeting_zone`).addEventListener('input', (event) => {
-        saveAltGreetings(event);
-    });
-
-    // Save it
-    saveAltGreetings();
-}
-
-// Function to delete an alternative greetings block
-function delAltGreeting(index, inlineDrawer){
-    // Delete the AltGreeting block
-    inlineDrawer.remove();
-
-    // Update the others AltGreeting blocks
-    const $altGreetingsToggle = $('.altgreetings-drawer-toggle');
-
-    if ($('div[id^="altGreetDrawer"]').length === 0) {
-        $('#altGreetings_content').html('<span id="chicken">Nothing here but chickens!!</span>');
-    }
-    else {
-        $altGreetingsToggle.each(function() {
-            const currentIndex = parseInt($(this).find('.greeting_index').text());
-            if (currentIndex > index) {
-                $(this).find('.greeting_index').text(currentIndex - 1);
-                $(this).attr('id', `altGreetDrawer${currentIndex - 1}`);
-            }
-        });
-    }
-
-    // Save it
-    saveAltGreetings();
 }
 
 // Function to fill details in the character details block
@@ -460,7 +257,7 @@ function searchAndFilter(){
 }
 
 // Function to refresh the character list based on search and sorting parameters
-function refreshCharList() {
+export function refreshCharList() {
     const filteredChars = searchAndFilter();
     if(filteredChars.length === 0){
         $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
@@ -590,74 +387,6 @@ function closeDetails( reset = true ) {
     document.getElementById('char-sep').style.display = 'none';
     selectedChar = undefined;
     selectedId = undefined;
-}
-
-// Function to print the categories and associated tags of a specific preset
-function printCategoriesList(catContainer, presetID){
-    catContainer.empty();
-    const preset = extensionSettings.acm.dropdownPresets[presetID];
-    if(preset.categories.length === 0){
-        catContainer.append("No category defined");
-    }
-    else {
-        preset.categories.forEach(cat => {
-            const catHTML = `
-                        <div>
-                            <div class="acm_catList">
-                                <h4>-${cat.name}-</h4>
-                                <div style="display:flex;">
-                                    <div class="menu_button fa-solid fa-edit" title="Rename category"></div>
-                                    <div class="menu_button fa-solid fa-trash" title="Delete category"></div>
-                                </div>
-                            </div>
-                            <div class="acm_catTagList"></div>
-                        </div>`;
-            const catElement = $(catHTML);
-            const catTagList = catElement.find('.acm_catTagList');
-            cat.members.forEach(tag => {
-                catTagList.append(displayTag(tag, false));
-            });
-            catContainer.append(catElement);
-        });
-    }
-}
-
-// Function to display the Custom Categories Management
-async function manageCustomCategories(){
-    const html = $(document.createElement('div'));
-    html.attr('id', 'acm_custom_catagories');
-    const selectElement = $(`
-        <select id="preset_selector" title="Preset Selector"></select>
-    `);
-    extensionSettings.acm.dropdownPresets.forEach((preset, index) => {
-        selectElement.append(`<option data-preset="${index}">${preset.name}</option>`);
-    });
-    html.append(`
-    <div class="title_restorable alignItemsBaseline">
-        <h3>Custom Categories</h3>
-        <div class="flex-container alignItemsBaseline">
-            ${selectElement.prop('outerHTML')}
-            <div class="menu_button menu_button_icon cat_view_create" title="Create a new category">
-                <i class="fa-solid fa-plus"></i>
-                <span data-i18n="Create">Create</span>
-            </div>
-        </div>
-    </div>
-     <div class="justifyLeft m-b-1">
-         <h4 id="preset_name">${extensionSettings.acm.dropdownPresets[0].name}</h4>
-         <small>
-             Drag handle to reorder. Click name to rename.<br>
-         </small>
-     </div>
-    `);
-
-    const catContainer = $('<div class="ui-sortable"></div>');
-    printCategoriesList(catContainer, '0');
-    // makeTagListDraggable(catContainer);
-
-    html.append(catContainer);
-    await callPopup(html, POPUP_TYPE.TEXT, null, { allowVerticalScrolling: true });
-
 }
 
 // Function to build the modal
