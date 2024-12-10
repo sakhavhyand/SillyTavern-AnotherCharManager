@@ -626,12 +626,14 @@ jQuery(async () => {
         // Check if div already opened
         if (tagsList.classList.contains('open')) {
             setTimeout(() => {
+                tagsList.style.minHeight = '0';
                 tagsList.style.height = '0';
             }, 10);
             tagsList.classList.toggle('open');
         } else {
             setTimeout(() => {
-                tagsList.style.height = (tagsList.scrollHeight + 7) + 'px';
+                tagsList.style.minHeight  = tagsList.scrollHeight > 80 ? '80px' : (tagsList.scrollHeight + 5) + 'px';
+                tagsList.style.height = tagsList.style.minHeight;
             }, 10);
             tagsList.classList.toggle('open');
         }
