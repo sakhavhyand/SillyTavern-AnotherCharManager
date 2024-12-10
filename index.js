@@ -1,34 +1,39 @@
 // An extension that allows you to manage characters.
+
+import { getContext } from '../../../extensions.js';
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { resetScrollHeight, getBase64Async } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
-import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
 import { power_user } from '../../../power-user.js';
+import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
 
-const getTokenCount = SillyTavern.getContext().getTokenCount;
-const getThumbnailUrl = SillyTavern.getContext().getThumbnailUrl;
-const callPopup = SillyTavern.getContext().callGenericPopup;
-const eventSource = SillyTavern.getContext().eventSource;
-const event_types = SillyTavern.getContext().eventTypes;
-const characters = SillyTavern.getContext().characters;
-const tagMap = SillyTavern.getContext().tagMap;
-const tagList = SillyTavern.getContext().tags;
-const selectCharacterById = SillyTavern.getContext().selectCharacterById;
-const Popup = SillyTavern.getContext().Popup;
-const POPUP_TYPE = SillyTavern.getContext().POPUP_TYPE;
+const getTokenCount = getContext().getTokenCount;
+const getThumbnailUrl = getContext().getThumbnailUrl;
+const callPopup = getContext().callGenericPopup;
+const eventSource = getContext().eventSource;
+const event_types = getContext().eventTypes;
+const characters = getContext().characters;
+const tagMap = getContext().tagMap;
+const tagList = getContext().tags;
+const selectCharacterById = getContext().selectCharacterById;
+const Popup = getContext().Popup;
+const POPUP_TYPE = getContext().POPUP_TYPE;
+const substituteParams = getContext().substituteParams;
+const extensionSettings = getContext().extensionSettings;
+const saveSettingsDebounced = getContext().saveSettingsDebounced;
 
 // Initializing some variables
 const extensionName = 'SillyTavern-AnotherCharManager';
 const oldExtensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
+const defaultSettings = {sortingField: "name", sortingOrder: "asc", favOnly: false};
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 let selectedId, selectedChar, mem_menu, mem_avatar;
-let sortOrder = 'asc';
-let sortData = 'name';
 let searchValue = '';
-let fav_only = false;
+const tagFilterstates = new Map();
+
 
 function debounce(func, timeout = 300) {
     let timer;
@@ -36,6 +41,15 @@ function debounce(func, timeout = 300) {
         clearTimeout(timer);
         timer = setTimeout(() => { func.apply(this, args); }, timeout);
     };
+}
+
+// Loads the extension settings if they exist, otherwise initializes them to the defaults.
+async function loadSettings() {
+    //Create the settings if they don't exist
+    extensionSettings.acm = extensionSettings.acm || {};
+    if (Object.keys(extensionSettings.acm).length === 0) {
+        Object.assign(extensionSettings.acm, defaultSettings);
+    }
 }
 
 // Function to get the ID of a character using its avatar
@@ -55,7 +69,7 @@ function generateGreetingArray() {
     return greetingArray;
 }
 
-// Add an event listeners to all alternative greetings textareas displayed
+// Add an event listeners to all alternative greetings text areas displayed
 function addAltGreetingsTrigger(){
     document.querySelectorAll('.altGreeting_zone').forEach(textarea => {
         textarea.addEventListener('input', (event) => {saveAltGreetings(event);});
@@ -81,7 +95,6 @@ function sortCharAR(chars, sort_data, sort_order) {
                 comparison = b[sort_data] - a[sort_data];
                 break;
         }
-
         return sort_order === 'desc' ? comparison * -1 : comparison;
     });
 }
@@ -89,7 +102,7 @@ function sortCharAR(chars, sort_data, sort_order) {
 // Function to generate the HTML block for a character
 function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
-    const avatarThumb = getThumbnailUrl('avatar', avatar) + '&t=' + new Date().getTime();
+    const avatarThumb = getThumbnailUrl('avatar', avatar);
     let isFav;
 
     const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
@@ -101,9 +114,9 @@ function getCharBlock(avatar) {
         isFav = '';
     }
 
-    return `<div class="character_item ${charClass} ${isFav}" chid="${id}" avatar="${avatar}" id="CharDID${id}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
+    return `<div class="character_item ${charClass} ${isFav}" id="${avatar}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
                     <div class="avatar_item">
-                        <img src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
+                        <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
                     </div>
                     <div class="char_name">
                         <div class="char_name_block">
@@ -136,14 +149,58 @@ function displayTag( tagId ){
     else { return ''; }
 }
 
+function generateTagFilter() {
+    let tagBlock='';
+
+    tagList.sort((a, b) => a.name.localeCompare(b.name));
+
+    tagList.forEach(tag => {
+        tagBlock += `<span id="${tag.id}" class="acm_tag" tabIndex="0" style="display: inline; background-color: ${tag.color}; color: ${tag.color2};">
+                                <span class="acm_tag_name">${tag.name}</span>
+                     </span>`;
+        tagFilterstates.set(tag.id, 1);
+    });
+
+    $('#tags-list').html(tagBlock);
+}
+function addListenersTagFilter() {
+    const tags = document.querySelectorAll('.acm_tag');
+
+    tags.forEach(tag => {
+        tag.addEventListener('click', () => tagFilterClick(tag));
+    });
+}
+
+function tagFilterClick(tag) {
+    const currentState = tagFilterstates.get(tag.id);
+    let newState;
+
+    if (currentState === 1) {
+        newState = 2;
+        tag.querySelector('.acm_tag_name').textContent = '✔️ ' + tag.querySelector('.acm_tag_name').textContent;
+        tag.style.borderColor = 'green';
+    } else if (currentState === 2) {
+        newState = 3;
+        tag.querySelector('.acm_tag_name').textContent = tag.querySelector('.acm_tag_name').textContent.replace('✔️ ', '');
+        tag.querySelector('.acm_tag_name').textContent = '❌ ' + tag.querySelector('.acm_tag_name').textContent;
+        tag.style.borderColor = 'red';
+    } else {
+        newState = 1;
+        tag.querySelector('.acm_tag_name').textContent = tag.querySelector('.acm_tag_name').textContent.replace(/✔️ |❌ /, '');
+        tag.style.borderColor = '';
+    }
+
+    tagFilterstates.set(tag.id, newState);
+    refreshCharList();
+}
+
 // Function to Display the AltGreetings if they exists
 function displayAltGreetings(item) {
     let altGreetingsHTML = '';
 
-    if(item.length === 0){
+    if (item.length === 0) {
         return '<span id="chicken">Nothing here but chickens!!</span>';
-    }
-    else {
+    } else {
         for (let i = 0; i < item.length; i++) {
             let greetingNumber = i + 1;
             altGreetingsHTML += `<div class="inline-drawer">
@@ -153,7 +210,7 @@ function displayAltGreetings(item) {
                             Greeting #
                             <span class="greeting_index">${greetingNumber}</span>
                         </strong>
-                        <span class="tokens_count drawer-header-item">Tokens: ${getTokenCount(item[i])}</span>
+                        <span class="tokens_count drawer-header-item">Tokens: ${getTokenCount(substituteParams(item[i]))}</span>
                     </div>
                     <div class="altGreetings_buttons">
                         <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
@@ -183,7 +240,7 @@ function saveAltGreetings(event = null){
     if (event) {
         const textarea = event.target;
         const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
-        tokensSpan.textContent = `Tokens: ${getTokenCount(textarea.value)}`;
+        tokensSpan.textContent = `Tokens: ${getTokenCount(substituteParams(textarea.value))}`;
     }
 
     // Edit the Alt Greetings number on the main drawer
@@ -259,7 +316,7 @@ function delAltGreeting(index, inlineDrawer){
 // Function to fill details in the character details block
 function fillDetails(avatar) {
     const char = characters[getIdByAvatar(avatar)];
-    const avatarThumb = getThumbnailUrl('avatar', char.avatar) + '&t=' + new Date().getTime();
+    const avatarThumb = getThumbnailUrl('avatar', char.avatar) ;
 
     $('#avatar_title').attr('title', char.avatar);
     $('#avatar_img').attr('src', avatarThumb);
@@ -273,25 +330,25 @@ function fillDetails(avatar) {
     $('#ch_infos_lastchat').text(`Last chat: ${char.date_last_chat ? new Date(char.date_last_chat).toISOString().substring(0, 10) : " - "}`);
     $('#ch_infos_adddate').text(`Added: ${char.date_added ? new Date(char.date_added).toISOString().substring(0, 10) : " - "}`);
     $('#ch_infos_link').html(char.data.extensions.chub?.full_path ? `Link: <a href="https://chub.ai/${char.data.extensions.chub.full_path}" target="_blank">Chub</a>` : "Link: -");
-    const tokens = getTokenCount(char.name) +
-                            getTokenCount(char.description) +
-                            getTokenCount(char.first_mes) +
-                            getTokenCount(char.data?.extensions?.depth_prompt?.prompt ?? '') +
-                            getTokenCount(char.data?.post_history_instructions || '') +
-                            getTokenCount(char.personality) +
-                            getTokenCount(char.scenario) +
-                            getTokenCount(char.data?.extensions?.depth_prompt?.prompt ?? '') +
-                            getTokenCount(char.mes_example);
+    const tokens = getTokenCount(substituteParams(char.name)) +
+                            getTokenCount(substituteParams(char.description)) +
+                            getTokenCount(substituteParams(char.first_mes)) +
+                            getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? '')) +
+                            getTokenCount(substituteParams(char.data?.post_history_instructions || '')) +
+                            getTokenCount(substituteParams(char.personality)) +
+                            getTokenCount(substituteParams(char.scenario)) +
+                            getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? '')) +
+                            getTokenCount(substituteParams(char.mes_example));
     $('#ch_infos_tokens').text(`Tokens: ${tokens}`);
-    const permTokens = getTokenCount(char.name) +
-        getTokenCount(char.description) +
-        getTokenCount(char.personality) +
-        getTokenCount(char.scenario) +
-        getTokenCount(char.data?.extensions?.depth_prompt?.prompt ?? '');
+    const permTokens = getTokenCount(substituteParams(char.name)) +
+        getTokenCount(substituteParams(char.description)) +
+        getTokenCount(substituteParams(char.personality)) +
+        getTokenCount(substituteParams(char.scenario)) +
+        getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''));
     $('#ch_infos_permtokens').text(`Perm. Tokens: ${permTokens}`);
-    $('#desc_Tokens').text(`Tokens: ${getTokenCount(char.description)}`);
+    $('#desc_Tokens').text(`Tokens: ${getTokenCount(substituteParams(char.description))}`);
     $('#desc_zone').val(char.description);
-    $('#firstMess_tokens').text(`Tokens: ${getTokenCount(char.first_mes)}`);
+    $('#firstMess_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.first_mes))}`);
     $('#firstMes_zone').val(char.first_mes);
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings.length}`);
     $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
@@ -309,22 +366,22 @@ function fillAdvancedDefinitions(avatar) {
     $('#acm_creator_notes_textarea').val(char.data?.creator_notes || char.creatorcomment);
     $('#acm_character_version_textarea').val(char.data?.character_version || '');
     $('#acm_system_prompt_textarea').val(char.data?.system_prompt || '');
-    $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(char.data?.system_prompt || '')}`);
+    $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.data?.system_prompt || ''))}`);
     $('#acm_post_history_instructions_textarea').val(char.data?.post_history_instructions || '');
-    $('#acm_post_tokens').text(`Tokens: ${getTokenCount(char.data?.post_history_instructions || '')}`);
+    $('#acm_post_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.data?.post_history_instructions || ''))}`);
     $('#acm_tags_textarea').val(Array.isArray(char.data?.tags) ? char.data.tags.join(', ') : '');
     $('#acm_creator_textarea').val(char.data?.creator);
     $('#acm_personality_textarea').val(char.personality);
-    $('#acm_personality_tokens').text(`Tokens: ${getTokenCount(char.personality)}`);
+    $('#acm_personality_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.personality))}`);
     $('#acm_scenario_pole').val(char.scenario);
-    $('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(char.scenario)}`);
+    $('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.scenario))}`);
     $('#acm_depth_prompt_prompt').val(char.data?.extensions?.depth_prompt?.prompt ?? '');
-    $('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(char.data?.extensions?.depth_prompt?.prompt ?? '')}`);
+    $('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''))}`);
     $('#acm_depth_prompt_depth').val(char.data?.extensions?.depth_prompt?.depth ?? depth_prompt_depth_default);
     $('#acm_depth_prompt_role').val(char.data?.extensions?.depth_prompt?.role ?? depth_prompt_role_default);
     $('#acm_talkativeness_slider').val(char.talkativeness || talkativeness_default);
     $('#acm_mes_example_textarea').val(char.mes_example);
-    $('#acm_messages_examples').text(`Tokens: ${getTokenCount(char.mes_example)}`);
+    $('#acm_messages_examples').text(`Tokens: ${getTokenCount(substituteParams(char.mes_example))}`);
 
 }
 
@@ -332,20 +389,48 @@ function fillAdvancedDefinitions(avatar) {
 function refreshCharList() {
 
     let filteredChars = [];
-    const charactersCopy = fav_only
-        ? [...SillyTavern.getContext().characters].filter(character => character.fav === true || character.data.extensions.fav === true)
-        : [...SillyTavern.getContext().characters];
+    const charactersCopy = extensionSettings.acm.favOnly
+        ? [...getContext().characters].filter(character => character.fav === true || character.data.extensions.fav === true)
+        : [...getContext().characters];
+
+    // Get tags states
+    const tagStates = [...tagFilterstates.entries()];
+
+    // Split included and excluded tags
+    const includedTagIds = tagList
+        .filter(tag => tagStates.find(([id, state]) => id === tag.id && state === 2))
+        .map(tag => tag.id);
+
+    const excludedTagIds = tagList
+        .filter(tag => tagStates.find(([id, state]) => id === tag.id && state === 3))
+        .map(tag => tag.id);
+
+    // Filtering based on tags states
+    let tagfilteredChars = charactersCopy.filter(item => {
+        const characterTags = tagMap[item.avatar] || [];
+
+        // Check if there is included tags
+        const hasIncludedTag = includedTagIds.length === 0 || characterTags.some(tagId => includedTagIds.includes(tagId));
+
+        // Check if there is excluded tags
+        const hasExcludedTag = characterTags.some(tagId => excludedTagIds.includes(tagId));
+
+        // Return true if :
+        // 1. There is no excluded tags
+        // 2. There is at least one included tags
+        return hasIncludedTag && !hasExcludedTag;
+    });
 
     if (searchValue !== '') {
-        const searchValueLower = searchValue.toLowerCase();
+        const searchValueLower = searchValue.trim().toLowerCase();
 
         // Find matching tag IDs based on searchValue
         const matchingTagIds = tagList
             .filter(tag => tag.name.toLowerCase().includes(searchValueLower))
             .map(tag => tag.id);
 
-        // Filter characters by description, name, creatorcomment, or tag
-        filteredChars = charactersCopy.filter(item => {
+        // Filter characters by description, name, creator comment, or tag
+        filteredChars = tagfilteredChars.filter(item => {
             const matchesText = item.description?.toLowerCase().includes(searchValueLower) ||
                 item.name?.toLowerCase().includes(searchValueLower) ||
                 item.creatorcomment?.toLowerCase().includes(searchValueLower);
@@ -359,12 +444,12 @@ function refreshCharList() {
             $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
         }
         else {
-            const sortedList = sortCharAR(filteredChars, sortData, sortOrder);
+            const sortedList = sortCharAR(filteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
             $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
         }
     }
     else {
-        const sortedList = sortCharAR(charactersCopy, sortData, sortOrder);
+        const sortedList = sortCharAR(tagfilteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
         $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
     }
 
@@ -372,14 +457,14 @@ function refreshCharList() {
 }
 
 // Function to display the selected character
-function selectAndDisplay(id, avatar) {
+function selectAndDisplay(avatar) {
 
     // Check if a visible character is already selected
-    if(typeof selectedId !== 'undefined' && document.getElementById(`CharDID${selectedId}`) !== null){
-        document.getElementById(`CharDID${selectedId}`).classList.replace('char_selected','char_select');
+    if(selectedChar !== avatar && document.getElementById(selectedChar) !== null){
+        document.getElementById(selectedChar).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
-    selectedId = id;
+    selectedId = getIdByAvatar(avatar);
     selectedChar = avatar;
     setCharacterId(getIdByAvatar(avatar));
 
@@ -388,7 +473,7 @@ function selectAndDisplay(id, avatar) {
     fillDetails(avatar);
     fillAdvancedDefinitions(avatar);
 
-    document.getElementById(`CharDID${id}`).classList.replace('char_select','char_selected');
+    document.getElementById(avatar).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
     document.getElementById('char-details').style.removeProperty('display');
 
@@ -416,6 +501,7 @@ async function update_avatar(input){
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
+                $(`#img_${selectedChar}`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
@@ -425,6 +511,7 @@ async function update_avatar(input){
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
+                $(`#img_${selectedChar}`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
@@ -435,13 +522,12 @@ async function update_avatar(input){
 // Function to close the details panel
 function closeDetails( reset = true ) {
     if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
-    selectedChar = undefined;
 
     $('#acm_export_format_popup').hide();
-
-    document.getElementById(`CharDID${selectedId}`)?.classList.replace('char_selected','char_select');
+    document.getElementById(selectedChar)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
+    selectedChar = undefined;
     selectedId = undefined;
 }
 
@@ -449,20 +535,15 @@ function closeDetails( reset = true ) {
 function openModal() {
 
     // Memorize some global variables
-    if (SillyTavern.getContext().characterId !== undefined && SillyTavern.getContext().characterId >= 0) {
-        mem_avatar = characters[SillyTavern.getContext().characterId].avatar;
+    if (getContext().characterId !== undefined && getContext().characterId >= 0) {
+        mem_avatar = characters[getContext().characterId].avatar;
     } else {
         mem_avatar = undefined;
     }
-    mem_menu = SillyTavern.getContext().menuType;
-
-    // Sort the characters
-    // let charsList = sortCharAR([...SillyTavern.getContext().characters], sortData, sortOrder);
+    mem_menu = getContext().menuType;
 
     // Display the modal with our list layout
     $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
-    // $('#character-list').empty().append(charsList.map((item) => getCharBlock(item.avatar)).join(''));
-    // $('#charNumber').empty().append(`Total characters : ${charsList.length}`);
     $('#acm_shadow_popup').css('display', 'block').transition({
         opacity: 1,
         duration: 125,
@@ -474,11 +555,14 @@ function openModal() {
         const field = option.getAttribute('data-field');
         const order = option.getAttribute('data-order');
 
-        option.selected = field === sortData && order === sortOrder;
+        option.selected = field === extensionSettings.acm.sortingField && order === extensionSettings.acm.sortingOrder;
     });
+    document.getElementById('favOnly_checkbox').checked = extensionSettings.acm.favOnly;
 }
 
 jQuery(async () => {
+
+    await loadSettings();
 
     // Create the shadow div
     let modalHtml;
@@ -527,18 +611,41 @@ jQuery(async () => {
     });
     // Load the characters list in background when ST launch
     eventSource.on('character_page_loaded', function () {
-            refreshCharList();
+        generateTagFilter();
+        addListenersTagFilter();
+        refreshCharList();
     });
 
     // Trigger when a character is selected in the list
     $(document).on('click', '.char_select', function () {
-        selectAndDisplay($(this).attr('chid'), $(this).attr('avatar'));
+        selectAndDisplay(this.id);
+    });
+
+    // Add trigger to open/close tag list for filtering
+    $(document).on('click', '#acm_tags_filter', function() {
+        const tagsList = document.getElementById('tags-list');
+
+        // Check if div already opened
+        if (tagsList.classList.contains('open')) {
+            setTimeout(() => {
+                tagsList.style.minHeight = '0';
+                tagsList.style.height = '0';
+            }, 10);
+            tagsList.classList.toggle('open');
+        } else {
+            setTimeout(() => {
+                tagsList.style.minHeight  = tagsList.scrollHeight > 80 ? '80px' : (tagsList.scrollHeight + 5) + 'px';
+                tagsList.style.height = tagsList.style.minHeight;
+            }, 10);
+            tagsList.classList.toggle('open');
+        }
     });
 
     // Trigger when the sort dropdown is used
     $(document).on('change', '#char_sort_order' , function () {
-        sortData = $(this).find(':selected').data('field');
-        sortOrder = $(this).find(':selected').data('order');
+        extensionSettings.acm.sortingField = $(this).find(':selected').data('field');
+        extensionSettings.acm.sortingOrder = $(this).find(':selected').data('order');
+        saveSettingsDebounced();
         refreshCharListDebounced();
     });
 
@@ -550,10 +657,12 @@ jQuery(async () => {
 
     $('#favOnly_checkbox').on("change",function() {
         if (this.checked) {
-            fav_only = true;
+            extensionSettings.acm.favOnly = true;
+            saveSettingsDebounced();
             refreshCharListDebounced();
         } else {
-            fav_only = false;
+            extensionSettings.acm.favOnly = false;
+            saveSettingsDebounced();
             refreshCharListDebounced();
         }
     });
@@ -569,7 +678,7 @@ jQuery(async () => {
         icon.toggleClass('down up').toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
         $(this).closest('.inline-drawer').children('.inline-drawer-content').stop().slideToggle();
 
-        // Set the height of "autoSetHeight" textareas within the inline-drawer to their scroll height
+        // Set the height of "autoSetHeight" text areas within the inline-drawer to their scroll height
         $(this).closest('.inline-drawer').find('.inline-drawer-content textarea.autoSetHeight').each(function () {
             resetScrollHeight($(this));
         });
@@ -593,6 +702,7 @@ jQuery(async () => {
         }, 125);
     });
 
+    // Trigger when the favorites button is clicked
     $('#acm_favorite_button').on('click', function() {
         const id = getIdByAvatar(selectedChar);
         if (characters[id].fav || characters[id].data.extensions.fav) {
@@ -607,6 +717,7 @@ jQuery(async () => {
         }
     });
 
+    // Trigger when the Open Chat button is clicked
     $('#acm_open_chat').on('click', function () {
         setCharacterId(undefined);
         mem_avatar = undefined;
@@ -681,14 +792,15 @@ jQuery(async () => {
     });
 
     $('#acm_advanced_div').on("click", function () {
-        if ($('#acm_character_popup').css('display') === 'none') {
-            $('#acm_character_popup').css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
+        const $popup = $('#acm_character_popup');
+        if ($popup.css('display') === 'none') {
+            $popup.css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
                 opacity: 1.0,
                 duration: 125,
                 easing: 'ease-in-out',
             });
         } else {
-            $('#acm_character_popup').css('display', 'none').removeClass('open');
+            $popup.css('display', 'none').removeClass('open');
         }
     });
 
@@ -703,21 +815,21 @@ jQuery(async () => {
 
     // Adding textarea trigger on input
     const elementsToUpdate = {
-        '#desc_zone': function () { const update = { avatar: selectedChar, description: String($('#desc_zone').val()), data: { description: String($('#desc_zone').val()), },}; editCharDebounced(update); $('#desc_Tokens').html(`Tokens: ${getTokenCount(String($('#desc_zone').val()))}`);},
-        '#firstMes_zone': function () { const update = { avatar: selectedChar, first_mes: String($('#firstMes_zone').val()), data: { first_mes: String($('#firstMes_zone').val()),},}; editCharDebounced(update); $('#firstMess_tokens').html(`Tokens: ${getTokenCount(String($('#firstMes_zone').val()))}`);},
-        '#acm_creator_notes_textarea': function () { const update = { avatar: selectedChar, creatorcomment: String($('#acm_creator_notes_textarea').val()), data: { creator_notes: String($('#acm_creator_notes_textarea').val()), },}; editCharDebounced(update);},
-        '#acm_character_version_textarea': function () { const update = { avatar: selectedChar, data: { character_version: String($('#acm_character_version_textarea').val()), },}; editCharDebounced(update);},
-        '#acm_system_prompt_textarea': function () { const update = { avatar: selectedChar, data: { system_prompt: String($('#acm_system_prompt_textarea').val()), },}; editCharDebounced(update); $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(String($('#acm_system_prompt_textarea').val()))}`);},
-        '#acm_post_history_instructions_textarea': function () { const update = { avatar: selectedChar, data: { post_history_instructions: String($('#acm_post_history_instructions_textarea').val()), },}; editCharDebounced(update); $('#acm_post_tokens').text(`Tokens: ${getTokenCount(String($('#acm_post_history_instructions_textarea').val()))}`);},
-        '#acm_creator_textarea': function () { const update = { avatar: selectedChar, data: { creator: String($('#acm_creator_textarea').val()), },}; editCharDebounced(update);},
-        '#acm_personality_textarea': function () { const update = { avatar: selectedChar, personality: String($('#acm_personality_textarea').val()), data: { personality: String($('#acm_personality_textarea').val()), },}; editCharDebounced(update); $('#acm_personality_tokens').text(`Tokens: ${getTokenCount(String($('#acm_personality_textarea').val()))}`);},
-        '#acm_scenario_pole': function () { const update = { avatar: selectedChar, scenario: String($('#acm_scenario_pole').val()), data: { scenario: String($('#acm_scenario_pole').val()), },}; editCharDebounced(update); $('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(String($('#acm_scenario_pole').val()))}`);},
-        '#acm_depth_prompt_prompt': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { prompt: String($('#acm_depth_prompt_prompt').val()),}}},}; editCharDebounced(update); $('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(String($('#acm_depth_prompt_prompt').val()))}`);},
-        '#acm_depth_prompt_depth': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { depth: $('#acm_depth_prompt_depth').val(),}}},}; editCharDebounced(update);},
-        '#acm_depth_prompt_role': function () { const update = { avatar: selectedChar, data: { extensions: { depth_prompt: { role: String($('#acm_depth_prompt_role').val()),}}},}; editCharDebounced(update);},
-        '#acm_talkativeness_slider': function () { const update = { avatar: selectedChar, talkativeness: String($('#acm_talkativeness_slider').val()), data: { extensions: { talkativeness: String($('#acm_talkativeness_slider').val()),}}}; editCharDebounced(update);},
-        '#acm_mes_example_textarea': function () { const update = { avatar: selectedChar, mes_example: String($('#acm_mes_example_textarea').val()), data: { mes_example: String($('#acm_mes_example_textarea').val()), },}; editCharDebounced(update); $('#acm_messages_examples').text(`Tokens: ${getTokenCount(String($('#acm_mes_example_textarea').val()))}`);},
-        '#acm_tags_textarea': function () { const update = { avatar: selectedChar, tags: $('#acm_tags_textarea').val().split(', '), data: { tags: $('#acm_tags_textarea').val().split(', '), },}; editCharDebounced(update);}
+        '#desc_zone': function () {const descZone=$('#desc_zone');const update={avatar:selectedChar,description:String(descZone.val()),data:{description:String(descZone.val()),},};editCharDebounced(update);$('#desc_Tokens').html(`Tokens: ${getTokenCount(substituteParams(String(descZone.val())))}`);},
+        '#firstMes_zone': function () {const firstMesZone=$('#firstMes_zone');const update={avatar:selectedChar,first_mes:String(firstMesZone.val()),data:{first_mes:String(firstMesZone.val()),},};editCharDebounced(update);$('#firstMess_tokens').html(`Tokens: ${getTokenCount(substituteParams(String(firstMesZone.val())))}`);},
+        '#acm_creator_notes_textarea': function () {const creatorNotes=$('#acm_creator_notes_textarea');const update={avatar:selectedChar,creatorcomment:String(creatorNotes.val()),data:{creator_notes:String(creatorNotes.val()),},};editCharDebounced(update);},
+        '#acm_character_version_textarea': function () { const update = {avatar:selectedChar,data:{character_version:String($('#acm_character_version_textarea').val()),},};editCharDebounced(update);},
+        '#acm_system_prompt_textarea': function () {const sysPrompt=$('#acm_system_prompt_textarea');const update={avatar:selectedChar,data:{system_prompt:String(sysPrompt.val()),},};editCharDebounced(update);$('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(sysPrompt.val())))}`);},
+        '#acm_post_history_instructions_textarea': function () {const postHistory=$('#acm_post_history_instructions_textarea');const update={avatar:selectedChar,data:{post_history_instructions:String(postHistory.val()),},};editCharDebounced(update);$('#acm_post_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(postHistory.val())))}`);},
+        '#acm_creator_textarea': function () {const update={ avatar:selectedChar,data:{creator:String($('#acm_creator_textarea').val()),},};editCharDebounced(update);},
+        '#acm_personality_textarea': function () {const personality=$('#acm_personality_textarea');const update={avatar:selectedChar,personality:String(personality.val()),data:{personality:String(personality.val()),},};editCharDebounced(update);$('#acm_personality_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(personality.val())))}`);},
+        '#acm_scenario_pole': function () {const scenario=$('#acm_scenario_pole');const update={avatar:selectedChar,scenario: String(scenario.val()),data:{scenario:String(scenario.val()),},};editCharDebounced(update);$('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(scenario.val())))}`);},
+        '#acm_depth_prompt_prompt': function () {const depthPrompt=$('#acm_depth_prompt_prompt');const update={avatar:selectedChar,data:{ extensions:{depth_prompt:{prompt:String(depthPrompt.val()),}}},};editCharDebounced(update);$('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(depthPrompt.val())))}`);},
+        '#acm_depth_prompt_depth': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{depth:$('#acm_depth_prompt_depth').val(),}}},};editCharDebounced(update);},
+        '#acm_depth_prompt_role': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{role:String($('#acm_depth_prompt_role').val()),}}},};editCharDebounced(update);},
+        '#acm_talkativeness_slider': function () {const talkativeness=$('#acm_talkativeness_slider');const update={avatar:selectedChar,talkativeness:String(talkativeness.val()),data:{extensions:{talkativeness:String(talkativeness.val()),}}};editCharDebounced(update);},
+        '#acm_mes_example_textarea': function () {const example=$('#acm_mes_example_textarea');const update={avatar:selectedChar,mes_example:String(example.val()),data:{mes_example:String(example.val()),},};editCharDebounced(update);$('#acm_messages_examples').text(`Tokens: ${getTokenCount(substituteParams(String(example.val())))}`);},
+        '#acm_tags_textarea': function () {const tagZone=$('#acm_tags_textarea');const update={avatar:selectedChar,tags:tagZone.val().split(', '),data:{tags:tagZone.val().split(', '), },};editCharDebounced(update);}
     };
 
     Object.keys(elementsToUpdate).forEach(function (id) {
@@ -741,7 +853,7 @@ jQuery(async () => {
     });
 
     // Edit a character avatar
-    $('#edit_avatar_button').change(function () {
+    $('#edit_avatar_button').on('change', function () {
         checkApiAvailability().then(async isAvailable => {
             if (isAvailable) {
                 await update_avatar(this);

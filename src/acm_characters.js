@@ -1,20 +1,22 @@
+import { getContext } from '../../../../extensions.js';
 import {
-    getCharacters, getPastCharacterChats, reloadCurrentChat, setCharacterId, system_message_types, getThumbnailUrl,
+    getCharacters, getPastCharacterChats, reloadCurrentChat, setCharacterId, system_message_types,
 } from '../../../../../script.js';
 import { renameTagKey } from '../../../../tags.js';
 import { delay, ensureImageFormatSupported } from '../../../../utils.js';
 import { renameGroupMember } from '../../../../group-chats.js';
 
-export { editChar, replaceAvatar, delChar, dupeChar, renameChar, exportChar, checkApiAvailability };
+export { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability };
 
-const event_types = SillyTavern.getContext().eventTypes;
-const eventSource = SillyTavern.getContext().eventSource;
-const getRequestHeaders = SillyTavern.getContext().getRequestHeaders;
-const characters = SillyTavern.getContext().characters;
-const callPopup = SillyTavern.getContext().callGenericPopup;
-const POPUP_TYPE = SillyTavern.getContext().POPUP_TYPE;
-const selectCharacterById = SillyTavern.getContext().selectCharacterById;
-const this_chid = SillyTavern.getContext().characterId;
+const event_types = getContext().eventTypes;
+const eventSource = getContext().eventSource;
+const getRequestHeaders = getContext().getRequestHeaders;
+const characters = getContext().characters;
+const callPopup = getContext().callGenericPopup;
+const POPUP_TYPE = getContext().POPUP_TYPE;
+const selectCharacterById = getContext().selectCharacterById;
+const this_chid = getContext().characterId;
+const getThumbnailUrl = getContext().getThumbnailUrl;
 
 
 // Function to check if the avatar plugin is installed
@@ -27,7 +29,6 @@ async function checkApiAvailability() {
         return false;
     }
 }
-
 
 // Function to edit a single character
 async function editChar(update) {
@@ -52,12 +53,11 @@ async function editChar(update) {
 async function replaceAvatar(newAvatar, id, crop_data = undefined) {
     let url = '/api/plugins/avataredit/edit-avatar';
 
-    if (crop_data != undefined) {
+    if (crop_data !== undefined) {
         url += `?crop=${encodeURIComponent(JSON.stringify(crop_data))}`;
     }
 
     let formData = new FormData();
-
     if (newAvatar instanceof File) {
         const convertedFile = await ensureImageFormatSupported(newAvatar);
         formData.set('avatar', convertedFile);
@@ -96,26 +96,26 @@ async function replaceAvatar(newAvatar, id, crop_data = undefined) {
 }
 
 // Function not used at this moment, leaving it here just in case
-async function delChar(avatar, delChats = true) {
-
-    const toDel = {
-        avatar_url: avatar,
-        delete_chats: delChats,
-    };
-
-    const response = await fetch('/api/characters/delete', {
-        method: 'POST',
-        headers: getRequestHeaders(),
-        body: JSON.stringify(toDel),
-        cache: 'no-cache',
-    });
-
-    if (response.ok) {
-        // TO DO ?
-    } else {
-        console.log('Error!');
-    }
-}
+// async function delChar(avatar, delChats = true) {
+//
+//     const toDel = {
+//         avatar_url: avatar,
+//         delete_chats: delChats,
+//     };
+//
+//     const response = await fetch('/api/characters/delete', {
+//         method: 'POST',
+//         headers: getRequestHeaders(),
+//         body: JSON.stringify(toDel),
+//         cache: 'no-cache',
+//     });
+//
+//     if (response.ok) {
+//         // TO DO ?
+//     } else {
+//         console.log('Error!');
+//     }
+// }
 
 // Function to duplicate a character
 async function dupeChar(avatar) {
@@ -166,10 +166,9 @@ async function renameChar(oldAvatar, charID, newName) {
 
                     // Async delay to update UI
                     await delay(1);
-
                     await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: newChId, character: characters[newChId] } });
 
-                    if (SillyTavern.getContext().characterId === -1) {
+                    if (getContext().characterId === -1) {
                         throw new Error('New character not selected');
                     }
 
@@ -221,12 +220,10 @@ async function renamePastChats(newAvatar, newValue) {
 
             if (getChatResponse.ok) {
                 const currentChat = await getChatResponse.json();
-
                 for (const message of currentChat) {
                     if (message.is_user || message.is_system || message.extra?.type == system_message_types.NARRATOR) {
                         continue;
                     }
-
                     if (message.name !== undefined) {
                         message.name = newValue;
                     }
@@ -275,6 +272,5 @@ async function exportChar (format, avatar) {
         a.click();
         document.body.removeChild(a);
     }
-
     $('#acm_export_format_popup').hide();
 }

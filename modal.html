@@ -5,9 +5,10 @@
                 <div class="list-character-wrapper flexFlowColumn">
                     <div class="sortAndFilter">
                         <form class="form_sort_filter" action="javascript:voidnull;">
-                            <div id="acm_tags_view" class="menu_button tags_view fa-solid fa-tags faSmallFontSquareFix" title="View all tags" data-i18n="[title]View all tags"></div>
-                            <div id="acm_character_import_button" class="menu_button fa-solid fa-file-import faSmallFontSquareFix" title="Import Character from File" data-i18n="[title]Import Character from File"></div>
-                            <div id="acm_external_import_button" class="menu_button fa-solid fa-cloud-arrow-down faSmallFontSquareFix" title="Import content from external URL" data-i18n="[title]Import content from external URL"></div>
+                            <div id="acm_character_import_button" class="menu_button fa-solid fa-file-import faSmallFontSquareFix" title="Import Character from File"></div>
+                            <div id="acm_external_import_button" class="menu_button fa-solid fa-cloud-arrow-down faSmallFontSquareFix" title="Import content from external URL"></div>
+                            <div id="acm_tags_view" class="menu_button tags_view fa-solid fa-gear faSmallFontSquareFix" title="Manage tags"></div>
+                            <div id="acm_tags_filter" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Show Tag List"></div>
                             <div class="sortText">Sorted by :</div>
                             <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
                                 <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
@@ -28,8 +29,8 @@
                         </form>
                         <span id="charNumber"></span>
                     </div>
-                    <div id="character-list">
-                    </div>
+                    <div id="tags-list"></div>
+                    <div id="character-list"> </div>
                     <hr id="char-sep" style="display:none">
                     <div id="char-details" style="display:none">
                         <div id="char-details-block">
