@@ -1,4 +1,5 @@
 // An extension that allows you to manage characters.
+
 import { getContext } from '../../../extensions.js';
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { resetScrollHeight, getBase64Async } from '../../../utils.js';
@@ -32,6 +33,7 @@ const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 let selectedId, selectedChar, mem_menu, mem_avatar;
 let searchValue = '';
 const tagFilterstates = new Map();
+
 
 function debounce(func, timeout = 300) {
     let timer;
