@@ -114,7 +114,7 @@ function getCharBlock(avatar) {
 
     return `<div class="character_item ${charClass} ${isFav}" id="${avatar}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
                     <div class="avatar_item">
-                        <img src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
+                        <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
                     </div>
                     <div class="char_name">
                         <div class="char_name_block">
@@ -499,7 +499,7 @@ async function update_avatar(input){
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`#${selectedChar}`).attr('src', newImageUrl);
+                $(`#img_${selectedChar}`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
@@ -509,7 +509,7 @@ async function update_avatar(input){
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`#${selectedChar}`).attr('src', newImageUrl);
+                $(`#img_${selectedChar}`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
