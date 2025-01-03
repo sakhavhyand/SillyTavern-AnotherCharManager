@@ -1,9 +1,11 @@
-import { getContext } from '../../../../extensions.js';
 import { refreshCharList, tagFilterstates } from '../index.js';
 
+const getContext = SillyTavern.getContext;
 const tagList = getContext().tags;
+const tag_map = getContext().tagMap;
+const saveSettingsDebounced = getContext().saveSettingsDebounced;
 
-export { displayTag, generateTagFilter, tagFilterClick, addListenersTagFilter };
+export { displayTag, generateTagFilter, tagFilterClick, addListenersTagFilter, renameTagKey };
 
 
 // Function to generate the HTML for displaying a tag
@@ -74,4 +76,11 @@ function tagFilterClick(tag) {
 
     tagFilterstates.set(tag.id, newState);
     refreshCharList();
+}
+
+function renameTagKey(oldKey, newKey) {
+    const value = tag_map[oldKey];
+    tag_map[newKey] = value || [];
+    delete tag_map[oldKey];
+    saveSettingsDebounced();
 }

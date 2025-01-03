@@ -1,13 +1,14 @@
-import { getContext } from '../../../../extensions.js';
 import {
     getCharacters, getPastCharacterChats, reloadCurrentChat, setCharacterId, system_message_types,
 } from '../../../../../script.js';
-import { renameTagKey } from '../../../../tags.js';
-import { delay, ensureImageFormatSupported } from '../../../../utils.js';
+import { ensureImageFormatSupported } from '../../../../utils.js';
 import { renameGroupMember } from '../../../../group-chats.js';
+import { renameTagKey } from './acm_tags.js';
+import { debounce, delay } from './acm_tools.js';
 
-export { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability };
+export { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability };
 
+const getContext = SillyTavern.getContext;
 const event_types = getContext().eventTypes;
 const eventSource = getContext().eventSource;
 const getRequestHeaders = getContext().getRequestHeaders;
@@ -17,6 +18,7 @@ const POPUP_TYPE = getContext().POPUP_TYPE;
 const selectCharacterById = getContext().selectCharacterById;
 const this_chid = getContext().characterId;
 const getThumbnailUrl = getContext().getThumbnailUrl;
+const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 
 
 // Function to check if the avatar plugin is installed

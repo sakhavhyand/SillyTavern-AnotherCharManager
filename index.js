@@ -1,14 +1,14 @@
 // An extension that allows you to manage characters.
-import { getContext } from '../../../extensions.js';
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
-import { resetScrollHeight, getBase64Async } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
-import { power_user } from '../../../power-user.js';
-import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
+import { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
 import { manageCustomCategories, printCategoriesList } from './src/acm_dropdownUI.js';
 import { displayTag, generateTagFilter, addListenersTagFilter } from './src/acm_tags.js';
 import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/acm_altGreetings.js';
+import { debounce, getBase64Async, resetScrollHeight } from './src/acm_tools.js';
 
+const getContext = SillyTavern.getContext;
+const power_user = getContext().powerUserSettings;
 const getTokenCount = getContext().getTokenCount;
 const getThumbnailUrl = getContext().getThumbnailUrl;
 const callPopup = getContext().callGenericPopup;
@@ -43,19 +43,10 @@ const defaultSettings = {
         { name: "Preset 5", categories: [] }
     ]};
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
-export const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 export let selectedChar;
 let selectedId, mem_menu, mem_avatar;
 let searchValue = '';
 export const tagFilterstates = new Map();
-
-function debounce(func, timeout = 300) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => { func.apply(this, args); }, timeout);
-    };
-}
 
 // Loads the extension settings if they exist, otherwise initializes them to the defaults.
 async function loadSettings() {

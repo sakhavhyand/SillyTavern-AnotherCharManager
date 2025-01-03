@@ -1,6 +1,6 @@
-import { getContext } from '../../../../extensions.js';
 import { displayTag } from './acm_tags.js';
 
+const getContext = SillyTavern.getContext;
 const POPUP_TYPE = getContext().POPUP_TYPE;
 const callPopup = getContext().callGenericPopup;
 const extensionSettings = getContext().extensionSettings;

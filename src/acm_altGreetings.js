@@ -1,6 +1,7 @@
-import { getContext } from '../../../../extensions.js';
-import { selectedChar, editCharDebounced } from '../index.js';
+import { selectedChar } from '../index.js';
+import { editCharDebounced } from './acm_characters.js';
 
+const getContext = SillyTavern.getContext;
 const getTokenCount = getContext().getTokenCount;
 const substituteParams = getContext().substituteParams;
 
