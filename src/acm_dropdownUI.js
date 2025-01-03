@@ -28,20 +28,18 @@ async function manageCustomCategories(){
      <div class="justifyLeft m-b-1">
          <h4 id="preset_name">${extensionSettings.dropdownPresets[0].name}</h4>
          <small>
-             Drag handle to reorder. Click name to rename.<br>
+             Drag handle to reorder.
          </small>
+         <div class="menu_button menu_button_icon cat_view_create" title="Create a new category">
+             <i class="fa-solid fa-plus"></i>
+             <span data-i18n="Create">Create</span>
+         </div>
      </div>
-     <div class="menu_button menu_button_icon cat_view_create" title="Create a new category">
-        <i class="fa-solid fa-plus"></i>
-        <span data-i18n="Create">Create</span>
-    </div>
+
     `);
 
-    // const catContainer = $('<div class="ui-sortable"></div>');
-    // printCategoriesList(catContainer, '0');
     // makeTagListDraggable(catContainer);
 
-    // html.append(catContainer);
     await callPopup(html, POPUP_TYPE.TEXT, null, { allowVerticalScrolling: true });
 
 }
@@ -61,6 +59,7 @@ function printCategoriesList(presetID, init = false){
             const catHTML = `
                         <div>
                             <div class="acm_catList">
+                                <div class="drag-handle ui-sortable-handle" data-i18n="[title]Drag to reorder categoies">☰</div>
                                 <h4>- ${cat.name} -</h4>
                                 <div style="display:flex;">
                                     <div class="menu_button fa-solid fa-edit cat_rename" data-catid="${index}" title="Rename category"></div>
@@ -72,12 +71,13 @@ function printCategoriesList(presetID, init = false){
             const catElement = $(catHTML);
             const catTagList = catElement.find('.acm_catTagList');
             cat.members.forEach(tag => {
-                catTagList.append(displayTag(tag, false));
+                catTagList.append(displayTag(tag, true));
             });
+            catTagList.append('<i class="fa-solid fa-plus tag"></i>');
             catContainer.append(catElement);
         });
     }
-    $("#acm_custom_catagories").append(catContainer);
+    $('#acm_custom_catagories').append(catContainer);
 }
 
 function addCategory(preset, catName){
