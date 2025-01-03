@@ -44,7 +44,7 @@ const defaultSettings = {
     ]};
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 export let selectedChar;
-let selectedId, mem_menu, mem_avatar;
+let mem_menu, mem_avatar;
 let searchValue = '';
 export const tagFilterstates = new Map();
 
@@ -311,7 +311,6 @@ function selectAndDisplay(avatar) {
         document.querySelector(`[data-avatar="${selectedChar}"]`).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
-    selectedId = getIdByAvatar(avatar);
     selectedChar = avatar;
     setCharacterId(getIdByAvatar(avatar));
 
@@ -344,7 +343,7 @@ async function update_avatar(input){
             crop_data = dlg.cropData;
 
             try {
-                await replaceAvatar(file, selectedId, crop_data);
+                await replaceAvatar(file, getIdByAvatar(selectedChar), crop_data);
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
@@ -355,7 +354,7 @@ async function update_avatar(input){
             }
         } else {
             try {
-                await replaceAvatar(file, selectedId);
+                await replaceAvatar(file, getIdByAvatar(selectedChar));
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
@@ -377,7 +376,6 @@ function closeDetails( reset = true ) {
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
     selectedChar = undefined;
-    selectedId = undefined;
 }
 
 // Function to build the modal
@@ -633,7 +631,7 @@ jQuery(async () => {
     $('#acm_open_chat').on('click', function () {
         setCharacterId(undefined);
         mem_avatar = undefined;
-        selectCharacterById(selectedId);
+        selectCharacterById(getIdByAvatar(selectedChar));
         closeDetails(false);
 
         $('#acm_shadow_popup').transition({
