@@ -2,7 +2,7 @@
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { createTagInput } from '../../../tags.js';
 import { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
-import { manageCustomCategories, printCategoriesList } from './src/acm_dropdownUI.js';
+import { manageCustomCategories, printCategoriesList, addCategory, removeCategory, renameCategory } from './src/acm_dropdownUI.js';
 import { displayTag, generateTagFilter, addListenersTagFilter } from './src/acm_tags.js';
 import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/acm_altGreetings.js';
 import { debounce, getBase64Async, resetScrollHeight } from './src/acm_tools.js';
@@ -608,6 +608,8 @@ jQuery(async () => {
             refreshCharList();
         } else if (ui === "manage") {
             manageCustomCategories();
+            const selectedPreset = $('#preset_selector option:selected').data('preset');
+            printCategoriesList(selectedPreset,true)
         } else {
             $('#dropdown-ui-menu').css('display', 'none');
         }
@@ -776,9 +778,26 @@ jQuery(async () => {
     // Add new custom category to active preset
     $(document).on("click", ".cat_view_create", async function () {
         const newCatName = await callPopup('<h3>Category name:</h3>', POPUP_TYPE.INPUT, '');
+        if (newCatName && newCatName.trim() !== '') {
+            const selectedPreset = $('#preset_selector option:selected').data('preset');
+            addCategory(selectedPreset, newCatName);
+        }
+    });
+
+    // Trigger on a click on the delete category button
+    $(document).on("click", ".cat_delete", function () {
         const selectedPreset = $('#preset_selector option:selected').data('preset');
-        extensionSettings.acm.dropdownPresets[selectedPreset].categories.push({ name: newCatName, members: [] });
-        saveSettingsDebounced();
-        printCategoriesList();
+        const selectedCat = $(this).data('catid');
+        removeCategory(selectedPreset, selectedCat);
+    });
+
+    // Trigger on a click on the rename category button
+    $(document).on("click", ".cat_rename", async function () {
+        const newCatName = await callPopup('<h3>New category name:</h3>', POPUP_TYPE.INPUT, '');
+        if (newCatName && newCatName.trim() !== '') {
+            const selectedPreset = $('#preset_selector option:selected').data('preset');
+            const selectedCat = $(this).data('catid');
+            renameCategory(selectedPreset, selectedCat, newCatName);
+        }
     });
 });

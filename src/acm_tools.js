@@ -37,6 +37,6 @@ async function resetScrollHeight(element) {
  * @param {number} ms Milliseconds to wait
  * @returns {Promise<void>} Promise that resolves after the given amount of milliseconds
  */
-export function delay(ms) {
+function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
