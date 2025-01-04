@@ -3,7 +3,7 @@ import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_r
 import { createTagInput } from '../../../tags.js';
 import { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
 import { manageCustomCategories, printCategoriesList, addCategory, removeCategory, renameCategory } from './src/acm_dropdownUI.js';
-import { displayTag, generateTagFilter, addListenersTagFilter } from './src/acm_tags.js';
+import { displayTag, generateTagFilter, addListenersTagFilter, createTagInputCat } from './src/acm_tags.js';
 import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/acm_altGreetings.js';
 import { debounce, getBase64Async, resetScrollHeight } from './src/acm_tools.js';
 
@@ -799,5 +799,12 @@ jQuery(async () => {
             const selectedCat = $(this).data('catid');
             renameCategory(selectedPreset, selectedCat, newCatName);
         }
+    });
+
+    // Trigger on a click on the add tag button in a category
+    $(document).on("click", ".addCatTag", function () {
+        const selectedPreset = $('#preset_selector option:selected').data('preset');
+        const selectedCat = $(this).data('catid');
+        createTagInputCat();
     });
 });

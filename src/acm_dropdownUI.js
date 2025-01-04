@@ -11,7 +11,7 @@ export { manageCustomCategories, printCategoriesList, addCategory, removeCategor
 // Function to display the Custom Categories Management
 async function manageCustomCategories(){
     const html = $(document.createElement('div'));
-    html.attr('id', 'acm_custom_catagories');
+    html.attr('id', 'acm_custom_categories');
     const selectElement = $(`
         <select id="preset_selector" title="Preset Selector"></select>
     `);
@@ -73,11 +73,11 @@ function printCategoriesList(presetID, init = false){
             cat.members.forEach(tag => {
                 catTagList.append(displayTag(tag, true));
             });
-            catTagList.append('<i class="fa-solid fa-plus tag"></i>');
+            catTagList.append('<i class="fa-solid fa-plus tag addCatTag" data-catid="${index}"></i>');
             catContainer.append(catElement);
         });
     }
-    $('#acm_custom_catagories').append(catContainer);
+    $('#acm_custom_categories').append(catContainer);
 }
 
 function addCategory(preset, catName){

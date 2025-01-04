@@ -1,5 +1,6 @@
 import { refreshCharList, tagFilterstates } from '../index.js';
 import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from './acm_tools.js';
+import {tags} from "../../../../../public/scripts/tags.js";
 
 const getContext = SillyTavern.getContext;
 const tagList = getContext().tags;
@@ -7,7 +8,7 @@ const tag_map = getContext().tagMap;
 const power_user = getContext().powerUserSettings;
 const saveSettingsDebounced = getContext().saveSettingsDebounced;
 
-export { displayTag, generateTagFilter, tagFilterClick, addListenersTagFilter, renameTagKey };
+export { displayTag, generateTagFilter, tagFilterClick, addListenersTagFilter, renameTagKey, createTagInputCat };
 
 
 // Function to generate the HTML for displaying a tag
@@ -160,8 +161,11 @@ function onTagInputFocus() {
  */
 function selectTag(event, ui, listSelector, { tagListOptions = {} } = {}) {
     let tagName = ui.item.value;
-    let tag = getTag(tagName);
+    let tag = tags.find(t => equalsIgnoreCaseAndAccents(t.name, tagName));
 
+    if (!tag) {
+        toastr.error("You can't create tag from this interface. Please use the tag editor instead.");
+    }
 
     // unfocus and clear the input
     $(event.target).val('').trigger('input');
