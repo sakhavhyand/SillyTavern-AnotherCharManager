@@ -1,6 +1,7 @@
 import { refreshCharList, tagFilterstates } from '../index.js';
 import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from './acm_tools.js';
-import {tags} from "../../../../../public/scripts/tags.js";
+import { tags } from "../../../../tags.js";
+import { addTagToCategory } from "./acm_dropdownUI.js";
 
 const getContext = SillyTavern.getContext;
 const tagList = getContext().tags;
@@ -17,19 +18,19 @@ function displayTag( tagId, isFromCat = false ){
     if (tagList.find(tagList => tagList.id === tagId)) {
         const name = tagList.find(tagList => tagList.id === tagId).name;
         const color = tagList.find(tagList => tagList.id === tagId).color;
+        const color2 = tagList.find(tagList => tagList.id === tagId).color2;
 
-        if (tagList.find(tagList => tagList.id === tagId).color2) {
-            const color2 = tagList.find(tagList => tagList.id === tagId).color2;
-
+        if (isFromCat) {
+            return `<span class="tag" style="background-color: ${color}; color: ${color2};" data-tagid="${tagId}">
+                        <span class="tag_name">${name}</span>
+                        <i class="${tagClass}"></i>
+                    </span>`;
+        }
+        else {
             return `<span id="${tagId}" class="tag" style="background-color: ${color}; color: ${color2};">
-                    <span class="tag_name">${name}</span>
-                    <i class="${tagClass}"></i>
-                </span>`;
-        } else {
-            return `<span id="${tagId}" class="tag" style="background-color: ${color};">
-                    <span class="tag_name">${name}</span>
-                    <i class="${tagClass}"></i>
-                </span>`;
+                        <span class="tag_name">${name}</span>
+                        <i class="${tagClass}"></i>
+                    </span>`;
         }
     }
     else { return ''; }
@@ -114,7 +115,7 @@ function createTagInputCat(inputSelector, listSelector, tagListOptions = {}) {
         // @ts-ignore
         .autocomplete({
             source: (i, o) => findTag(i, o, listSelector),
-            select: (e, u) => selectTag(e, u, listSelector, { tagListOptions: tagListOptions }),
+            select: (e, u) => selectCatTag(e, u, listSelector, { tagListOptions: tagListOptions }),
             minLength: 0,
         })
         .focus(onTagInputFocus); // <== show tag list on click
@@ -159,9 +160,11 @@ function onTagInputFocus() {
  * @param {PrintTagListOptions} [param1.tagListOptions] - Optional parameters for printing the tag list. Can be set to be consistent with the expected behavior of tags in the list that was defined before.
  * @returns {boolean} <c>false</c>, to keep the input clear
  */
-function selectTag(event, ui, listSelector, { tagListOptions = {} } = {}) {
+function selectCatTag(event, ui, listSelector, { tagListOptions = {} } = {}) {
     let tagName = ui.item.value;
     let tag = tags.find(t => equalsIgnoreCaseAndAccents(t.name, tagName));
+    const selectedPreset = $('#preset_selector option:selected').data('preset');
+    const selectedCat = $(listSelector).find('label').closest('[data-catid]').data('catid');
 
     if (!tag) {
         toastr.error("You can't create tag from this interface. Please use the tag editor instead.");
@@ -170,7 +173,8 @@ function selectTag(event, ui, listSelector, { tagListOptions = {} } = {}) {
     // unfocus and clear the input
     $(event.target).val('').trigger('input');
 
-
+    $(listSelector).find('label').before(displayTag(tag.id, true));
+    addTagToCategory(selectedPreset, selectedCat, tag.id);
 
     // need to return false to keep the input clear
     return false;

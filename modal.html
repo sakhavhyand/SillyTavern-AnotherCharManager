@@ -131,16 +131,6 @@
             </div>
             <div id="acm_popup_controls">
                 <div id="acm_switch_ui" class="menu_button">Switch UI</div>
-                <div id="dropdown-ui-menu" class="dropdown-ui-menu list-group">
-                    <div class="dropdown-ui-item" data-ui="classic">Classic UI</div>
-                    <div id="acm_dropdown_sub" class="dropdown-ui-item" data-ui="dropdown">Dropdown UI ></div>
-                </div>
-                <div id="dropdown-submenu" class="dropdown-submenu list-group">
-                    <div class="dropdown-ui-item" data-ui="all-tags">All Tags</div>
-                    <div class="dropdown-ui-item" data-ui="custom-categories">Custom Categories</div>
-                    <hr class="dropdown-separator" />
-                    <div class="dropdown-ui-item" data-ui="manage">Manage Categories</div>
-                </div>
                 <div id="acm_popup_close" class="menu_button">Close</div>
             </div>
         </div>
@@ -149,6 +139,23 @@
 <div id="acm_export_format_popup" class="list-group" style="position: absolute; inset: 0 0 auto auto; margin: 0; transform: translate(-1920px);" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="left">
     <div class="acm_export_format list-group-item" data-format="png">PNG</div>
     <div class="acm_export_format list-group-item" data-format="json">JSON</div>
+</div>
+<div id="dropdown-ui-menu" class="dropdown-ui-menu list-group">
+    <div id="acm_switch_classic" class="dropdown-ui-item">Classic UI</div>
+    <div id="acm_dropdown_sub" class="dropdown-ui-item">Dropdown UI ></div>
+</div>
+<div id="dropdown-submenu" class="dropdown-ui-menu list-group">
+    <div id="acm_switch_alltags" class="dropdown-ui-item">All Tags</div>
+    <div id="acm_dropdown_cat" class="dropdown-ui-item">Custom Categories ></div>
+    <hr class="dropdown-separator" />
+    <div id="acm_manage_categories" class="dropdown-ui-item">Manage Categories</div>
+</div>
+<div id="preset-submenu" class="dropdown-ui-menu list-group">
+    <div class="dropdown-ui-item" data-ui="preset" data-preset="0">Preset 1</div>
+    <div class="dropdown-ui-item" data-ui="preset" data-preset="1">Preset 2</div>
+    <div class="dropdown-ui-item" data-ui="preset" data-preset="2">Preset 3</div>
+    <div class="dropdown-ui-item" data-ui="preset" data-preset="3">Preset 4</div>
+    <div class="dropdown-ui-item" data-ui="preset" data-preset="4">Preset 5</div>
 </div>
 <div id="acm_character_popup" class="flex-container flexFlowColumn flexNoGap">
     <div id="acm_character_popup_text">

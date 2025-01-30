@@ -2,8 +2,15 @@
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { createTagInput } from '../../../tags.js';
 import { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
-import { manageCustomCategories, printCategoriesList, addCategory, removeCategory, renameCategory } from './src/acm_dropdownUI.js';
-import { displayTag, generateTagFilter, addListenersTagFilter, createTagInputCat } from './src/acm_tags.js';
+import {
+    manageCustomCategories,
+    printCategoriesList,
+    addCategory,
+    removeCategory,
+    renameCategory,
+    removeTagFromCategory
+} from './src/acm_dropdownUI.js';
+import { displayTag, generateTagFilter, addListenersTagFilter } from './src/acm_tags.js';
 import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/acm_altGreetings.js';
 import { debounce, getBase64Async, resetScrollHeight } from './src/acm_tools.js';
 
@@ -429,36 +436,72 @@ jQuery(async () => {
     let acmExportPopper = Popper.createPopper(document.getElementById('acm_export_button'), document.getElementById('acm_export_format_popup'), {
         placement: 'left',
     });
-
     let acmUIPopper = Popper.createPopper(document.getElementById('acm_switch_ui'), document.getElementById('dropdown-ui-menu'), {
         placement: 'top',
-        modifiers: [
-            {
-                name: 'offset',
-                options: {
-                    offset: [0, 8],
-                },
-            },
-        ],
     });
-
     let acmUISubPopper = Popper.createPopper(document.getElementById('acm_dropdown_sub'), document.getElementById('dropdown-submenu'), {
         placement: 'right',
-        modifiers: [
-            {
-                name: 'offset',
-                options: {
-                    offset: [8, 0],
-                },
-            },
-        ],
     });
+    let acmUIPresetPopper = Popper.createPopper(document.getElementById('acm_dropdown_cat'), document.getElementById('preset-submenu'), {
+        placement: 'right',
+    });
+
+    // Switch UI
+    $('#acm_switch_ui').on("click", function () {
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
+    });
+
+    $('#acm_dropdown_sub').on("click", function () {
+        $('#dropdown-submenu').toggle();
+        acmUISubPopper.update();
+    });
+
+    $('#acm_dropdown_cat').on("click", function () {
+        $('#preset-submenu').toggle();
+        acmUIPresetPopper.update();
+    });
+
+    $('#acm_switch_classic').on("click", function () {
+        if (extensionSettings.acm.dropdownUI) {
+            extensionSettings.acm.dropdownUI = false;
+            saveSettingsDebounced();
+            $('#dropdown-ui-menu').toggle();
+            acmUIPopper.update();
+            refreshCharList();
+        }
+    });
+
+    $('#acm_switch_alltags').on("click", function () {
+        if (!extensionSettings.acm.dropdownUI) {
+            extensionSettings.acm.dropdownUI = true;
+            extensionSettings.acm.dropdownMode = "allTags";
+            saveSettingsDebounced();
+            $('#dropdown-ui-menu').toggle();
+            refreshCharList();
+        }
+    });
+
+    $('#acm_manage_categories').on("click", function () {
+        manageCustomCategories();
+        const selectedPreset = $('#preset_selector option:selected').data('preset');
+        printCategoriesList(selectedPreset,true)
+    });
+
 
     // Close Popper menu when clicking outside
     document.addEventListener('click', (event) => {
-        if (!document.getElementById('dropdown-ui-menu').contains(event.target) && !document.getElementById('acm_switch_ui').contains(event.target)) {
+        const menuElements = [
+            document.getElementById('dropdown-ui-menu'),
+            document.getElementById('dropdown-submenu'),
+            document.getElementById('preset-submenu'),
+            document.getElementById('acm_switch_ui')
+        ];
+
+        if (!menuElements.some(menu => menu && menu.contains(event.target))) {
             document.getElementById('dropdown-ui-menu').style.display = 'none';
             document.getElementById('dropdown-submenu').style.display = 'none';
+            document.getElementById('preset-submenu').style.display = 'none';
         }
         if (!document.getElementById('acm_export_format_popup').contains(event.target) && !document.getElementById('acm_export_button').contains(event.target)) {
             document.getElementById('acm_export_format_popup').style.display = 'none';
@@ -579,40 +622,6 @@ jQuery(async () => {
             $('#acm_shadow_popup').css('display', 'none');
             $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
         }, 125);
-    });
-
-    // Switch UI
-    $('#acm_switch_ui').on("click", function () {
-        $('#dropdown-ui-menu').toggle();
-        acmUIPopper.update();
-    });
-
-    $(document).on('click', '.dropdown-ui-item', function () {
-        const ui = $(this).data('ui');
-        if (!ui) {
-            return;
-        }
-        if (ui === "classic" && extensionSettings.acm.dropdownUI) {
-            extensionSettings.acm.dropdownUI = false;
-            saveSettingsDebounced();
-            $('#dropdown-ui-menu').css('display', 'none');
-            refreshCharList();
-        } else if (ui === "dropdown") {
-            $('#dropdown-submenu').toggle();
-            acmUISubPopper.update();
-        } else if (ui === "all-tags" && !extensionSettings.acm.dropdownUI) {
-            extensionSettings.acm.dropdownUI = true;
-            extensionSettings.acm.dropdownMode = "allTags";
-            saveSettingsDebounced();
-            $('#dropdown-ui-menu').css('display', 'none');
-            refreshCharList();
-        } else if (ui === "manage") {
-            manageCustomCategories();
-            const selectedPreset = $('#preset_selector option:selected').data('preset');
-            printCategoriesList(selectedPreset,true)
-        } else {
-            $('#dropdown-ui-menu').css('display', 'none');
-        }
     });
 
     // Trigger when the favorites button is clicked
@@ -775,6 +784,12 @@ jQuery(async () => {
         });
     });
 
+    $(document).on('change', '#preset_selector', function () {
+        const newPreset = $(this).find(':selected').data('preset');
+        $('#preset_name').html(extensionSettings.acm.dropdownPresets[newPreset].name);
+        printCategoriesList(newPreset);
+    });
+
     // Add new custom category to active preset
     $(document).on("click", ".cat_view_create", async function () {
         const newCatName = await callPopup('<h3>Category name:</h3>', POPUP_TYPE.INPUT, '');
@@ -787,7 +802,7 @@ jQuery(async () => {
     // Trigger on a click on the delete category button
     $(document).on("click", ".cat_delete", function () {
         const selectedPreset = $('#preset_selector option:selected').data('preset');
-        const selectedCat = $(this).data('catid');
+        const selectedCat = $(this).closest('[data-catid]').data('catid');
         removeCategory(selectedPreset, selectedCat);
     });
 
@@ -796,15 +811,38 @@ jQuery(async () => {
         const newCatName = await callPopup('<h3>New category name:</h3>', POPUP_TYPE.INPUT, '');
         if (newCatName && newCatName.trim() !== '') {
             const selectedPreset = $('#preset_selector option:selected').data('preset');
-            const selectedCat = $(this).data('catid');
+            const selectedCat = $(this).closest('[data-catid]').data('catid');
             renameCategory(selectedPreset, selectedCat, newCatName);
         }
     });
 
     // Trigger on a click on the add tag button in a category
     $(document).on("click", ".addCatTag", function () {
+        const selectedCat = $(this).closest('[data-catid]').data('catid');
+        $(this)
+            .removeClass('addCatTag')
+            .addClass('cancelCatTag')
+            .removeClass('fa-plus')
+            .addClass('fa-minus');
+        $(`#input_cat_tag_${selectedCat}`).show();
+    });
+
+    // Trigger on a click on the minus tag button in a category
+    $(document).on("click", ".cancelCatTag", function () {
+        const selectedCat = $(this).closest('[data-catid]').data('catid');
+        $(this)
+            .addClass('addCatTag')
+            .removeClass('cancelCatTag')
+            .addClass('fa-plus')
+            .removeClass('fa-minus');
+        $(`#input_cat_tag_${selectedCat}`).hide();
+    });
+
+    $(document).on("click", ".tag_cat_remove", function () {
         const selectedPreset = $('#preset_selector option:selected').data('preset');
-        const selectedCat = $(this).data('catid');
-        createTagInputCat();
+        const selectedCat = $(this).closest('[data-catid]').data('catid');
+        const selectedTag = $(this).closest('[data-tagid]').data('tagid');
+        removeTagFromCategory(selectedPreset, selectedCat, selectedTag);
+        $(this).closest('[data-tagid]').remove();
     });
 });

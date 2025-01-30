@@ -59,6 +59,7 @@
 .dropdown-ui-menu {
     display: none;
     position: absolute;
+    z-index: 9000;
 }
 
 .dropdown-ui-item {
@@ -104,13 +105,6 @@
     padding-bottom: 10px;
     height: 100%;
     overflow-y: auto;
-}
-
-/* Sous-menu */
-.dropdown-submenu {
-    position: absolute;
-    top: 0;
-    left: 0;
 }
 
 .dropdown-submenu-item {
@@ -582,4 +576,14 @@
     margin-bottom: 5px;
     margin-left: 5px;
     margin-right: 5px;
+}
+
+.sortable-placeholder {
+    border: 2px dashed #ccc;
+    height: 50px; /* Ajustez pour correspondre à vos éléments */
+    margin: 10px 0;
+}
+
+.drag-handle {
+    cursor: grab;
 }
