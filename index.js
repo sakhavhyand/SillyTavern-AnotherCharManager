@@ -9,7 +9,7 @@ import {
     removeCategory,
     renameCategory,
     removeTagFromCategory,
-    dropdownAllTags, dropdownCustom
+    dropdownAllTags, dropdownCustom, dropdownCreators, renamePreset, updatePresetNames
 } from './src/acm_dropdownUI.js';
 import { displayTag, generateTagFilter, addListenersTagFilter } from './src/acm_tags.js';
 import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/acm_altGreetings.js';
@@ -264,9 +264,7 @@ export function refreshCharList() {
     else {
         const sortedList = sortCharAR(filteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
         if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === "allTags"){
-            const html = dropdownAllTags(sortedList);
-
-            $('#character-list').html(html);
+            $('#character-list').html(dropdownAllTags(sortedList));
 
             document.querySelectorAll('.dropdown-container').forEach(container => {
                 container.querySelector('.dropdown-title').addEventListener('click', () => {
@@ -275,9 +273,16 @@ export function refreshCharList() {
             });
         }
         else if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === "custom"){
-            const html = dropdownCustom(sortedList);
+            $('#character-list').html(dropdownCustom(sortedList));
 
-            $('#character-list').html(html);
+            document.querySelectorAll('.dropdown-container').forEach(container => {
+                container.querySelector('.dropdown-title').addEventListener('click', () => {
+                    container.classList.toggle('open');
+                });
+            });
+        }
+        else if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === "creators"){
+            $('#character-list').html(dropdownCreators(sortedList));
 
             document.querySelectorAll('.dropdown-container').forEach(container => {
                 container.querySelector('.dropdown-title').addEventListener('click', () => {
@@ -415,6 +420,8 @@ jQuery(async () => {
     }
     $('#background_template').after(modalHtml);
 
+    updatePresetNames();
+
     let acmExportPopper = Popper.createPopper(document.getElementById('acm_export_button'), document.getElementById('acm_export_format_popup'), {
         placement: 'left',
     });
@@ -448,47 +455,75 @@ jQuery(async () => {
         if (extensionSettings.acm.dropdownUI) {
             extensionSettings.acm.dropdownUI = false;
             saveSettingsDebounced();
-            $('#dropdown-ui-menu').toggle();
-            acmUIPopper.update();
-            $('#dropdown-submenu').toggle(false);
-            acmUISubPopper.update();
-            $('#preset-submenu').toggle(false);
-            acmUIPresetPopper.update();
             refreshCharList();
         }
-    });
-
-    $('#acm_switch_alltags').on("click", function () {
-        if (!extensionSettings.acm.dropdownUI) {
-            extensionSettings.acm.dropdownUI = true;
-            extensionSettings.acm.dropdownMode = "allTags";
-            saveSettingsDebounced();
-            $('#dropdown-ui-menu').toggle();
-            refreshCharList();
-        }
-    });
-
-    $('#acm_manage_categories').on("click", function () {
-        manageCustomCategories();
-        const selectedPreset = $('#preset_selector option:selected').data('preset');
-        printCategoriesList(selectedPreset,true)
-    });
-
-    $(document).on('click', '[data-ui="preset"]', function () {
         $('#dropdown-ui-menu').toggle();
         acmUIPopper.update();
         $('#dropdown-submenu').toggle(false);
         acmUISubPopper.update();
         $('#preset-submenu').toggle(false);
         acmUIPresetPopper.update();
-        if (!extensionSettings.acm.dropdownUI) {
+    });
+
+    $('#acm_switch_alltags').on("click", function () {
+        if (!extensionSettings.acm.dropdownUI || (extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode !== 'allTags')) {
+            extensionSettings.acm.dropdownUI = true;
+            extensionSettings.acm.dropdownMode = "allTags";
+            saveSettingsDebounced();
+            refreshCharList();
+        }
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
+        $('#dropdown-submenu').toggle(false);
+        acmUISubPopper.update();
+        $('#preset-submenu').toggle(false);
+        acmUIPresetPopper.update();
+    });
+
+    $('#acm_switch_creators').on("click", function () {
+        if (!extensionSettings.acm.dropdownUI || (extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode !== 'creators')) {
+            extensionSettings.acm.dropdownUI = true;
+            extensionSettings.acm.dropdownMode = "creators";
+            saveSettingsDebounced();
+            refreshCharList();
+        }
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
+        $('#dropdown-submenu').toggle(false);
+        acmUISubPopper.update();
+        $('#preset-submenu').toggle(false);
+        acmUIPresetPopper.update();
+    });
+
+    $('#acm_manage_categories').on("click", function () {
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
+        $('#dropdown-submenu').toggle(false);
+        acmUISubPopper.update();
+        $('#preset-submenu').toggle(false);
+        acmUIPresetPopper.update();
+        manageCustomCategories();
+        const selectedPreset = $('#preset_selector option:selected').data('preset');
+        printCategoriesList(selectedPreset,true)
+    });
+
+    $(document).on('click', '[data-ui="preset"]', function () {
+        if (!extensionSettings.acm.dropdownUI
+            || (extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode !== 'custom')
+            || (extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === 'custom' && extensionSettings.acm.customPreset !== $(this).data('preset'))
+        ) {
             extensionSettings.acm.dropdownUI = true;
             extensionSettings.acm.dropdownMode = "custom";
             extensionSettings.acm.customPreset = $(this).data('preset');
             saveSettingsDebounced();
-            $('#dropdown-ui-menu').toggle();
             refreshCharList();
         }
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
+        $('#dropdown-submenu').toggle(false);
+        acmUISubPopper.update();
+        $('#preset-submenu').toggle(false);
+        acmUIPresetPopper.update();
     })
 
     // Close Popper menu when clicking outside
@@ -792,6 +827,15 @@ jQuery(async () => {
         printCategoriesList(newPreset);
     });
 
+    // Trigger on a click on the rename preset button
+    $(document).on("click", ".preset_rename", async function () {
+        const selectedPreset = $('#preset_selector option:selected').data('preset');
+        const newPresetName = await callPopup('<h3>New preset name:</h3>', POPUP_TYPE.INPUT, extensionSettings.acm.dropdownPresets[selectedPreset].name);
+        if (newPresetName && newPresetName.trim() !== '') {
+            renamePreset(selectedPreset, newPresetName);
+        }
+    });
+
     // Add new custom category to active preset
     $(document).on("click", ".cat_view_create", async function () {
         const newCatName = await callPopup('<h3>Category name:</h3>', POPUP_TYPE.INPUT, '');
@@ -810,10 +854,10 @@ jQuery(async () => {
 
     // Trigger on a click on the rename category button
     $(document).on("click", ".cat_rename", async function () {
-        const newCatName = await callPopup('<h3>New category name:</h3>', POPUP_TYPE.INPUT, '');
+        const selectedPreset = $('#preset_selector option:selected').data('preset');
+        const selectedCat = $(this).closest('[data-catid]').data('catid');
+        const newCatName = await callPopup('<h3>New category name:</h3>', POPUP_TYPE.INPUT, extensionSettings.acm.dropdownPresets[selectedPreset].categories[selectedCat].name);
         if (newCatName && newCatName.trim() !== '') {
-            const selectedPreset = $('#preset_selector option:selected').data('preset');
-            const selectedCat = $(this).closest('[data-catid]').data('catid');
             renameCategory(selectedPreset, selectedCat, newCatName);
         }
     });

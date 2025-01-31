@@ -9,7 +9,7 @@ const tagList = getContext().tags;
 const extensionSettings = getContext().extensionSettings.acm;
 const saveSettingsDebounced = getContext().saveSettingsDebounced;
 
-export { manageCustomCategories, printCategoriesList, addCategory, removeCategory, renameCategory, addTagToCategory, removeTagFromCategory, dropdownAllTags, dropdownCustom };
+export { manageCustomCategories, printCategoriesList, addCategory, removeCategory, renameCategory, addTagToCategory, removeTagFromCategory, dropdownAllTags, dropdownCustom, dropdownCreators, renamePreset, updatePresetNames };
 
 function dropdownAllTags(sortedList){
     const html = tagList.map(tag => {
@@ -24,7 +24,7 @@ function dropdownAllTags(sortedList){
         const characterBlocks = charactersForTag.map(character => getCharBlock(character)).join('');
 
         return `<div class="dropdown-container">
-                            <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${tag.name}</div>
+                            <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${tag.name} (${charactersForTag.length})</div>
                             <div class="dropdown-content character-list">
                                 ${characterBlocks}
                             </div>
@@ -37,7 +37,7 @@ function dropdownAllTags(sortedList){
 
     const noTagsHtml = noTagsCharacters.length > 0
         ? `<div class="dropdown-container">
-                        <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">No Tags</div>
+                        <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">No Tags (${noTagsCharacters.length})</div>
                         <div class="dropdown-content character-list">
                             ${noTagsCharacters.map(character => getCharBlock(character)).join('')}
                         </div>
@@ -63,11 +63,52 @@ function dropdownCustom(sortedList){
         const characterBlocks = charactersForCat.map(character => getCharBlock(character)).join('');
 
         return `<div class="dropdown-container">
-                            <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${category.name}</div>
+                            <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${category.name} (${charactersForCat.length})</div>
                             <div class="dropdown-content character-list">
                                 ${characterBlocks}
                             </div>
                         </div>`;
+    }).join('');
+}
+
+function dropdownCreators(sortedList){
+    return Object.entries(
+        sortedList.reduce((groups, item) => {
+            const creator = item.data.creator;
+
+            if (creator) {
+                if (!groups[creator]) {
+                    groups[creator] = [];
+                }
+                groups[creator].push(item.avatar);
+            } else {
+                if (!groups['No Creator']) {
+                    groups['No Creator'] = [];
+                }
+                groups['No Creator'].push(item.avatar);
+            }
+
+            return groups;
+        }, {})
+    ).sort(([creatorA], [creatorB]) => {
+        if (creatorA === 'No Creator') return 1;
+        if (creatorB === 'No Creator') return -1;
+        return creatorA.localeCompare(creatorB);
+    })
+        .map(([creator, avatars]) => {
+        if (avatars.length === 0) {
+            return '';
+        }
+
+        const characterBlocks = avatars.map(character => getCharBlock(character)).join('');
+        const creatorName = creator === 'No Creator' ? "No Creators" : creator;
+
+        return `<div class="dropdown-container">
+                <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${creatorName} (${avatars.length})</div>
+                <div class="dropdown-content character-list">
+                    ${characterBlocks}
+                </div>
+            </div>`;
     }).join('');
 }
 
@@ -89,18 +130,21 @@ async function manageCustomCategories(){
         </div>
     </div>
      <div class="justifyLeft m-b-1">
-         <h4 id="preset_name">${extensionSettings.dropdownPresets[0].name}</h4>
-         <small>
-             Drag handle to reorder.
-         </small>
-         <div class="menu_button menu_button_icon cat_view_create" title="Create a new category">
-             <i class="fa-solid fa-plus"></i>
-             <span data-i18n="Create">Create</span>
-         </div>
+        <div>
+             <h4 id="preset_name">${extensionSettings.dropdownPresets[0].name}</h4>
+             <i class="menu_button fa-solid fa-edit preset_rename" title="Rename preset"></i>
+        </div>
+        <small>
+            Drag handle to reorder.
+        </small>
+        <div class="menu_button menu_button_icon cat_view_create" title="Create a new category">
+            <i class="fa-solid fa-plus"></i>
+            <span data-i18n="Create">Create</span>
+        </div>
      </div>
 
     `);
-    await callPopup(html, POPUP_TYPE.TEXT, null, { allowVerticalScrolling: true });
+    await callPopup(html, POPUP_TYPE.TEXT, null, {okButton: "Close", allowVerticalScrolling: true });
 }
 
 // Function to print the categories and associated tags of a specific preset
@@ -151,7 +195,7 @@ function makeCategoryDraggable(containerSelector) {
         items: "> div",
         tolerance: "pointer",
         placeholder: "sortable-placeholder",
-        update: function (event, ui) {
+        update: function () {
             const newOrder = [];
             $(containerSelector).children("div").each(function () {
                 newOrder.push($(this).data("catid"));
@@ -167,6 +211,14 @@ function makeCategoryDraggable(containerSelector) {
         .mousedown(function () { $(this).css("cursor", "grabbing"); })
         .mouseup(function () { $(this).css("cursor", "grab"); }
     );
+}
+
+function renamePreset(preset, newName) {
+    extensionSettings.dropdownPresets[preset].name = newName;
+    saveSettingsDebounced();
+    $('#preset_name').html(newName);
+    $(`#preset_selector option`).filter((_, element) => $(element).data('preset') === preset).text(newName);
+    updatePresetNames();
 }
 
 function addCategory(preset, catName){
@@ -204,4 +256,14 @@ function removeTagFromCategory(preset, category, tag) {
         members.splice(tagIndex, 1);
         saveSettingsDebounced();
     }
+}
+
+function updatePresetNames() {
+    $('#preset-submenu .dropdown-ui-item').each(function () {
+        const presetIndex = $(this).data('preset');
+        const newName = extensionSettings.dropdownPresets[presetIndex]?.name;
+        if (newName) {
+            $(this).text(newName);
+        }
+    });
 }
