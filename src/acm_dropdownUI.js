@@ -1,12 +1,75 @@
-import {createTagInputCat, displayTag} from './acm_tags.js';
+import { createTagInputCat, displayTag } from './acm_tags.js';
+import { getCharBlock } from "../index.js";
 
 const getContext = SillyTavern.getContext;
 const POPUP_TYPE = getContext().POPUP_TYPE;
 const callPopup = getContext().callGenericPopup;
+const tagMap = getContext().tagMap;
+const tagList = getContext().tags;
 const extensionSettings = getContext().extensionSettings.acm;
 const saveSettingsDebounced = getContext().saveSettingsDebounced;
 
-export { manageCustomCategories, printCategoriesList, addCategory, removeCategory, renameCategory, addTagToCategory, removeTagFromCategory };
+export { manageCustomCategories, printCategoriesList, addCategory, removeCategory, renameCategory, addTagToCategory, removeTagFromCategory, dropdownAllTags, dropdownCustom };
+
+function dropdownAllTags(sortedList){
+    const html = tagList.map(tag => {
+        const charactersForTag = sortedList
+            .filter(item => tagMap[item.avatar]?.includes(tag.id))
+            .map(item => item.avatar);
+
+        if (charactersForTag.length === 0) {
+            return '';
+        }
+
+        const characterBlocks = charactersForTag.map(character => getCharBlock(character)).join('');
+
+        return `<div class="dropdown-container">
+                            <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${tag.name}</div>
+                            <div class="dropdown-content character-list">
+                                ${characterBlocks}
+                            </div>
+                        </div>`;
+    }).join('');
+
+    const noTagsCharacters = sortedList
+        .filter(item => !tagMap[item.avatar] || tagMap[item.avatar].length === 0)
+        .map(item => item.avatar);
+
+    const noTagsHtml = noTagsCharacters.length > 0
+        ? `<div class="dropdown-container">
+                        <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">No Tags</div>
+                        <div class="dropdown-content character-list">
+                            ${noTagsCharacters.map(character => getCharBlock(character)).join('')}
+                        </div>
+                    </div>`
+        : '';
+
+    return html + noTagsHtml;
+}
+
+function dropdownCustom(sortedList){
+    const preset = extensionSettings.customPreset;
+    const categories = extensionSettings.dropdownPresets[preset].categories;
+    return categories.map(category => {
+        const members = category.members;
+        const charactersForCat = sortedList
+            .filter(item => members.every(memberId => tagMap[item.avatar]?.includes(String(memberId))))
+            .map(item => item.avatar);
+
+        if (charactersForCat.length === 0) {
+            return '';
+        }
+
+        const characterBlocks = charactersForCat.map(character => getCharBlock(character)).join('');
+
+        return `<div class="dropdown-container">
+                            <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${category.name}</div>
+                            <div class="dropdown-content character-list">
+                                ${characterBlocks}
+                            </div>
+                        </div>`;
+    }).join('');
+}
 
 // Function to display the Custom Categories Management
 async function manageCustomCategories(){

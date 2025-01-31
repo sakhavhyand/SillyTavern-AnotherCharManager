@@ -8,7 +8,8 @@ import {
     addCategory,
     removeCategory,
     renameCategory,
-    removeTagFromCategory
+    removeTagFromCategory,
+    dropdownAllTags, dropdownCustom
 } from './src/acm_dropdownUI.js';
 import { displayTag, generateTagFilter, addListenersTagFilter } from './src/acm_tags.js';
 import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/acm_altGreetings.js';
@@ -97,7 +98,7 @@ function sortCharAR(chars, sort_data, sort_order) {
 }
 
 // Function to generate the HTML block for a character
-function getCharBlock(avatar) {
+export function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
     let isFav;
@@ -263,39 +264,20 @@ export function refreshCharList() {
     else {
         const sortedList = sortCharAR(filteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
         if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === "allTags"){
-            const html = tagList.map(tag => {
-                const charactersForTag = sortedList
-                    .filter(item => tagMap[item.avatar]?.includes(tag.id))
-                    .map(item => item.avatar);
+            const html = dropdownAllTags(sortedList);
 
-                if (charactersForTag.length === 0) {
-                    return '';
-                }
+            $('#character-list').html(html);
 
-                const characterBlocks = charactersForTag.map(character => getCharBlock(character)).join('');
+            document.querySelectorAll('.dropdown-container').forEach(container => {
+                container.querySelector('.dropdown-title').addEventListener('click', () => {
+                    container.classList.toggle('open');
+                });
+            });
+        }
+        else if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === "custom"){
+            const html = dropdownCustom(sortedList);
 
-                return `<div class="dropdown-container">
-                            <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${tag.name}</div>
-                            <div class="dropdown-content character-list">
-                                ${characterBlocks}
-                            </div>
-                        </div>`;
-            }).join('');
-
-            const noTagsCharacters = sortedList
-                .filter(item => !tagMap[item.avatar] || tagMap[item.avatar].length === 0)
-                .map(item => item.avatar);
-
-            const noTagsHtml = noTagsCharacters.length > 0
-                ? `<div class="dropdown-container">
-                        <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">No Tags</div>
-                        <div class="dropdown-content character-list">
-                            ${noTagsCharacters.map(character => getCharBlock(character)).join('')}
-                        </div>
-                    </div>`
-                : '';
-
-            $('#character-list').html(html + noTagsHtml);
+            $('#character-list').html(html);
 
             document.querySelectorAll('.dropdown-container').forEach(container => {
                 container.querySelector('.dropdown-title').addEventListener('click', () => {
@@ -468,6 +450,10 @@ jQuery(async () => {
             saveSettingsDebounced();
             $('#dropdown-ui-menu').toggle();
             acmUIPopper.update();
+            $('#dropdown-submenu').toggle(false);
+            acmUISubPopper.update();
+            $('#preset-submenu').toggle(false);
+            acmUIPresetPopper.update();
             refreshCharList();
         }
     });
@@ -488,6 +474,22 @@ jQuery(async () => {
         printCategoriesList(selectedPreset,true)
     });
 
+    $(document).on('click', '[data-ui="preset"]', function () {
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
+        $('#dropdown-submenu').toggle(false);
+        acmUISubPopper.update();
+        $('#preset-submenu').toggle(false);
+        acmUIPresetPopper.update();
+        if (!extensionSettings.acm.dropdownUI) {
+            extensionSettings.acm.dropdownUI = true;
+            extensionSettings.acm.dropdownMode = "custom";
+            extensionSettings.acm.customPreset = $(this).data('preset');
+            saveSettingsDebounced();
+            $('#dropdown-ui-menu').toggle();
+            refreshCharList();
+        }
+    })
 
     // Close Popper menu when clicking outside
     document.addEventListener('click', (event) => {
