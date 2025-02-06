@@ -504,6 +504,7 @@ jQuery(async () => {
         acmUIPresetPopper.update();
         manageCustomCategories();
         const selectedPreset = $('#preset_selector option:selected').data('preset');
+        if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === 'custom'){$('.popup-button-ok').on('click', function () {refreshCharList();});}
         printCategoriesList(selectedPreset,true)
     });
 
