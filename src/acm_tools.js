@@ -1,6 +1,14 @@
 
 export { debounce, getBase64Async, resetScrollHeight, delay, equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents };
 
+/**
+ * Creates a debounced version of the provided function that delays its execution
+ * until after a specified timeout period has elapsed since the last time it was invoked.
+ *
+ * @param {Function} func - The function to debounce.
+ * @param {number} [timeout=300] - The time, in milliseconds, to delay the function execution.
+ * @return {Function} A new debounced function that delays the execution of the original function.
+ */
 function debounce(func, timeout = 300) {
     let timer;
     return (...args) => {
@@ -27,6 +35,12 @@ function getBase64Async(file) {
     });
 }
 
+/**
+ * Resets the scroll height of a given HTML element to match its scrollable content height.
+ *
+ * @param {HTMLElement} element - The HTML element whose height needs to be reset.
+ * @return {void} This function does not return a value.
+ */
 async function resetScrollHeight(element) {
     $(element).css('height', '0px');
     $(element).css('height', $(element).prop('scrollHeight') + 3 + 'px');
@@ -42,6 +56,14 @@ function delay(ms) {
 }
 
 
+/**
+ * Compares two strings for equality, ignoring case differences and accent marks.
+ * This method determines whether the two strings are equal when case and accents are disregarded.
+ *
+ * @param {string} a - The first string to compare.
+ * @param {string} b - The second string to compare.
+ * @return {boolean} Returns true if the two strings are equal ignoring case and accents; otherwise, false.
+ */
 function equalsIgnoreCaseAndAccents(a, b) {
     return compareIgnoreCaseAndAccents(a, b, (a, b) => a === b);
 }

@@ -7,7 +7,12 @@ const substituteParams = getContext().substituteParams;
 
 export { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings };
 
-// Function to generate an Array for the selected character alternative greetings
+/**
+ * Collects the values of all textareas with the class 'altGreeting_zone'
+ * and returns them as an array of strings.
+ *
+ * @return {string[]} An array containing the values of the textareas with the class 'altGreeting_zone'.
+ */
 function generateGreetingArray() {
     const textareas = document.querySelectorAll('.altGreeting_zone');
     const greetingArray = [];
@@ -18,14 +23,24 @@ function generateGreetingArray() {
     return greetingArray;
 }
 
-// Add an event listeners to all alternative greetings text areas displayed
+/**
+ * Attaches an event listener to all elements with the class 'altGreeting_zone'.
+ * The event listener triggers the saveAltGreetings function whenever an 'input' event occurs on the element.
+ *
+ * @return {void} This function does not return anything.
+ */
 function addAltGreetingsTrigger(){
     document.querySelectorAll('.altGreeting_zone').forEach(textarea => {
         textarea.addEventListener('input', (event) => {saveAltGreetings(event);});
     });
 }
 
-// Function to display a new alternative greeting block
+/**
+ * Adds a new alternate greeting section to the DOM within the 'altGreetings_content' container.
+ * Each new section is dynamically created and appended to the container, including appropriate event listeners.
+ *
+ * @return {void} Does not return anything.
+ */
 function addAltGreeting(){
     const drawerContainer = document.getElementById('altGreetings_content');
 
@@ -66,7 +81,14 @@ function addAltGreeting(){
     saveAltGreetings();
 }
 
-// Function to delete an alternative greetings block
+/**
+ * Deletes an alternative greeting block, updates the indices of remaining blocks,
+ * and ensures proper UI display for the alternative greetings section.
+ *
+ * @param {number} index The index of the alternative greeting block to be deleted.
+ * @param {Object} inlineDrawer The DOM element representing the alternative greeting block to remove.
+ * @return {void} The function does not return a value.
+ */
 function delAltGreeting(index, inlineDrawer){
     // Delete the AltGreeting block
     inlineDrawer.remove();
@@ -91,7 +113,12 @@ function delAltGreeting(index, inlineDrawer){
     saveAltGreetings();
 }
 
-// Function to Display the AltGreetings if they exists
+/**
+ * Generates and returns HTML content for alternative greetings based on the provided items.
+ *
+ * @param {string[]} item - An array of strings where each string represents a greeting.
+ * @return {string} The generated HTML as a string. If the `item` array is empty, a placeholder HTML string is returned.
+ */
 function displayAltGreetings(item) {
     let altGreetingsHTML = '';
 
@@ -123,7 +150,13 @@ function displayAltGreetings(item) {
     }
 }
 
-// Function to save added/edited/deleted alternative greetings
+/**
+ * Saves alternate greetings for the selected character and updates the relevant UI elements.
+ *
+ * @param {Event|null} event - The event object triggered by a user action, used to update token count.
+ *                             Pass null if no event is available.
+ * @return {void} This function does not return a value.
+ */
 function saveAltGreetings(event = null){
     const greetings = generateGreetingArray();
     const update = {

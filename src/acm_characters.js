@@ -21,7 +21,11 @@ const getThumbnailUrl = getContext().getThumbnailUrl;
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
 
 
-// Function to check if the avatar plugin is installed
+/**
+ * Checks the availability of the AvatarEdit API by making a POST request to the probe endpoint.
+ *
+ * @return {Promise<boolean>} A promise that resolves to true if the API is available (returns a status of 204), or false otherwise.
+ */
 async function checkApiAvailability() {
     try {
         const response = await fetch('/api/plugins/avataredit/probe', {method: 'POST', headers: getRequestHeaders()});
@@ -32,7 +36,13 @@ async function checkApiAvailability() {
     }
 }
 
-// Function to edit a single character
+/**
+ * Updates the attributes of a character by sending a POST request with the given data.
+ * Emits an event upon successful update.
+ *
+ * @param {Object} update - The object containing the character attributes to update.
+ * @return {Promise<void>} A promise that resolves when the character is successfully updated or logs an error if the request fails.
+ */
 async function editChar(update) {
     let url = '/api/characters/merge-attributes';
 
@@ -51,7 +61,14 @@ async function editChar(update) {
     }
 }
 
-// Function to replace an avatar
+/**
+ * Replaces a character's avatar with a new one, with optional cropping.
+ *
+ * @param {File|string} newAvatar - The new avatar to replace the current one. Can be a File object or a URL string.
+ * @param {string} id - The unique identifier of the character whose avatar is being replaced.
+ * @param {Object} [crop_data] - Optional cropping data for the avatar, if applicable.
+ * @return {Promise<void>} A promise that resolves when the avatar has been successfully replaced or rejects if an error occurs.
+ */
 async function replaceAvatar(newAvatar, id, crop_data = undefined) {
     let url = '/api/plugins/avataredit/edit-avatar';
 
@@ -119,7 +136,14 @@ async function replaceAvatar(newAvatar, id, crop_data = undefined) {
 //     }
 // }
 
-// Function to duplicate a character
+/**
+ * Sends a request to duplicate a character based on the provided avatar URL.
+ * Upon success, notifies via a success message, emits an event containing
+ * the duplication details, and refreshes the character list.
+ *
+ * @param {string} avatar - The URL of the avatar to be duplicated.
+ * @return {Promise<void>} Resolves when the operation is complete.
+ */
 async function dupeChar(avatar) {
     const body = { avatar_url: avatar };
     const response = await fetch('/api/characters/duplicate', {
@@ -136,7 +160,17 @@ async function dupeChar(avatar) {
     }
 }
 
-// Function to rename a character
+/**
+ * Renames an existing character and updates related data across the system.
+ * This includes updating the character's avatar, name, associated group membership,
+ * and optionally updating past chat logs to reflect the new name.
+ *
+ * @param {string} oldAvatar - The current avatar URL of the character being renamed.
+ * @param {number} charID - The unique identifier of the character to be renamed.
+ * @param {string} newName - The new name to assign to the character.
+ * @return {Promise<void>} Resolves when the character has been successfully renamed,
+ *         associated data updated, and UI changes applied. Rejects if any operation fails during the process.
+ */
 async function renameChar(oldAvatar, charID, newName) {
 
     if (newName && newName !== characters[charID].name) {
@@ -202,7 +236,15 @@ async function renameChar(oldAvatar, charID, newName) {
     }
 }
 
-// Function to rename existing chats of a character ( associated with the renameChar function )
+/**
+ * Renames past chats and updates their associated avatar and chat name in a persistent storage.
+ * Iterates through all past chat files, modifies the chat data to reflect the new avatar and chat name,
+ * and then saves the updated chats back to storage.
+ *
+ * @param {string} newAvatar - The new avatar URL to associate with the past chats.
+ * @param {string} newValue - The new name to assign to the past chats.
+ * @return {Promise<void>} A promise that resolves when all past chats have been processed and saved.
+ */
 async function renamePastChats(newAvatar, newValue) {
     const pastChats = await getPastCharacterChats();
 
@@ -254,7 +296,13 @@ async function renamePastChats(newAvatar, newValue) {
     }
 }
 
-// Function to export a character
+/**
+ * Exports a character's avatar in the specified format.
+ *
+ * @param {string} format - The desired file format for the exported avatar (e.g., "png", "jpg").
+ * @param {string} avatar - The URL of the avatar image to be exported.
+ * @return {Promise<void>} A promise that resolves when the export operation completes.
+ */
 async function exportChar (format, avatar) {
     const body = { format, avatar_url: avatar };
 

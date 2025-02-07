@@ -12,7 +12,13 @@ const saveSettingsDebounced = getContext().saveSettingsDebounced;
 export { displayTag, generateTagFilter, tagFilterClick, addListenersTagFilter, renameTagKey, createTagInputCat };
 
 
-// Function to generate the HTML for displaying a tag
+/**
+ * Renders a tag as an HTML string based on the provided tag ID and an optional category flag.
+ *
+ * @param {string} tagId - The identifier of the tag to be displayed.
+ * @param {boolean} [isFromCat=false] - Indicates whether the tag is from a category.
+ * @return {string} The HTML string representation of the tag. Returns an empty string if the tag ID is not found in the tag list.
+ */
 function displayTag( tagId, isFromCat = false ){
     const tagClass = isFromCat ? "fa-solid fa-circle-xmark tag_cat_remove" : "fa-solid fa-circle-xmark tag_remove";
     if (tagList.find(tagList => tagList.id === tagId)) {
@@ -36,6 +42,12 @@ function displayTag( tagId, isFromCat = false ){
     else { return ''; }
 }
 
+/**
+ * Generates and displays an HTML block of sorted tags with specific styles and attributes,
+ * and initializes filter states for these tags.
+ *
+ * @return {void} This function does not return a value.
+ */
 function generateTagFilter() {
     let tagBlock='';
 
@@ -51,6 +63,12 @@ function generateTagFilter() {
     $('#tags-list').html(tagBlock);
 }
 
+/**
+ * Adds event listeners to elements with the class 'acm_tag' to handle click events.
+ * Each click event triggers the `tagFilterClick` function with the corresponding tag element.
+ *
+ * @return {void} This method does not return a value.
+ */
 function addListenersTagFilter() {
     const tags = document.querySelectorAll('.acm_tag');
 
@@ -59,6 +77,21 @@ function addListenersTagFilter() {
     });
 }
 
+/**
+ * Handles the click event for a tag filter and updates its state accordingly.
+ *
+ * The method toggles the tag's state among three possible states:
+ * 1 - Default state with no special indication.
+ * 2 - Active state indicated by a checkmark and green border.
+ * 3 - Disabled state indicated by a cross and red border.
+ * Updates the visual representation of the tag and modifies its state in the tagFilterstates map.
+ * Also triggers a refresh of the character list based on the updated state.
+ *
+ * @param {HTMLElement} tag The tag element being clicked. It must contain a child element with
+ *                          the class 'acm_tag_name' and must have an id used to track its state.
+ *
+ * @return {void} This function does not return a value.
+ */
 function tagFilterClick(tag) {
     const currentState = tagFilterstates.get(tag.id);
     let newState;
@@ -82,6 +115,14 @@ function tagFilterClick(tag) {
     refreshCharList();
 }
 
+/**
+ * Renames a tag key in the tag map by transferring the corresponding value to a new key
+ * and removing the old key from the tag map.
+ *
+ * @param {string} oldKey - The existing tag key to be renamed.
+ * @param {string} newKey - The new name for the tag key.
+ * @return {object} tag - Returns the updated tag map after the rename operation.
+ */
 function renameTagKey(oldKey, newKey) {
     const value = tag_map[oldKey];
     tag_map[newKey] = value || [];
@@ -89,6 +130,14 @@ function renameTagKey(oldKey, newKey) {
     saveSettingsDebounced();
 }
 
+/**
+ * Finds tags based on the provided request, resolving the result with filtered and sorted tags that match the search term.
+ *
+ * @param {Object} request - The search request containing a `term` property to match tags.
+ * @param {Function} resolve - A callback function to resolve the results array.
+ * @param {string} listSelector - Selector for the list element containing tags, used to exclude tags already present in the list.
+ * @return {Array<string>} - The filtered and sorted list of tag names matching the search term, including the term itself if no exact match is found.
+ */
 function findTag(request, resolve, listSelector) {
     const skipIds = [...($(listSelector).find('.tag').map((_, el) => $(el).attr('id')))];
     const haystack = tagList.filter(t => !skipIds.includes(t.id)).sort(compareTagsForSort).map(t => t.name);
@@ -145,6 +194,13 @@ function compareTagsForSort(a, b) {
     }
 }
 
+/**
+ * Handles the focus event on a tag input field and triggers the autocomplete functionality.
+ *
+ * This method is intended to initiate an autocomplete search using the input value when the field gains focus.
+ *
+ * @return {void} This method does not return a value.
+ */
 function onTagInputFocus() {
     // @ts-ignore
     $(this).autocomplete('search', $(this).val());
