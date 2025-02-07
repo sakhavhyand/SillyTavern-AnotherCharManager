@@ -56,6 +56,10 @@
     gap: 20px;
 }
 
+.acm_popup_buttons {
+    width:unset !important;
+}
+
 .dropdown-ui-menu {
     display: none;
     position: absolute;
@@ -74,7 +78,6 @@
 
 #acm_popup_close {
     background-color: var(--crimson70a);
-    cursor: pointer;
 }
 
 .dropdown-container {
@@ -558,6 +561,10 @@
     padding-right: 20px;
 }
 
+.acm_catCreate {
+    display: flex;
+    align-items: center;
+}
 
 .acm_catList {
     display: flex;

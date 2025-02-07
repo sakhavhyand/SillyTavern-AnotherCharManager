@@ -129,17 +129,19 @@ async function manageCustomCategories(){
             ${selectElement.prop('outerHTML')}
         </div>
     </div>
-     <div class="justifyLeft m-b-1">
-        <div>
+     <div>
+        <div style="display:flex;">
              <h4 id="preset_name">${extensionSettings.dropdownPresets[0].name}</h4>
              <i class="menu_button fa-solid fa-edit preset_rename" title="Rename preset"></i>
         </div>
-        <small>
-            Drag handle to reorder.
-        </small>
-        <div class="menu_button menu_button_icon cat_view_create" title="Create a new category">
-            <i class="fa-solid fa-plus"></i>
-            <span data-i18n="Create">Create</span>
+        <div class="acm_catCreate">
+            <div class="menu_button menu_button_icon cat_view_create" title="Create a new category">
+                <i class="fa-solid fa-plus"></i>
+                <span data-i18n="Create">Create</span>
+            </div>
+            <small>
+                Drag handle to reorder.
+            </small>
         </div>
      </div>
 
