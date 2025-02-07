@@ -114,7 +114,7 @@ export function getCharBlock(avatar) {
 
     return `<div class="character_item ${charClass} ${isFav}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]" data-avatar="${avatar}">
                     <div class="avatar_item">
-                        <img src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
+                        <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
                     </div>
                     <div class="char_name">
                         <div class="char_name_block">
@@ -337,7 +337,7 @@ async function update_avatar(input){
             crop_data = dlg.cropData;
 
             try {
-                await replaceAvatar(file, getIdByAvatar(selectedChar), crop_data);
+               await replaceAvatar(file, getIdByAvatar(selectedChar), crop_data);
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
@@ -590,12 +590,14 @@ jQuery(async () => {
         // Check if div already opened
         if (tagsList.classList.contains('open')) {
             setTimeout(() => {
+                tagsList.style.minHeight = '0';
                 tagsList.style.height = '0';
             }, 10);
             tagsList.classList.toggle('open');
         } else {
             setTimeout(() => {
-                tagsList.style.height = (tagsList.scrollHeight + 7) + 'px';
+                tagsList.style.minHeight  = tagsList.scrollHeight > 80 ? '80px' : (tagsList.scrollHeight + 5) + 'px';
+                tagsList.style.height = tagsList.style.minHeight;
             }, 10);
             tagsList.classList.toggle('open');
         }
