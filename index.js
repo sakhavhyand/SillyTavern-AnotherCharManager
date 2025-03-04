@@ -1,12 +1,22 @@
 // An extension that allows you to manage characters.
-
-import { getContext } from '../../../extensions.js';
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
-import { resetScrollHeight, getBase64Async } from '../../../utils.js';
 import { createTagInput } from '../../../tags.js';
-import { power_user } from '../../../power-user.js';
-import { editChar, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
+import { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
+import {
+    manageCustomCategories,
+    printCategoriesList,
+    addCategory,
+    removeCategory,
+    renameCategory,
+    removeTagFromCategory,
+    dropdownAllTags, dropdownCustom, dropdownCreators, renamePreset, updatePresetNames
+} from './src/acm_dropdownUI.js';
+import { displayTag, generateTagFilter, addListenersTagFilter } from './src/acm_tags.js';
+import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/acm_altGreetings.js';
+import { debounce, getBase64Async, resetScrollHeight } from './src/acm_tools.js';
 
+const getContext = SillyTavern.getContext;
+const power_user = getContext().powerUserSettings;
 const getTokenCount = getContext().getTokenCount;
 const getThumbnailUrl = getContext().getThumbnailUrl;
 const callPopup = getContext().callGenericPopup;
@@ -27,28 +37,34 @@ const extensionName = 'SillyTavern-AnotherCharManager';
 const oldExtensionName = 'SillyTavern-AnotherTagManager';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
-const defaultSettings = {sortingField: "name", sortingOrder: "asc", favOnly: false};
+const defaultSettings = {
+    sortingField: "name",
+    sortingOrder: "asc",
+    favOnly: false,
+    dropdownUI: false,
+    dropdownMode: "allTags",
+    dropdownPresets: [
+        { name: "Preset 1", categories: [] },
+        { name: "Preset 2", categories: [] },
+        { name: "Preset 3", categories: [] },
+        { name: "Preset 4", categories: [] },
+        { name: "Preset 5", categories: [] }
+    ]};
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
-const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
-let selectedId, selectedChar, mem_menu, mem_avatar;
+export let selectedChar;
+let mem_menu, mem_avatar;
 let searchValue = '';
-const tagFilterstates = new Map();
-
-
-function debounce(func, timeout = 300) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => { func.apply(this, args); }, timeout);
-    };
-}
+export const tagFilterstates = new Map();
 
 // Loads the extension settings if they exist, otherwise initializes them to the defaults.
 async function loadSettings() {
     //Create the settings if they don't exist
     extensionSettings.acm = extensionSettings.acm || {};
-    if (Object.keys(extensionSettings.acm).length === 0) {
-        Object.assign(extensionSettings.acm, defaultSettings);
+    // Add default settings for any missing keys
+    for (const key in defaultSettings) {
+        if (!extensionSettings.acm.hasOwnProperty(key)) {
+            extensionSettings.acm[key] = defaultSettings[key];
+        }
     }
 }
 
@@ -56,24 +72,6 @@ async function loadSettings() {
 function getIdByAvatar(avatar){
     const index = characters.findIndex(character => character.avatar === avatar);
     return index !== -1 ? String(index) : undefined;
-}
-
-// Function to generate an Array for the selected character alternative greetings
-function generateGreetingArray() {
-    const textareas = document.querySelectorAll('.altGreeting_zone');
-    const greetingArray = [];
-
-    textareas.forEach(textarea => {
-        greetingArray.push(textarea.value);
-    });
-    return greetingArray;
-}
-
-// Add an event listeners to all alternative greetings text areas displayed
-function addAltGreetingsTrigger(){
-    document.querySelectorAll('.altGreeting_zone').forEach(textarea => {
-        textarea.addEventListener('input', (event) => {saveAltGreetings(event);});
-    });
 }
 
 // Function to sort the character array based on specified property and order
@@ -100,7 +98,7 @@ function sortCharAR(chars, sort_data, sort_order) {
 }
 
 // Function to generate the HTML block for a character
-function getCharBlock(avatar) {
+export function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
     let isFav;
@@ -114,7 +112,7 @@ function getCharBlock(avatar) {
         isFav = '';
     }
 
-    return `<div class="character_item ${charClass} ${isFav}" id="${avatar}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]">
+    return `<div class="character_item ${charClass} ${isFav}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]" data-avatar="${avatar}">
                     <div class="avatar_item">
                         <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
                     </div>
@@ -124,193 +122,6 @@ function getCharBlock(avatar) {
                         </div>
                     </div>
                 </div>`;
-}
-
-// Function to generate the HTML for displaying a tag
-function displayTag( tagId ){
-    if (tagList.find(tagList => tagList.id === tagId)) {
-        const name = tagList.find(tagList => tagList.id === tagId).name;
-        const color = tagList.find(tagList => tagList.id === tagId).color;
-
-        if (tagList.find(tagList => tagList.id === tagId).color2) {
-            const color2 = tagList.find(tagList => tagList.id === tagId).color2;
-
-            return `<span id="${tagId}" class="tag" style="background-color: ${color}; color: ${color2};">
-                    <span class="tag_name">${name}</span>
-                    <i class="fa-solid fa-circle-xmark tag_remove"></i>
-                </span>`;
-        } else {
-            return `<span id="${tagId}" class="tag" style="background-color: ${color};">
-                    <span class="tag_name">${name}</span>
-                    <i class="fa-solid fa-circle-xmark tag_remove"></i>
-                </span>`;
-        }
-    }
-    else { return ''; }
-}
-
-function generateTagFilter() {
-    let tagBlock='';
-
-    tagList.sort((a, b) => a.name.localeCompare(b.name));
-
-    tagList.forEach(tag => {
-        tagBlock += `<span id="${tag.id}" class="acm_tag" tabIndex="0" style="display: inline; background-color: ${tag.color}; color: ${tag.color2};">
-                                <span class="acm_tag_name">${tag.name}</span>
-                     </span>`;
-        tagFilterstates.set(tag.id, 1);
-    });
-
-    $('#tags-list').html(tagBlock);
-}
-function addListenersTagFilter() {
-    const tags = document.querySelectorAll('.acm_tag');
-
-    tags.forEach(tag => {
-        tag.addEventListener('click', () => tagFilterClick(tag));
-    });
-}
-
-function tagFilterClick(tag) {
-    const currentState = tagFilterstates.get(tag.id);
-    let newState;
-
-    if (currentState === 1) {
-        newState = 2;
-        tag.querySelector('.acm_tag_name').textContent = '✔️ ' + tag.querySelector('.acm_tag_name').textContent;
-        tag.style.borderColor = 'green';
-    } else if (currentState === 2) {
-        newState = 3;
-        tag.querySelector('.acm_tag_name').textContent = tag.querySelector('.acm_tag_name').textContent.replace('✔️ ', '');
-        tag.querySelector('.acm_tag_name').textContent = '❌ ' + tag.querySelector('.acm_tag_name').textContent;
-        tag.style.borderColor = 'red';
-    } else {
-        newState = 1;
-        tag.querySelector('.acm_tag_name').textContent = tag.querySelector('.acm_tag_name').textContent.replace(/✔️ |❌ /, '');
-        tag.style.borderColor = '';
-    }
-
-    tagFilterstates.set(tag.id, newState);
-    refreshCharList();
-}
-
-// Function to Display the AltGreetings if they exists
-function displayAltGreetings(item) {
-    let altGreetingsHTML = '';
-
-    if (item.length === 0) {
-        return '<span id="chicken">Nothing here but chickens!!</span>';
-    } else {
-        for (let i = 0; i < item.length; i++) {
-            let greetingNumber = i + 1;
-            altGreetingsHTML += `<div class="inline-drawer">
-                <div id="altGreetDrawer${greetingNumber}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                    <div style="display: flex;flex-grow: 1;">
-                        <strong class="drawer-header-item">
-                            Greeting #
-                            <span class="greeting_index">${greetingNumber}</span>
-                        </strong>
-                        <span class="tokens_count drawer-header-item">Tokens: ${getTokenCount(substituteParams(item[i]))}</span>
-                    </div>
-                    <div class="altGreetings_buttons">
-                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
-                        <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
-                    </div>
-                </div>
-                <div class="inline-drawer-content">
-                    <textarea class="altGreeting_zone autoSetHeight">${item[i]}</textarea>
-                </div>
-            </div>`;
-        }
-        return altGreetingsHTML;
-    }
-}
-
-// Function to save added/edited/deleted alternative greetings
-function saveAltGreetings(event = null){
-    const greetings = generateGreetingArray();
-    const update = {
-        avatar: selectedChar,
-        data: {
-            alternate_greetings: greetings,
-        },
-    };
-    editCharDebounced(update);
-    // Update token count if necessary
-    if (event) {
-        const textarea = event.target;
-        const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
-        tokensSpan.textContent = `Tokens: ${getTokenCount(substituteParams(textarea.value))}`;
-    }
-
-    // Edit the Alt Greetings number on the main drawer
-    $('#altGreetings_number').html(`Numbers: ${greetings.length}`);
-}
-
-// Function to display a new alternative greeting block
-function addAltGreeting(){
-    const drawerContainer = document.getElementById('altGreetings_content');
-
-    // Determine the new greeting index
-    const greetingIndex = drawerContainer.getElementsByClassName('inline-drawer').length + 1;
-
-    // Create the new inline-drawer block
-    const altGreetingDiv = document.createElement('div');
-    altGreetingDiv.className = 'inline-drawer';
-    altGreetingDiv.innerHTML = `<div id="altGreetDrawer${greetingIndex}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                    <div style="display: flex;flex-grow: 1;">
-                        <strong class="drawer-header-item">
-                            Greeting #
-                            <span class="greeting_index">${greetingIndex}</span>
-                        </strong>
-                        <span class="tokens_count drawer-header-item">Tokens: 0</span>
-                    </div>
-                    <div class="altGreetings_buttons">
-                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
-                        <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
-                    </div>
-                </div>
-                <div class="inline-drawer-content">
-                    <textarea class="altGreeting_zone autoSetHeight"></textarea>
-                </div>
-            </div>`;
-
-    // Add the new inline-drawer block
-    $('#chicken').empty();
-    drawerContainer.appendChild(altGreetingDiv);
-
-    // Add the event on the textarea
-    altGreetingDiv.querySelector(`.altGreeting_zone`).addEventListener('input', (event) => {
-        saveAltGreetings(event);
-    });
-
-    // Save it
-    saveAltGreetings();
-}
-
-// Function to delete an alternative greetings block
-function delAltGreeting(index, inlineDrawer){
-    // Delete the AltGreeting block
-    inlineDrawer.remove();
-
-    // Update the others AltGreeting blocks
-    const $altGreetingsToggle = $('.altgreetings-drawer-toggle');
-
-    if ($('div[id^="altGreetDrawer"]').length === 0) {
-        $('#altGreetings_content').html('<span id="chicken">Nothing here but chickens!!</span>');
-    }
-    else {
-        $altGreetingsToggle.each(function() {
-            const currentIndex = parseInt($(this).find('.greeting_index').text());
-            if (currentIndex > index) {
-                $(this).find('.greeting_index').text(currentIndex - 1);
-                $(this).attr('id', `altGreetDrawer${currentIndex - 1}`);
-            }
-        });
-    }
-
-    // Save it
-    saveAltGreetings();
 }
 
 // Function to fill details in the character details block
@@ -385,9 +196,7 @@ function fillAdvancedDefinitions(avatar) {
 
 }
 
-// Function to refresh the character list based on search and sorting parameters
-function refreshCharList() {
-
+function searchAndFilter(){
     let filteredChars = [];
     const charactersCopy = extensionSettings.acm.favOnly
         ? [...getContext().characters].filter(character => character.fav === true || character.data.extensions.fav === true)
@@ -439,32 +248,63 @@ function refreshCharList() {
 
             return matchesText || matchesTag;
         });
+        return filteredChars;
+    }
+    else {
+        return tagfilteredChars;
+    }
+}
 
-        if(filteredChars.length === 0){
-            $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
+// Function to refresh the character list based on search and sorting parameters
+export function refreshCharList() {
+    const filteredChars = searchAndFilter();
+    if(filteredChars.length === 0){
+        $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
+    }
+    else {
+        const sortedList = sortCharAR(filteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
+        if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === "allTags"){
+            $('#character-list').html(dropdownAllTags(sortedList));
+
+            document.querySelectorAll('.dropdown-container').forEach(container => {
+                container.querySelector('.dropdown-title').addEventListener('click', () => {
+                    container.classList.toggle('open');
+                });
+            });
+        }
+        else if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === "custom"){
+            $('#character-list').html(dropdownCustom(sortedList));
+
+            document.querySelectorAll('.dropdown-container').forEach(container => {
+                container.querySelector('.dropdown-title').addEventListener('click', () => {
+                    container.classList.toggle('open');
+                });
+            });
+        }
+        else if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === "creators"){
+            $('#character-list').html(dropdownCreators(sortedList));
+
+            document.querySelectorAll('.dropdown-container').forEach(container => {
+                container.querySelector('.dropdown-title').addEventListener('click', () => {
+                    container.classList.toggle('open');
+                });
+            });
         }
         else {
-            const sortedList = sortCharAR(filteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
             $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
         }
     }
-    else {
-        const sortedList = sortCharAR(tagfilteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
-        $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
-    }
-
-    $('#charNumber').empty().append(`Total characters : ${charactersCopy.length}`);
+    $('#charNumber').empty().append(`Total characters : ${getContext().characters.length}`);
 }
 
 // Function to display the selected character
 function selectAndDisplay(avatar) {
 
     // Check if a visible character is already selected
-    if(selectedChar !== avatar && document.getElementById(selectedChar) !== null){
-        document.getElementById(selectedChar).classList.replace('char_selected','char_select');
+    if(typeof selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${selectedChar}"]`) !== null){
+        document.querySelector(`[data-avatar="${selectedChar}"]`).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
-    selectedId = getIdByAvatar(avatar);
     selectedChar = avatar;
     setCharacterId(getIdByAvatar(avatar));
 
@@ -473,7 +313,7 @@ function selectAndDisplay(avatar) {
     fillDetails(avatar);
     fillAdvancedDefinitions(avatar);
 
-    document.getElementById(avatar).classList.replace('char_select','char_selected');
+    document.querySelector(`[data-avatar="${avatar}"]`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
     document.getElementById('char-details').style.removeProperty('display');
 
@@ -497,21 +337,23 @@ async function update_avatar(input){
             crop_data = dlg.cropData;
 
             try {
-                await replaceAvatar(file, selectedId, crop_data);
+               await replaceAvatar(file, getIdByAvatar(selectedChar), crop_data);
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`#img_${selectedChar}`).attr('src', newImageUrl);
+                //$(`#${selectedChar}`).attr('src', newImageUrl);
+                $(`[data-avatar="${selectedChar}"]`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
         } else {
             try {
-                await replaceAvatar(file, selectedId);
+                await replaceAvatar(file, getIdByAvatar(selectedChar));
                 // Firefox tricks
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`#img_${selectedChar}`).attr('src', newImageUrl);
+                //$(`#${selectedChar}`).attr('src', newImageUrl);
+                $(`[data-avatar="${selectedChar}"]`).attr('src', newImageUrl);
             } catch {
                 toast.error("Something went wrong.");
             }
@@ -524,11 +366,10 @@ function closeDetails( reset = true ) {
     if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
 
     $('#acm_export_format_popup').hide();
-    document.getElementById(selectedChar)?.classList.replace('char_selected','char_select');
+    document.querySelector(`[data-avatar="${selectedChar}"]`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
     selectedChar = undefined;
-    selectedId = undefined;
 }
 
 // Function to build the modal
@@ -579,8 +420,130 @@ jQuery(async () => {
     }
     $('#background_template').after(modalHtml);
 
+    updatePresetNames();
+
     let acmExportPopper = Popper.createPopper(document.getElementById('acm_export_button'), document.getElementById('acm_export_format_popup'), {
         placement: 'left',
+    });
+    let acmUIPopper = Popper.createPopper(document.getElementById('acm_switch_ui'), document.getElementById('dropdown-ui-menu'), {
+        placement: 'top',
+    });
+    let acmUISubPopper = Popper.createPopper(document.getElementById('acm_dropdown_sub'), document.getElementById('dropdown-submenu'), {
+        placement: 'right',
+    });
+    let acmUIPresetPopper = Popper.createPopper(document.getElementById('acm_dropdown_cat'), document.getElementById('preset-submenu'), {
+        placement: 'right',
+    });
+
+    // Switch UI
+    $('#acm_switch_ui').on("click", function () {
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
+    });
+
+    $('#acm_dropdown_sub').on("click", function () {
+        $('#dropdown-submenu').toggle();
+        acmUISubPopper.update();
+    });
+
+    $('#acm_dropdown_cat').on("click", function () {
+        $('#preset-submenu').toggle();
+        acmUIPresetPopper.update();
+    });
+
+    $('#acm_switch_classic').on("click", function () {
+        if (extensionSettings.acm.dropdownUI) {
+            extensionSettings.acm.dropdownUI = false;
+            saveSettingsDebounced();
+            refreshCharList();
+        }
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
+        $('#dropdown-submenu').toggle(false);
+        acmUISubPopper.update();
+        $('#preset-submenu').toggle(false);
+        acmUIPresetPopper.update();
+    });
+
+    $('#acm_switch_alltags').on("click", function () {
+        if (!extensionSettings.acm.dropdownUI || (extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode !== 'allTags')) {
+            extensionSettings.acm.dropdownUI = true;
+            extensionSettings.acm.dropdownMode = "allTags";
+            saveSettingsDebounced();
+            refreshCharList();
+        }
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
+        $('#dropdown-submenu').toggle(false);
+        acmUISubPopper.update();
+        $('#preset-submenu').toggle(false);
+        acmUIPresetPopper.update();
+    });
+
+    $('#acm_switch_creators').on("click", function () {
+        if (!extensionSettings.acm.dropdownUI || (extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode !== 'creators')) {
+            extensionSettings.acm.dropdownUI = true;
+            extensionSettings.acm.dropdownMode = "creators";
+            saveSettingsDebounced();
+            refreshCharList();
+        }
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
+        $('#dropdown-submenu').toggle(false);
+        acmUISubPopper.update();
+        $('#preset-submenu').toggle(false);
+        acmUIPresetPopper.update();
+    });
+
+    $('#acm_manage_categories').on("click", function () {
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
+        $('#dropdown-submenu').toggle(false);
+        acmUISubPopper.update();
+        $('#preset-submenu').toggle(false);
+        acmUIPresetPopper.update();
+        manageCustomCategories();
+        const selectedPreset = $('#preset_selector option:selected').data('preset');
+        if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === 'custom'){$('.popup-button-ok').on('click', function () {refreshCharList();});}
+        printCategoriesList(selectedPreset,true)
+    });
+
+    $(document).on('click', '[data-ui="preset"]', function () {
+        if (!extensionSettings.acm.dropdownUI
+            || (extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode !== 'custom')
+            || (extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === 'custom' && extensionSettings.acm.customPreset !== $(this).data('preset'))
+        ) {
+            extensionSettings.acm.dropdownUI = true;
+            extensionSettings.acm.dropdownMode = "custom";
+            extensionSettings.acm.customPreset = $(this).data('preset');
+            saveSettingsDebounced();
+            refreshCharList();
+        }
+        $('#dropdown-ui-menu').toggle();
+        acmUIPopper.update();
+        $('#dropdown-submenu').toggle(false);
+        acmUISubPopper.update();
+        $('#preset-submenu').toggle(false);
+        acmUIPresetPopper.update();
+    })
+
+    // Close Popper menu when clicking outside
+    document.addEventListener('click', (event) => {
+        const menuElements = [
+            document.getElementById('dropdown-ui-menu'),
+            document.getElementById('dropdown-submenu'),
+            document.getElementById('preset-submenu'),
+            document.getElementById('acm_switch_ui')
+        ];
+
+        if (!menuElements.some(menu => menu && menu.contains(event.target))) {
+            document.getElementById('dropdown-ui-menu').style.display = 'none';
+            document.getElementById('dropdown-submenu').style.display = 'none';
+            document.getElementById('preset-submenu').style.display = 'none';
+        }
+        if (!document.getElementById('acm_export_format_popup').contains(event.target) && !document.getElementById('acm_export_button').contains(event.target)) {
+            document.getElementById('acm_export_format_popup').style.display = 'none';
+        }
     });
 
     // Put the button before rm_button_group_chats in the form_character_search_form
@@ -591,23 +554,22 @@ jQuery(async () => {
     });
 
     // Add listener to refresh the display on characters edit
-    eventSource.on('character_edited',  function () {
-            refreshCharListDebounced();
+    eventSource.on('character_edited', function () {
+        refreshCharListDebounced();
     });
     // Add listener to refresh the display on characters delete
     eventSource.on('characterDeleted', function () {
         let charDetailsState = document.getElementById('char-details');
         if (charDetailsState.style.display === 'none') {
             refreshCharListDebounced();
-        }
-        else {
+        } else {
             closeDetails();
             refreshCharListDebounced();
         }
     });
     // Add listener to refresh the display on characters duplication
     eventSource.on(event_types.CHARACTER_DUPLICATED, function () {
-            refreshCharListDebounced();
+        refreshCharListDebounced();
     });
     // Load the characters list in background when ST launch
     eventSource.on('character_page_loaded', function () {
@@ -618,11 +580,11 @@ jQuery(async () => {
 
     // Trigger when a character is selected in the list
     $(document).on('click', '.char_select', function () {
-        selectAndDisplay(this.id);
+        selectAndDisplay(this.dataset.avatar);
     });
 
     // Add trigger to open/close tag list for filtering
-    $(document).on('click', '#acm_tags_filter', function() {
+    $(document).on('click', '#acm_tags_filter', function () {
         const tagsList = document.getElementById('tags-list');
 
         // Check if div already opened
@@ -642,7 +604,7 @@ jQuery(async () => {
     });
 
     // Trigger when the sort dropdown is used
-    $(document).on('change', '#char_sort_order' , function () {
+    $(document).on('change', '#char_sort_order', function () {
         extensionSettings.acm.sortingField = $(this).find(':selected').data('field');
         extensionSettings.acm.sortingOrder = $(this).find(':selected').data('order');
         saveSettingsDebounced();
@@ -650,12 +612,12 @@ jQuery(async () => {
     });
 
     // Trigger when the search bar is used
-    $(document).on('input','#char_search_bar', function () {
+    $(document).on('input', '#char_search_bar', function () {
         searchValue = String($(this).val()).toLowerCase();
         refreshCharListDebounced();
     });
 
-    $('#favOnly_checkbox').on("change",function() {
+    $('#favOnly_checkbox').on("change", function () {
         if (this.checked) {
             extensionSettings.acm.favOnly = true;
             saveSettingsDebounced();
@@ -703,15 +665,14 @@ jQuery(async () => {
     });
 
     // Trigger when the favorites button is clicked
-    $('#acm_favorite_button').on('click', function() {
+    $('#acm_favorite_button').on('click', function () {
         const id = getIdByAvatar(selectedChar);
         if (characters[id].fav || characters[id].data.extensions.fav) {
-            const update = { avatar: selectedChar, fav: false, data: { extensions: { fav: false }}};
+            const update = { avatar: selectedChar, fav: false, data: { extensions: { fav: false } } };
             editCharDebounced(update);
             $('#acm_favorite_button')[0].classList.replace('fav_on', 'fav_off');
-        }
-        else {
-            const update = { avatar: selectedChar, fav: true, data: { extensions: { fav: true }}};
+        } else {
+            const update = { avatar: selectedChar, fav: true, data: { extensions: { fav: true } } };
             editCharDebounced(update);
             $('#acm_favorite_button')[0].classList.replace('fav_off', 'fav_on');
         }
@@ -721,7 +682,7 @@ jQuery(async () => {
     $('#acm_open_chat').on('click', function () {
         setCharacterId(undefined);
         mem_avatar = undefined;
-        selectCharacterById(selectedId);
+        selectCharacterById(getIdByAvatar(selectedChar));
         closeDetails(false);
 
         $('#acm_shadow_popup').transition({
@@ -834,7 +795,7 @@ jQuery(async () => {
 
     Object.keys(elementsToUpdate).forEach(function (id) {
         $(id).on('input', function () {
-                elementsToUpdate[id]();
+            elementsToUpdate[id]();
         });
     });
 
@@ -861,5 +822,76 @@ jQuery(async () => {
                 toastr.warning('Please check if the needed plugin is installed! Link in the README.');
             }
         });
+    });
+
+    $(document).on('change', '#preset_selector', function () {
+        const newPreset = $(this).find(':selected').data('preset');
+        $('#preset_name').html(extensionSettings.acm.dropdownPresets[newPreset].name);
+        printCategoriesList(newPreset);
+    });
+
+    // Trigger on a click on the rename preset button
+    $(document).on("click", ".preset_rename", async function () {
+        const selectedPreset = $('#preset_selector option:selected').data('preset');
+        const newPresetName = await callPopup('<h3>New preset name:</h3>', POPUP_TYPE.INPUT, extensionSettings.acm.dropdownPresets[selectedPreset].name);
+        if (newPresetName && newPresetName.trim() !== '') {
+            renamePreset(selectedPreset, newPresetName);
+        }
+    });
+
+    // Add new custom category to active preset
+    $(document).on("click", ".cat_view_create", async function () {
+        const newCatName = await callPopup('<h3>Category name:</h3>', POPUP_TYPE.INPUT, '');
+        if (newCatName && newCatName.trim() !== '') {
+            const selectedPreset = $('#preset_selector option:selected').data('preset');
+            addCategory(selectedPreset, newCatName);
+        }
+    });
+
+    // Trigger on a click on the delete category button
+    $(document).on("click", ".cat_delete", function () {
+        const selectedPreset = $('#preset_selector option:selected').data('preset');
+        const selectedCat = $(this).closest('[data-catid]').data('catid');
+        removeCategory(selectedPreset, selectedCat);
+    });
+
+    // Trigger on a click on the rename category button
+    $(document).on("click", ".cat_rename", async function () {
+        const selectedPreset = $('#preset_selector option:selected').data('preset');
+        const selectedCat = $(this).closest('[data-catid]').data('catid');
+        const newCatName = await callPopup('<h3>New category name:</h3>', POPUP_TYPE.INPUT, extensionSettings.acm.dropdownPresets[selectedPreset].categories[selectedCat].name);
+        if (newCatName && newCatName.trim() !== '') {
+            renameCategory(selectedPreset, selectedCat, newCatName);
+        }
+    });
+
+    // Trigger on a click on the add tag button in a category
+    $(document).on("click", ".addCatTag", function () {
+        const selectedCat = $(this).closest('[data-catid]').data('catid');
+        $(this)
+            .removeClass('addCatTag')
+            .addClass('cancelCatTag')
+            .removeClass('fa-plus')
+            .addClass('fa-minus');
+        $(`#input_cat_tag_${selectedCat}`).show();
+    });
+
+    // Trigger on a click on the minus tag button in a category
+    $(document).on("click", ".cancelCatTag", function () {
+        const selectedCat = $(this).closest('[data-catid]').data('catid');
+        $(this)
+            .addClass('addCatTag')
+            .removeClass('cancelCatTag')
+            .addClass('fa-plus')
+            .removeClass('fa-minus');
+        $(`#input_cat_tag_${selectedCat}`).hide();
+    });
+
+    $(document).on("click", ".tag_cat_remove", function () {
+        const selectedPreset = $('#preset_selector option:selected').data('preset');
+        const selectedCat = $(this).closest('[data-catid]').data('catid');
+        const selectedTag = $(this).closest('[data-tagid]').data('tagid');
+        removeTagFromCategory(selectedPreset, selectedCat, selectedTag);
+        $(this).closest('[data-tagid]').remove();
     });
 });
