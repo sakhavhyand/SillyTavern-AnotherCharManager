@@ -23,6 +23,7 @@ const callPopup = getContext().callGenericPopup;
 const eventSource = getContext().eventSource;
 const event_types = getContext().eventTypes;
 const characters = getContext().characters;
+const unshallowCharacter = getContext().unshallowCharacter;
 const tagMap = getContext().tagMap;
 const tagList = getContext().tags;
 const selectCharacterById = getContext().selectCharacterById;
@@ -125,9 +126,10 @@ export function getCharBlock(avatar) {
 }
 
 // Function to fill details in the character details block
-function fillDetails(avatar) {
+async function fillDetails(avatar) {
+    await unshallowCharacter(getIdByAvatar(avatar));
     const char = characters[getIdByAvatar(avatar)];
-    const avatarThumb = getThumbnailUrl('avatar', char.avatar) ;
+    const avatarThumb = getThumbnailUrl('avatar', char.avatar);
 
     $('#avatar_title').attr('title', char.avatar);
     $('#avatar_img').attr('src', avatarThumb);
