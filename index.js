@@ -161,7 +161,7 @@ function fillDetails(avatar) {
     $('#desc_zone').val(char.description);
     $('#firstMess_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.first_mes))}`);
     $('#firstMes_zone').val(char.first_mes);
-    $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings.length}`);
+    $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
     createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
     $('#altGreetings_content').html(displayAltGreetings(char.data.alternate_greetings));
