@@ -122,7 +122,7 @@ function delAltGreeting(index, inlineDrawer){
 function displayAltGreetings(item) {
     let altGreetingsHTML = '';
 
-    if (item.length === 0) {
+    if (!item || item.length === 0) {
         return '<span id="chicken">Nothing here but chickens!!</span>';
     } else {
         for (let i = 0; i < item.length; i++) {

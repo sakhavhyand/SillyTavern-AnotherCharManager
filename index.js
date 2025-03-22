@@ -23,6 +23,7 @@ const callPopup = getContext().callGenericPopup;
 const eventSource = getContext().eventSource;
 const event_types = getContext().eventTypes;
 const characters = getContext().characters;
+const unshallowCharacter = getContext().unshallowCharacter;
 const tagMap = getContext().tagMap;
 const tagList = getContext().tags;
 const selectCharacterById = getContext().selectCharacterById;
@@ -125,9 +126,12 @@ export function getCharBlock(avatar) {
 }
 
 // Function to fill details in the character details block
-function fillDetails(avatar) {
+async function fillDetails(avatar) {
+    if (typeof characters[getIdByAvatar(avatar)].data.alternate_greetings === 'undefined') {
+        await unshallowCharacter(getIdByAvatar(avatar));
+    }
     const char = characters[getIdByAvatar(avatar)];
-    const avatarThumb = getThumbnailUrl('avatar', char.avatar) ;
+    const avatarThumb = getThumbnailUrl('avatar', char.avatar);
 
     $('#avatar_title').attr('title', char.avatar);
     $('#avatar_img').attr('src', avatarThumb);
@@ -161,7 +165,7 @@ function fillDetails(avatar) {
     $('#desc_zone').val(char.description);
     $('#firstMess_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.first_mes))}`);
     $('#firstMes_zone').val(char.first_mes);
-    $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings.length}`);
+    $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
     createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
     $('#altGreetings_content').html(displayAltGreetings(char.data.alternate_greetings));
