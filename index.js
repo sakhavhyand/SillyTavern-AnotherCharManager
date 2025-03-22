@@ -127,7 +127,9 @@ export function getCharBlock(avatar) {
 
 // Function to fill details in the character details block
 async function fillDetails(avatar) {
-    await unshallowCharacter(getIdByAvatar(avatar));
+    if (typeof characters[getIdByAvatar(avatar)].data.alternate_greetings === 'undefined') {
+        await unshallowCharacter(getIdByAvatar(avatar));
+    }
     const char = characters[getIdByAvatar(avatar)];
     const avatarThumb = getThumbnailUrl('avatar', char.avatar);
 
