@@ -5,6 +5,7 @@
                 <div class="list-character-wrapper flexFlowColumn">
                     <div class="sortAndFilter">
                         <form class="form_sort_filter" action="javascript:voidnull;">
+                            <div id="acm_character_create_button" class="menu_button fa-solid fa-plus faSmallFontSquareFix" title="Create Character"></div>
                             <div id="acm_character_import_button" class="menu_button fa-solid fa-file-import faSmallFontSquareFix" title="Import Character from File"></div>
                             <div id="acm_external_import_button" class="menu_button fa-solid fa-cloud-arrow-down faSmallFontSquareFix" title="Import content from external URL"></div>
                             <div id="acm_tags_view" class="menu_button tags_view fa-solid fa-gear faSmallFontSquareFix" title="Manage tags"></div>
@@ -317,4 +318,18 @@
         </div>
     </div>
     <div id="acm_character_popup_ok" class="menu_button interactable" data-i18n="Save">Save</div>
+</div>
+<div id="acm_create_popup" class="flex-container flexFlowColumn flexNoGap">
+    <div style="display: flex;height: 100vh;">
+        <div style="display: flex;flex-direction: column;flex: 1;background-color: lightgray;border: 1px solid black;">
+            <div style="flex: 3;background-color: #7088c4;border: 1px solid black;"></div>
+            <div style="flex: 7;background-color: #7088c4;border: 1px solid black;"></div>
+        </div>
+        <div style="flex: 1;background-color: lightgray;border: 1px solid black;"></div>
+    </div>
+    <hr>
+    <div id="acm_create_popup_controls">
+        <div id="acm_create_popup_create" class="acm_popup_buttons menu_button">Create</div>
+        <div id="acm_create_popup_close" class="menu_button">Cancel</div>
+    </div>
 </div>

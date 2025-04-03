@@ -50,7 +50,7 @@
     height: 100%;
 }
 
-#acm_popup_controls {
+#acm_popup_controls, #acm_create_popup_controls {
     display: flex;
     align-self: center;
     gap: 20px;
@@ -76,7 +76,7 @@
     color: var(--black70a);
 }
 
-#acm_popup_close {
+#acm_popup_close, #acm_create_popup_close {
     background-color: var(--crimson70a);
 }
 
@@ -127,7 +127,7 @@
     z-index: 9100;
 }
 
-#acm_character_popup {
+#acm_character_popup, #acm_create_popup {
     display: none;
     background-color: var(--SmartThemeBlurTintColor);
     backdrop-filter: blur(calc(var(--SmartThemeBlurStrength)*2));
@@ -170,8 +170,6 @@
     position: absolute;
     right: 5px;
     top: 5px;
-    /* width: 20px;
-    height: 20px; */
     cursor: pointer;
     opacity: 0.6;
     font-size: 24px;

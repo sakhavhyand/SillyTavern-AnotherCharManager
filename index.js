@@ -710,7 +710,7 @@ jQuery(async () => {
         $('#external_import_button').trigger("click");
     });
 
-    // Import character by file
+    // Rename character
     $('#acm_rename_button').on("click", async function () {
         const charID = getIdByAvatar(selectedChar);
         const newName = await callPopup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
@@ -756,6 +756,7 @@ jQuery(async () => {
         $('#delete_button').trigger("click");
     });
 
+    // Display Advanced Definitions popup
     $('#acm_advanced_div').on("click", function () {
         const $popup = $('#acm_character_popup');
         if ($popup.css('display') === 'none') {
@@ -769,6 +770,7 @@ jQuery(async () => {
         }
     });
 
+    // Close Advanced Definitions popup
     $('#acm_character_cross').on("click", function () {
         $('#character_popup').transition({
             opacity: 0,
@@ -776,6 +778,30 @@ jQuery(async () => {
             easing: 'ease-in-out',
         });
         setTimeout(function () { $('#acm_character_popup').css('display', 'none'); }, 125);
+    });
+
+    // Display character creation popup
+    $('#acm_character_create_button').on("click", function () {
+        const $popup = $('#acm_create_popup');
+        if ($popup.css('display') === 'none') {
+            $popup.css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
+                opacity: 1.0,
+                duration: 125,
+                easing: 'ease-in-out',
+            });
+        } else {
+            $popup.css('display', 'none').removeClass('open');
+        }
+    });
+
+    // Close character creation popup
+    $('#acm_create_popup_close').on("click", function () {
+        $('acm_create_popup').transition({
+            opacity: 0,
+            duration: 125,
+            easing: 'ease-in-out',
+        });
+        setTimeout(function () { $('#acm_create_popup').css('display', 'none'); }, 125);
     });
 
     // Adding textarea trigger on input
