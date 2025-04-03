@@ -594,3 +594,24 @@
 .drag-handle {
     cursor: grab;
 }
+
+/* Character creation */
+.avatar-and-name-block {
+    justify-content: space-between;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#acmTagInput {
+    height: 26px;
+    margin-bottom: 0;
+}
+
+#acmDescription_div, #acmFirst_message_div {
+    display: flex;
+    align-items: center;
+}
+
+#acm_create_first, #acm_create_desc {
+    height: 26dvh;
+}

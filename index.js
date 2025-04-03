@@ -167,7 +167,6 @@ async function fillDetails(avatar) {
     $('#firstMes_zone').val(char.first_mes);
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
-    createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
     $('#altGreetings_content').html(displayAltGreetings(char.data.alternate_greetings));
     $('#acm_favorite_button').toggleClass('fav_on', char.fav || char.data.extensions.fav).toggleClass('fav_off', !(char.fav || char.data.extensions.fav));
 
@@ -581,6 +580,9 @@ jQuery(async () => {
         addListenersTagFilter();
         refreshCharList();
     });
+
+    createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
+    createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
 
     // Trigger when a character is selected in the list
     $(document).on('click', '.char_select', function () {
