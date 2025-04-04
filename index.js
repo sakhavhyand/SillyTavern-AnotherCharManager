@@ -17,7 +17,7 @@ import { debounce, getBase64Async, resetScrollHeight } from './src/acm_tools.js'
 
 const getContext = SillyTavern.getContext;
 const power_user = getContext().powerUserSettings;
-const getTokenCount = getContext().getTokenCount;
+const getTokenCountAsync = getContext().getTokenCountAsync;
 const getThumbnailUrl = getContext().getThumbnailUrl;
 const callPopup = getContext().callGenericPopup;
 const eventSource = getContext().eventSource;
@@ -145,25 +145,25 @@ async function fillDetails(avatar) {
     $('#ch_infos_lastchat').text(`Last chat: ${char.date_last_chat ? new Date(char.date_last_chat).toISOString().substring(0, 10) : " - "}`);
     $('#ch_infos_adddate').text(`Added: ${char.date_added ? new Date(char.date_added).toISOString().substring(0, 10) : " - "}`);
     $('#ch_infos_link').html(char.data.extensions.chub?.full_path ? `Link: <a href="https://chub.ai/${char.data.extensions.chub.full_path}" target="_blank">Chub</a>` : "Link: -");
-    const tokens = getTokenCount(substituteParams(char.name)) +
-                            getTokenCount(substituteParams(char.description)) +
-                            getTokenCount(substituteParams(char.first_mes)) +
-                            getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? '')) +
-                            getTokenCount(substituteParams(char.data?.post_history_instructions || '')) +
-                            getTokenCount(substituteParams(char.personality)) +
-                            getTokenCount(substituteParams(char.scenario)) +
-                            getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? '')) +
-                            getTokenCount(substituteParams(char.mes_example));
+    const tokens = await getTokenCountAsync(substituteParams(char.name)) +
+                            await getTokenCountAsync(substituteParams(char.description)) +
+                            await getTokenCountAsync(substituteParams(char.first_mes)) +
+                            await getTokenCountAsync(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? '')) +
+                            await getTokenCountAsync(substituteParams(char.data?.post_history_instructions || '')) +
+                            await getTokenCountAsync(substituteParams(char.personality)) +
+                            await getTokenCountAsync(substituteParams(char.scenario)) +
+                            await getTokenCountAsync(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? '')) +
+                            await getTokenCountAsync(substituteParams(char.mes_example));
     $('#ch_infos_tokens').text(`Tokens: ${tokens}`);
-    const permTokens = getTokenCount(substituteParams(char.name)) +
-        getTokenCount(substituteParams(char.description)) +
-        getTokenCount(substituteParams(char.personality)) +
-        getTokenCount(substituteParams(char.scenario)) +
-        getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''));
+    const permTokens = await getTokenCountAsync(substituteParams(char.name)) +
+        await getTokenCountAsync(substituteParams(char.description)) +
+        await getTokenCountAsync(substituteParams(char.personality)) +
+        await getTokenCountAsync(substituteParams(char.scenario)) +
+        await getTokenCountAsync(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''));
     $('#ch_infos_permtokens').text(`Perm. Tokens: ${permTokens}`);
-    $('#desc_Tokens').text(`Tokens: ${getTokenCount(substituteParams(char.description))}`);
+    $('#desc_Tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.description))}`);
     $('#desc_zone').val(char.description);
-    $('#firstMess_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.first_mes))}`);
+    $('#firstMess_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.first_mes))}`);
     $('#firstMes_zone').val(char.first_mes);
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
@@ -173,29 +173,29 @@ async function fillDetails(avatar) {
     addAltGreetingsTrigger()
 }
 
-function fillAdvancedDefinitions(avatar) {
+async function fillAdvancedDefinitions(avatar) {
     const char = characters[getIdByAvatar(avatar)];
 
     $('#acm_character_popup-button-h3').text(char.name);
     $('#acm_creator_notes_textarea').val(char.data?.creator_notes || char.creatorcomment);
     $('#acm_character_version_textarea').val(char.data?.character_version || '');
     $('#acm_system_prompt_textarea').val(char.data?.system_prompt || '');
-    $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.data?.system_prompt || ''))}`);
+    $('#acm_main_prompt_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.data?.system_prompt || ''))}`);
     $('#acm_post_history_instructions_textarea').val(char.data?.post_history_instructions || '');
-    $('#acm_post_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.data?.post_history_instructions || ''))}`);
+    $('#acm_post_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.data?.post_history_instructions || ''))}`);
     $('#acm_tags_textarea').val(Array.isArray(char.data?.tags) ? char.data.tags.join(', ') : '');
     $('#acm_creator_textarea').val(char.data?.creator);
     $('#acm_personality_textarea').val(char.personality);
-    $('#acm_personality_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.personality))}`);
+    $('#acm_personality_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.personality))}`);
     $('#acm_scenario_pole').val(char.scenario);
-    $('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.scenario))}`);
+    $('#acm_scenario_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.scenario))}`);
     $('#acm_depth_prompt_prompt').val(char.data?.extensions?.depth_prompt?.prompt ?? '');
-    $('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''))}`);
+    $('#acm_char_notes_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''))}`);
     $('#acm_depth_prompt_depth').val(char.data?.extensions?.depth_prompt?.depth ?? depth_prompt_depth_default);
     $('#acm_depth_prompt_role').val(char.data?.extensions?.depth_prompt?.role ?? depth_prompt_role_default);
     $('#acm_talkativeness_slider').val(char.talkativeness || talkativeness_default);
     $('#acm_mes_example_textarea').val(char.mes_example);
-    $('#acm_messages_examples').text(`Tokens: ${getTokenCount(substituteParams(char.mes_example))}`);
+    $('#acm_messages_examples').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.mes_example))}`);
 
 }
 
@@ -808,25 +808,34 @@ jQuery(async () => {
 
     // Adding textarea trigger on input
     const elementsToUpdate = {
-        '#desc_zone': function () {const descZone=$('#desc_zone');const update={avatar:selectedChar,description:String(descZone.val()),data:{description:String(descZone.val()),},};editCharDebounced(update);$('#desc_Tokens').html(`Tokens: ${getTokenCount(substituteParams(String(descZone.val())))}`);},
-        '#firstMes_zone': function () {const firstMesZone=$('#firstMes_zone');const update={avatar:selectedChar,first_mes:String(firstMesZone.val()),data:{first_mes:String(firstMesZone.val()),},};editCharDebounced(update);$('#firstMess_tokens').html(`Tokens: ${getTokenCount(substituteParams(String(firstMesZone.val())))}`);},
+        '#desc_zone': async function () {const descZone=$('#desc_zone');const update={avatar:selectedChar,description:String(descZone.val()),data:{description:String(descZone.val()),},};editCharDebounced(update);$('#desc_Tokens').html(`Tokens: ${await getTokenCountAsync(substituteParams(String(descZone.val())))}`);},
+        '#firstMes_zone': async function () {const firstMesZone=$('#firstMes_zone');const update={avatar:selectedChar,first_mes:String(firstMesZone.val()),data:{first_mes:String(firstMesZone.val()),},};editCharDebounced(update);$('#firstMess_tokens').html(`Tokens: ${await getTokenCountAsync(substituteParams(String(firstMesZone.val())))}`);},
         '#acm_creator_notes_textarea': function () {const creatorNotes=$('#acm_creator_notes_textarea');const update={avatar:selectedChar,creatorcomment:String(creatorNotes.val()),data:{creator_notes:String(creatorNotes.val()),},};editCharDebounced(update);},
         '#acm_character_version_textarea': function () { const update = {avatar:selectedChar,data:{character_version:String($('#acm_character_version_textarea').val()),},};editCharDebounced(update);},
-        '#acm_system_prompt_textarea': function () {const sysPrompt=$('#acm_system_prompt_textarea');const update={avatar:selectedChar,data:{system_prompt:String(sysPrompt.val()),},};editCharDebounced(update);$('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(sysPrompt.val())))}`);},
-        '#acm_post_history_instructions_textarea': function () {const postHistory=$('#acm_post_history_instructions_textarea');const update={avatar:selectedChar,data:{post_history_instructions:String(postHistory.val()),},};editCharDebounced(update);$('#acm_post_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(postHistory.val())))}`);},
+        '#acm_system_prompt_textarea': async function () {const sysPrompt=$('#acm_system_prompt_textarea');const update={avatar:selectedChar,data:{system_prompt:String(sysPrompt.val()),},};editCharDebounced(update);$('#acm_main_prompt_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(String(sysPrompt.val())))}`);},
+        '#acm_post_history_instructions_textarea': async function () {const postHistory=$('#acm_post_history_instructions_textarea');const update={avatar:selectedChar,data:{post_history_instructions:String(postHistory.val()),},};editCharDebounced(update);$('#acm_post_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(String(postHistory.val())))}`);},
         '#acm_creator_textarea': function () {const update={ avatar:selectedChar,data:{creator:String($('#acm_creator_textarea').val()),},};editCharDebounced(update);},
-        '#acm_personality_textarea': function () {const personality=$('#acm_personality_textarea');const update={avatar:selectedChar,personality:String(personality.val()),data:{personality:String(personality.val()),},};editCharDebounced(update);$('#acm_personality_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(personality.val())))}`);},
-        '#acm_scenario_pole': function () {const scenario=$('#acm_scenario_pole');const update={avatar:selectedChar,scenario: String(scenario.val()),data:{scenario:String(scenario.val()),},};editCharDebounced(update);$('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(scenario.val())))}`);},
-        '#acm_depth_prompt_prompt': function () {const depthPrompt=$('#acm_depth_prompt_prompt');const update={avatar:selectedChar,data:{ extensions:{depth_prompt:{prompt:String(depthPrompt.val()),}}},};editCharDebounced(update);$('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(depthPrompt.val())))}`);},
+        '#acm_personality_textarea': async function () {const personality=$('#acm_personality_textarea');const update={avatar:selectedChar,personality:String(personality.val()),data:{personality:String(personality.val()),},};editCharDebounced(update);$('#acm_personality_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(String(personality.val())))}`);},
+        '#acm_scenario_pole': async function () {const scenario=$('#acm_scenario_pole');const update={avatar:selectedChar,scenario: String(scenario.val()),data:{scenario:String(scenario.val()),},};editCharDebounced(update);$('#acm_scenario_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(String(scenario.val())))}`);},
+        '#acm_depth_prompt_prompt': async function () {const depthPrompt=$('#acm_depth_prompt_prompt');const update={avatar:selectedChar,data:{ extensions:{depth_prompt:{prompt:String(depthPrompt.val()),}}},};editCharDebounced(update);$('#acm_char_notes_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(String(depthPrompt.val())))}`);},
         '#acm_depth_prompt_depth': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{depth:$('#acm_depth_prompt_depth').val(),}}},};editCharDebounced(update);},
         '#acm_depth_prompt_role': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{role:String($('#acm_depth_prompt_role').val()),}}},};editCharDebounced(update);},
         '#acm_talkativeness_slider': function () {const talkativeness=$('#acm_talkativeness_slider');const update={avatar:selectedChar,talkativeness:String(talkativeness.val()),data:{extensions:{talkativeness:String(talkativeness.val()),}}};editCharDebounced(update);},
-        '#acm_mes_example_textarea': function () {const example=$('#acm_mes_example_textarea');const update={avatar:selectedChar,mes_example:String(example.val()),data:{mes_example:String(example.val()),},};editCharDebounced(update);$('#acm_messages_examples').text(`Tokens: ${getTokenCount(substituteParams(String(example.val())))}`);},
-        '#acm_tags_textarea': function () {const tagZone=$('#acm_tags_textarea');const update={avatar:selectedChar,tags:tagZone.val().split(', '),data:{tags:tagZone.val().split(', '), },};editCharDebounced(update);}
+        '#acm_mes_example_textarea': async function () {const example=$('#acm_mes_example_textarea');const update={avatar:selectedChar,mes_example:String(example.val()),data:{mes_example:String(example.val()),},};editCharDebounced(update);$('#acm_messages_examples').text(`Tokens: ${await getTokenCountAsync(substituteParams(String(example.val())))}`);},
+        '#acm_tags_textarea': function () {const tagZone=$('#acm_tags_textarea');const update={avatar:selectedChar,tags:tagZone.val().split(', '),data:{tags:tagZone.val().split(', '), },};editCharDebounced(update);},
+        '#acm_create_name': async function () {$('#acm_create_name_tokens').html(`Tokens: ${await getTokenCountAsync(substituteParams(String($('#acm_create_name').val())))}`);},
+        '#acm_create_desc': async function () {$('#acm_create_desc_tokens').html(`Tokens: ${await getTokenCountAsync(substituteParams(String($('#acm_create_desc').val())))}`);},
+        '#acm_create_first': async function () {$('#acm_create_first_tokens').html(`Tokens: ${await getTokenCountAsync(substituteParams(String($('#acm_create_first').val())))}`);},
+        '#acm_create_system_prompt': async function () {$('#acm_create_system_prompt_tokens').html(`Tokens: ${await getTokenCountAsync(substituteParams(String($('#acm_create_system_prompt').val())))}`);},
+        '#acm_create_post_history_instructions': async function () {$('#acm_create_post_history_instructions_tokens').html(`Tokens: ${await getTokenCountAsync(substituteParams(String($('#acm_create_post_history_instructions').val())))}`);},
+        '#acm_create_personality': async function () {$('#acm_create_personality_tokens').html(`Tokens: ${await getTokenCountAsync(substituteParams(String($('#acm_create_personality').val())))}`);},
+        '#acm_create_scenario': async function () {$('#acm_create_scenario_tokens').html(`Tokens: ${await getTokenCountAsync(substituteParams(String($('#acm_create_scenario').val())))}`);},
+        '#acm_create_depth_prompt': async function () {$('#acm_create_depth_prompt_tokens').html(`Tokens: ${await getTokenCountAsync(substituteParams(String($('#acm_create_depth_prompt').val())))}`);},
+        '#acm_create_mes_example': async function () {$('#acm_create_mes_example_tokens').html(`Tokens: ${await getTokenCountAsync(substituteParams(String($('#acm_create_mes_example').val())))}`);},
     };
 
     Object.keys(elementsToUpdate).forEach(function (id) {
-        $(id).on('input', function () {
+        $(id).on('input',  function () {
             elementsToUpdate[id]();
         });
     });
