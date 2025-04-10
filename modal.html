@@ -356,7 +356,7 @@
 <div id="acm_create_popup" class="flex-container flexFlowColumn flexNoGap">
     <div style="display: flex;height: 100vh;">
         <form id="acm_form_create" action="javascript:voidnull;" method="post" enctype="multipart/form-data" style="display:flex;flex:1;">
-            <div style="flex: 1;">
+            <div id="acm_left_panel" class="panel-transition">
                 <div class="avatar-and-name-block">
                     <div class="flex-container flexFlowColumn expander flexNoGap">
                         <div class="avatar_div buttons_block alignitemsflexstart justifySpaceBetween flexnowrap" style="display: flex;">
@@ -419,7 +419,12 @@
                     </div>
                 </div>
             </div>
-            <div style="flex: 1;">
+            <div id="column-separator" class="column-separator">
+                <span class="arrow arrow-up">&#x2191;</span>
+                <span id="separator-label">Advanced Definitions</span>
+                <span class="arrow arrow-up">&#x2193;</span>
+            </div>
+            <div id="acm_right_panel" class="panel-transition">
                 <div>
                     <h3 class="margin0"><span data-i18n="Advanced Defininitions">Advanced Definitions</span></h3>
                 </div>

@@ -935,4 +935,27 @@ jQuery(async () => {
         removeTagFromCategory(selectedPreset, selectedCat, selectedTag);
         $(this).closest('[data-tagid]').remove();
     });
+
+    let showAdvanced = true;
+
+    function updateLayout() {
+        if (showAdvanced) {
+            $('#acm_left_panel').removeClass('panel-hidden');
+            $('#acm_right_panel').addClass('panel-hidden');
+            $('#separator-label').text('Advanced Definitions');
+        } else {
+            $('#acm_right_panel').removeClass('panel-hidden');
+            $('#acm_left_panel').addClass('panel-hidden');
+            $('#separator-label').text('Main Definitions');
+        }
+    }
+
+    $('#column-separator').on('click', function () {
+        showAdvanced = !showAdvanced;
+        updateLayout();
+    });
+
+    // Init
+    updateLayout();
+
 });
