@@ -1,7 +1,7 @@
 // An extension that allows you to manage characters.
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { createTagInput } from '../../../tags.js';
-import { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/acm_characters.js';
+import { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/components/characters.js';
 import {
     manageCustomCategories,
     printCategoriesList,
@@ -10,10 +10,10 @@ import {
     renameCategory,
     removeTagFromCategory,
     dropdownAllTags, dropdownCustom, dropdownCreators, renamePreset, updatePresetNames
-} from './src/acm_dropdownUI.js';
-import { displayTag, generateTagFilter, addListenersTagFilter } from './src/acm_tags.js';
-import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/acm_altGreetings.js';
-import { debounce, getBase64Async, resetScrollHeight } from './src/acm_tools.js';
+} from './src/components/dropdownUI.js';
+import { displayTag, generateTagFilter, addListenersTagFilter } from './src/components/tags.js';
+import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/components/altGreetings.js';
+import { debounce, getBase64Async, resetScrollHeight } from './src/components/utils.js';
 
 const getContext = SillyTavern.getContext;
 const power_user = getContext().powerUserSettings;

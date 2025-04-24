@@ -1,5 +1,5 @@
-import { selectedChar } from '../index.js';
-import { editCharDebounced } from './acm_characters.js';
+import { selectedChar } from '../../index.js';
+import { editCharDebounced } from './characters.js';
 
 const getContext = SillyTavern.getContext;
 const getTokenCount = getContext().getTokenCount;

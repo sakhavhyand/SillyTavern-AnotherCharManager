@@ -1,5 +1,5 @@
-import { createTagInputCat, displayTag } from './acm_tags.js';
-import { getCharBlock } from "../index.js";
+import { createTagInputCat, displayTag } from './tags.js';
+import { getCharBlock } from "../../index.js";
 
 const getContext = SillyTavern.getContext;
 const POPUP_TYPE = getContext().POPUP_TYPE;

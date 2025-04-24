@@ -1,7 +1,7 @@
-import { refreshCharList, tagFilterstates } from '../index.js';
-import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from './acm_tools.js';
-import { tags } from "../../../../tags.js";
-import { addTagToCategory } from "./acm_dropdownUI.js";
+import { refreshCharList, tagFilterstates } from '../../index.js';
+import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from './utils.js';
+import { tags } from "../../../../../tags.js";
+import { addTagToCategory } from "./dropdownUI.js";
 
 const getContext = SillyTavern.getContext;
 const tagList = getContext().tags;

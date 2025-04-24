@@ -1,0 +1,10 @@
+/* ===== UTILITY COMPONENTS ===== */
+.sortable-placeholder {
+    border: 2px dashed #ccc;
+    height: 50px;
+    margin: 10px 0;
+}
+
+.drag-handle {
+    cursor: grab;
+}

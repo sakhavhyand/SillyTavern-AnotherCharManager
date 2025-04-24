@@ -1,10 +1,10 @@
 import {
     getCharacters, getPastCharacterChats, reloadCurrentChat, setCharacterId, system_message_types,
-} from '../../../../../script.js';
-import { ensureImageFormatSupported } from '../../../../utils.js';
-import { renameGroupMember } from '../../../../group-chats.js';
-import { renameTagKey } from './acm_tags.js';
-import { debounce, delay } from './acm_tools.js';
+} from '../../../../../../script.js';
+import { ensureImageFormatSupported } from '../../../../../utils.js';
+import { renameGroupMember } from '../../../../../group-chats.js';
+import { renameTagKey } from './tags.js';
+import { debounce, delay } from './utils.js';
 
 export { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability };
 
