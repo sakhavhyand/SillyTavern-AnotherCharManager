@@ -1,7 +1,10 @@
 import { editCharDebounced } from "../components/characters.js";
-import { selectedChar } from "../constants/settings.js";
+import { selectedChar, setMem_avatar } from "../constants/settings.js";
 import { closeDetails } from "../../index.js";
-import { getTokenCount, substituteParams } from "../constants/context.js";
+import { getTokenCount, selectCharacterById, substituteParams } from "../constants/context.js";
+import { getIdByAvatar } from "../utils.js";
+import { addAltGreeting, delAltGreeting } from "../components/altGreetings.js";
+import { setCharacterId } from '../../../../../../script.js';
 
 
 
@@ -34,5 +37,59 @@ export function initializeCharDetailsEvents() {
     // Trigger when clicking on the separator to close the character details
     $(document).on('click', '#char-sep', function () {
         closeDetails();
+    });
+
+    // Trigger when the Open Chat button is clicked
+    $('#acm_open_chat').on('click', function () {
+        setCharacterId(undefined);
+        setMem_avatar(undefined);
+        selectCharacterById(getIdByAvatar(selectedChar));
+        closeDetails(false);
+
+        $('#acm_shadow_popup').transition({
+            opacity: 0,
+            duration: 125,
+            easing: 'ease-in-out',
+        });
+        setTimeout(function () {
+            $('#acm_shadow_popup').css('display', 'none');
+            $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
+        }, 125);
+    });
+
+    $('#acm_advanced_div').on("click", function () {
+        const $popup = $('#acm_character_popup');
+        if ($popup.css('display') === 'none') {
+            $popup.css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
+                opacity: 1.0,
+                duration: 125,
+                easing: 'ease-in-out',
+            });
+        } else {
+            $popup.css('display', 'none').removeClass('open');
+        }
+    });
+
+    $('#acm_character_cross').on("click", function () {
+        $('#character_popup').transition({
+            opacity: 0,
+            duration: 125,
+            easing: 'ease-in-out',
+        });
+        setTimeout(function () { $('#acm_character_popup').css('display', 'none'); }, 125);
+    });
+
+    // Add a new alternative greetings
+    $(document).on('click', '.fa-circle-plus', async function (event) {
+        event.stopPropagation();
+        addAltGreeting();
+    });
+
+    // Delete an alternative greetings
+    $(document).on('click', '.fa-circle-minus', function (event) {
+        event.stopPropagation();
+        const inlineDrawer = this.closest('.inline-drawer');
+        const greetingIndex = parseInt(this.closest('.altgreetings-drawer-toggle').querySelector('.greeting_index').textContent);
+        delAltGreeting(greetingIndex, inlineDrawer);
     });
 }

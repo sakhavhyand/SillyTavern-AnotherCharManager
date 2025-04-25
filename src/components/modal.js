@@ -1,9 +1,6 @@
 import { extensionFolderPath, oldExtensionFolderPath } from "../constants/settings.js";
 import { updateDropdownPresetNames } from "./dropdownUI.js";
 
-let mem_avatar;
-let mem_menu;
-
 /**
  * Initializes the modal component
  */

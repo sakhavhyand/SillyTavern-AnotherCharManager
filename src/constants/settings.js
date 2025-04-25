@@ -9,6 +9,19 @@ export const setSelectedChar = (value) => {
     selectedChar = value;
 };
 
+export let searchValue = '';
+export const setSearchValue = (value) => {
+    searchValue = value;
+};
+
+export let mem_menu, mem_avatar;
+export const setMem_menu = (value) => {
+    mem_menu = value;
+};
+export const setMem_avatar = (value) => {
+    mem_avatar = value;
+};
+
 export const tagFilterstates = new Map();
 
 export const defaultSettings = {

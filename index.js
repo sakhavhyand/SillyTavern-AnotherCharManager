@@ -1,46 +1,37 @@
 // An extension that allows you to manage characters.
 import { setCharacterId, setMenuType, depth_prompt_depth_default, depth_prompt_role_default, talkativeness_default, } from '../../../../script.js';
 import { createTagInput } from '../../../tags.js';
-import { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability } from './src/components/characters.js';
+import { replaceAvatar } from './src/components/characters.js';
 import {
-    manageCustomCategories,
-    printCategoriesList,
-    addCategory,
-    removeCategory,
-    renameCategory,
-    dropdownAllTags, dropdownCustom, dropdownCreators, renamePreset,
+    dropdownAllTags, dropdownCustom, dropdownCreators
 } from './src/components/dropdownUI.js';
 import {
     displayTag,
-    generateTagFilter,
-    addListenersTagFilter,
     initializeTagFilterStates
 } from './src/components/tags.js';
-import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/components/altGreetings.js';
-import {debounce, getBase64Async, getIdByAvatar, resetScrollHeight} from './src/utils.js';
+import { addAltGreetingsTrigger, displayAltGreetings } from './src/components/altGreetings.js';
+import {debounce, getBase64Async, getIdByAvatar} from './src/utils.js';
 import {
-    getCategory,
-    getPreset,
     getSetting,
     initializeSettings,
-    updateSetting,
-    removeTagFromCategory
 } from "./src/services/settings-service.js";
 import { initializeModal } from "./src/components/modal.js";
-import { selectedChar, setSelectedChar , tagFilterstates } from "./src/constants/settings.js";
+import {
+    mem_avatar,
+    searchValue,
+    selectedChar, setMem_avatar, setMem_menu,
+    setSelectedChar,
+    tagFilterstates
+} from "./src/constants/settings.js";
 import { initializeEventHandlers } from "./src/events/global-events.js";
 import {
     power_user,
     getTokenCount,
     getThumbnailUrl,
-    callPopup,
-    eventSource,
-    event_types,
     characters,
     unshallowCharacter,
     tagMap,
     tagList,
-    selectCharacterById,
     Popup,
     POPUP_TYPE,
     substituteParams,
@@ -48,9 +39,7 @@ import {
 } from "./src/constants/context.js";
 
 // Initializing some variables
-const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
-let mem_menu, mem_avatar;
-let searchValue = '';
+export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 
 // Function to sort the character array based on specified property and order
 function sortCharAR(chars, sort_data, sort_order) {
@@ -285,7 +274,7 @@ export function refreshCharList() {
 }
 
 // Function to display the selected character
-function selectAndDisplay(avatar) {
+export function selectAndDisplay(avatar) {
 
     // Check if a visible character is already selected
     if(typeof selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${selectedChar}"]`) !== null){
@@ -307,7 +296,7 @@ function selectAndDisplay(avatar) {
 }
 
 // Function to replace the avatar by a new one
-async function update_avatar(input){
+export async function update_avatar(input){
     if (input.files && input.files[0]) {
 
         let crop_data = undefined;
@@ -364,11 +353,11 @@ export function openModal() {
 
     // Memorize some global variables
     if (characterId !== undefined && characterId >= 0) {
-        mem_avatar = characters[characterId].avatar;
+        setMem_avatar(characters[characterId].avatar);
     } else {
-        mem_avatar = undefined;
+        setMem_avatar(undefined);
     }
-    mem_menu = menuType;
+    setMem_menu(menuType);
 
     // Display the modal with our list layout
     $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
@@ -395,429 +384,4 @@ jQuery(async () => {
     await initializeModal();
     initializeEventHandlers();
 
-
-
-
-    // Switch UI
-    $('#acm_switch_ui').on("click", function () {
-        $('#dropdown-ui-menu').toggle();
-        window.acmPoppers.UI.update();
-    });
-
-    $('#acm_dropdown_sub').on("click", function () {
-        $('#dropdown-submenu').toggle();
-        window.acmPoppers.UISub.update();
-    });
-
-    $('#acm_dropdown_cat').on("click", function () {
-        $('#preset-submenu').toggle();
-        window.acmPoppers.UIPreset.update();
-    });
-
-    $('#acm_switch_classic').on("click", function () {
-        if (getSetting('dropdownUI')) {
-            updateSetting('dropdownUI', false);
-            refreshCharList();
-        }
-        $('#dropdown-ui-menu').toggle();
-        window.acmPoppers.UI.update();
-        $('#dropdown-submenu').toggle(false);
-        window.acmPoppers.UISub.update();
-        $('#preset-submenu').toggle(false);
-        window.acmPoppers.UIPreset.update();
-    });
-
-    $('#acm_switch_alltags').on("click", function () {
-        if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'allTags')) {
-            updateSetting('dropdownUI', true);
-            updateSetting('dropdownMode', "allTags");
-            refreshCharList();
-        }
-        $('#dropdown-ui-menu').toggle();
-        window.acmPoppers.UI.update();
-        $('#dropdown-submenu').toggle(false);
-        window.acmPoppers.UISub.update();
-        $('#preset-submenu').toggle(false);
-        window.acmPoppers.UIPreset.update();
-    });
-
-    $('#acm_switch_creators').on("click", function () {
-        if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'creators')) {
-            updateSetting('dropdownUI', true);
-            updateSetting('dropdownMode', "creators")
-            refreshCharList();
-        }
-        $('#dropdown-ui-menu').toggle();
-        window.acmPoppers.UI.update();
-        $('#dropdown-submenu').toggle(false);
-        window.acmPoppers.UISub.update();
-        $('#preset-submenu').toggle(false);
-        window.acmPoppers.UIPreset.update();
-    });
-
-    $('#acm_manage_categories').on("click", function () {
-        $('#dropdown-ui-menu').toggle();
-        window.acmPoppers.UI.update();
-        $('#dropdown-submenu').toggle(false);
-        window.acmPoppers.UISub.update();
-        $('#preset-submenu').toggle(false);
-        window.acmPoppers.UIPreset.update();
-        manageCustomCategories();
-        const selectedPreset = $('#preset_selector option:selected').data('preset');
-        if(getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom'){$('.popup-button-ok').on('click', function () {refreshCharList();});}
-        printCategoriesList(selectedPreset,true)
-    });
-
-    $(document).on('click', '[data-ui="preset"]', function () {
-        if (!getSetting('dropdownUI')
-            || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'custom')
-            || (getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom' && getSetting('presetId') !== $(this).data('preset'))
-        ) {
-            updateSetting('dropdownUI', true);
-            updateSetting('dropdownMode', "custom");
-            updateSetting('presetId', $(this).data('preset'));
-            refreshCharList();
-        }
-        $('#dropdown-ui-menu').toggle();
-        window.acmPoppers.UI.update();
-        $('#dropdown-submenu').toggle(false);
-        window.acmPoppers.UISub.update();
-        $('#preset-submenu').toggle(false);
-        window.acmPoppers.UIPreset.update();
-    })
-
-    // Close Popper menu when clicking outside
-    document.addEventListener('click', (event) => {
-        const menuElements = [
-            document.getElementById('dropdown-ui-menu'),
-            document.getElementById('dropdown-submenu'),
-            document.getElementById('preset-submenu'),
-            document.getElementById('acm_switch_ui')
-        ];
-
-        if (!menuElements.some(menu => menu && menu.contains(event.target))) {
-            document.getElementById('dropdown-ui-menu').style.display = 'none';
-            document.getElementById('dropdown-submenu').style.display = 'none';
-            document.getElementById('preset-submenu').style.display = 'none';
-        }
-        if (!document.getElementById('acm_export_format_popup').contains(event.target) && !document.getElementById('acm_export_button').contains(event.target)) {
-            document.getElementById('acm_export_format_popup').style.display = 'none';
-        }
-    });
-
-
-
-
-    // Add listener to refresh the display on characters edit
-    eventSource.on('character_edited', function () {
-        refreshCharListDebounced();
-    });
-    // Add listener to refresh the display on characters delete
-    eventSource.on('characterDeleted', function () {
-        let charDetailsState = document.getElementById('char-details');
-        if (charDetailsState.style.display === 'none') {
-            refreshCharListDebounced();
-        } else {
-            closeDetails();
-            refreshCharListDebounced();
-        }
-    });
-    // Add listener to refresh the display on characters duplication
-    eventSource.on(event_types.CHARACTER_DUPLICATED, function () {
-        refreshCharListDebounced();
-    });
-    // Load the characters list in background when ST launch
-    eventSource.on('character_page_loaded', function () {
-        generateTagFilter();
-        addListenersTagFilter();
-        refreshCharList();
-    });
-
-    // Trigger when a character is selected in the list
-    $(document).on('click', '.char_select', function () {
-        selectAndDisplay(this.dataset.avatar);
-    });
-
-    // Add trigger to open/close tag list for filtering
-    $(document).on('click', '#acm_tags_filter', function () {
-        const tagsList = document.getElementById('tags-list');
-
-        // Check if div already opened
-        if (tagsList.classList.contains('open')) {
-            setTimeout(() => {
-                tagsList.style.minHeight = '0';
-                tagsList.style.height = '0';
-            }, 10);
-            tagsList.classList.toggle('open');
-        } else {
-            setTimeout(() => {
-                tagsList.style.minHeight  = tagsList.scrollHeight > 80 ? '80px' : (tagsList.scrollHeight + 5) + 'px';
-                tagsList.style.height = tagsList.style.minHeight;
-            }, 10);
-            tagsList.classList.toggle('open');
-        }
-    });
-
-    // Trigger when the sort dropdown is used
-    $(document).on('change', '#char_sort_order', function () {
-        updateSetting('sortingField', $(this).find(':selected').data('field'));
-        updateSetting('sortingOrder', $(this).find(':selected').data('order'));
-        refreshCharListDebounced();
-    });
-
-    // Trigger when the search bar is used
-    $(document).on('input', '#char_search_bar', function () {
-        searchValue = String($(this).val()).toLowerCase();
-        refreshCharListDebounced();
-    });
-
-    $('#favOnly_checkbox').on("change", function () {
-        if (this.checked) {
-            updateSetting('favOnly', true);
-            refreshCharListDebounced();
-        } else {
-            updateSetting('favOnly', false);
-            refreshCharListDebounced();
-        }
-    });
-
-
-
-    // Trigger when clicking on a drawer to open/close it
-    $(document).on('click', '.altgreetings-drawer-toggle', function () {
-        const icon = $(this).find('.idit');
-        icon.toggleClass('down up').toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
-        $(this).closest('.inline-drawer').children('.inline-drawer-content').stop().slideToggle();
-
-        // Set the height of "autoSetHeight" text areas within the inline-drawer to their scroll height
-        $(this).closest('.inline-drawer').find('.inline-drawer-content textarea.autoSetHeight').each(function () {
-            resetScrollHeight($(this));
-        });
-    });
-
-    // Trigger when the modal is closed to reset some global parameters
-    $('#acm_popup_close').on("click", function () {
-        closeDetails();
-        setCharacterId(getIdByAvatar(mem_avatar));
-        setMenuType(mem_menu);
-        mem_avatar = undefined;
-
-        $('#acm_shadow_popup').transition({
-            opacity: 0,
-            duration: 125,
-            easing: 'ease-in-out',
-        });
-        setTimeout(function () {
-            $('#acm_shadow_popup').css('display', 'none');
-            $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
-        }, 125);
-    });
-
-    // Trigger when the favorites button is clicked
-    $('#acm_favorite_button').on('click', function () {
-        const id = getIdByAvatar(selectedChar);
-        if (characters[id].fav || characters[id].data.extensions.fav) {
-            const update = { avatar: selectedChar, fav: false, data: { extensions: { fav: false } } };
-            editCharDebounced(update);
-            $('#acm_favorite_button')[0].classList.replace('fav_on', 'fav_off');
-        } else {
-            const update = { avatar: selectedChar, fav: true, data: { extensions: { fav: true } } };
-            editCharDebounced(update);
-            $('#acm_favorite_button')[0].classList.replace('fav_off', 'fav_on');
-        }
-    });
-
-    // Trigger when the Open Chat button is clicked
-    $('#acm_open_chat').on('click', function () {
-        setCharacterId(undefined);
-        mem_avatar = undefined;
-        selectCharacterById(getIdByAvatar(selectedChar));
-        closeDetails(false);
-
-        $('#acm_shadow_popup').transition({
-            opacity: 0,
-            duration: 125,
-            easing: 'ease-in-out',
-        });
-        setTimeout(function () {
-            $('#acm_shadow_popup').css('display', 'none');
-            $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
-        }, 125);
-    });
-
-    // Import character by file
-    $('#acm_character_import_button').on("click", function () {
-        $('#character_import_file').trigger("click");
-    });
-
-    // Import character by URL
-    $('#acm_external_import_button').on("click", function () {
-        $('#external_import_button').trigger("click");
-    });
-
-    // Import character by file
-    $('#acm_rename_button').on("click", async function () {
-        const charID = getIdByAvatar(selectedChar);
-        const newName = await callPopup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
-        await renameChar(selectedChar, charID, newName);
-    });
-
-    // Export character
-    $('#acm_export_button').on("click", function () {
-        $('#acm_export_format_popup').toggle();
-        window.acmPoppers.Export.update();
-    });
-
-    $(document).on('click', '.acm_export_format', function () {
-        const format = $(this).data('format');
-        if (!format) {
-            return;
-        }
-        exportChar(format, selectedChar);
-    });
-
-    // Duplicate character
-    $('#acm_dupe_button').on("click", async function () {
-        if (!selectedChar) {
-            toastr.warning('You must first select a character to duplicate!');
-            return;
-        }
-
-        const confirmMessage = `
-            <h3>Are you sure you want to duplicate this character?</h3>
-            <span>If you just want to start a new chat with the same character, use "Start new chat" option in the bottom-left options menu.</span><br><br>`;
-
-        const confirm = await callPopup(confirmMessage, POPUP_TYPE.CONFIRM);
-
-        if (!confirm) {
-            console.log('User cancelled duplication');
-            return;
-        }
-        await dupeChar(selectedChar);
-    });
-
-    // Delete character
-    $('#acm_delete_button').on("click", function () {
-        $('#delete_button').trigger("click");
-    });
-
-    $('#acm_advanced_div').on("click", function () {
-        const $popup = $('#acm_character_popup');
-        if ($popup.css('display') === 'none') {
-            $popup.css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
-                opacity: 1.0,
-                duration: 125,
-                easing: 'ease-in-out',
-            });
-        } else {
-            $popup.css('display', 'none').removeClass('open');
-        }
-    });
-
-    $('#acm_character_cross').on("click", function () {
-        $('#character_popup').transition({
-            opacity: 0,
-            duration: 125,
-            easing: 'ease-in-out',
-        });
-        setTimeout(function () { $('#acm_character_popup').css('display', 'none'); }, 125);
-    });
-
-
-
-    // Add a new alternative greetings
-    $(document).on('click', '.fa-circle-plus', async function (event) {
-        event.stopPropagation();
-        addAltGreeting();
-    });
-
-    // Delete an alternative greetings
-    $(document).on('click', '.fa-circle-minus', function (event) {
-        event.stopPropagation();
-        const inlineDrawer = this.closest('.inline-drawer');
-        const greetingIndex = parseInt(this.closest('.altgreetings-drawer-toggle').querySelector('.greeting_index').textContent);
-        delAltGreeting(greetingIndex, inlineDrawer);
-    });
-
-    // Edit a character avatar
-    $('#edit_avatar_button').on('change', function () {
-        checkApiAvailability().then(async isAvailable => {
-            if (isAvailable) {
-                await update_avatar(this);
-            } else {
-                toastr.warning('Please check if the needed plugin is installed! Link in the README.');
-            }
-        });
-    });
-
-    $(document).on('change', '#preset_selector', function () {
-        const newPreset = $(this).find(':selected').data('preset');
-        $('#preset_name').html(getPreset(newPreset).name);
-        printCategoriesList(newPreset);
-    });
-
-    // Trigger on a click on the rename preset button
-    $(document).on("click", ".preset_rename", async function () {
-        const selectedPreset = $('#preset_selector option:selected').data('preset');
-        const newPresetName = await callPopup('<h3>New preset name:</h3>', POPUP_TYPE.INPUT, getPreset(selectedPreset).name);
-        if (newPresetName && newPresetName.trim() !== '') {
-            renamePreset(selectedPreset, newPresetName);
-        }
-    });
-
-    // Add new custom category to active preset
-    $(document).on("click", ".cat_view_create", async function () {
-        const newCatName = await callPopup('<h3>Category name:</h3>', POPUP_TYPE.INPUT, '');
-        if (newCatName && newCatName.trim() !== '') {
-            const selectedPreset = $('#preset_selector option:selected').data('preset');
-            addCategory(selectedPreset, newCatName);
-        }
-    });
-
-    // Trigger on a click on the delete category button
-    $(document).on("click", ".cat_delete", function () {
-        const selectedPreset = $('#preset_selector option:selected').data('preset');
-        const selectedCat = $(this).closest('[data-catid]').data('catid');
-        removeCategory(selectedPreset, selectedCat);
-    });
-
-    // Trigger on a click on the rename category button
-    $(document).on("click", ".cat_rename", async function () {
-        const selectedPreset = $('#preset_selector option:selected').data('preset');
-        const selectedCat = $(this).closest('[data-catid]').data('catid');
-        const newCatName = await callPopup('<h3>New category name:</h3>', POPUP_TYPE.INPUT, getCategory(selectedPreset, selectedCat).name);
-        if (newCatName && newCatName.trim() !== '') {
-            renameCategory(selectedPreset, selectedCat, newCatName);
-        }
-    });
-
-    // Trigger on a click on the add tag button in a category
-    $(document).on("click", ".addCatTag", function () {
-        const selectedCat = $(this).closest('[data-catid]').data('catid');
-        $(this)
-            .removeClass('addCatTag')
-            .addClass('cancelCatTag')
-            .removeClass('fa-plus')
-            .addClass('fa-minus');
-        $(`#input_cat_tag_${selectedCat}`).show();
-    });
-
-    // Trigger on a click on the minus tag button in a category
-    $(document).on("click", ".cancelCatTag", function () {
-        const selectedCat = $(this).closest('[data-catid]').data('catid');
-        $(this)
-            .addClass('addCatTag')
-            .removeClass('cancelCatTag')
-            .addClass('fa-plus')
-            .removeClass('fa-minus');
-        $(`#input_cat_tag_${selectedCat}`).hide();
-    });
-
-    $(document).on("click", ".tag_cat_remove", function () {
-        const selectedPreset = $('#preset_selector option:selected').data('preset');
-        const selectedCat = $(this).closest('[data-catid]').data('catid');
-        const selectedTag = $(this).closest('[data-tagid]').data('tagid');
-        removeTagFromCategory(selectedPreset, selectedCat, selectedTag);
-        $(this).closest('[data-tagid]').remove();
-    });
 });
