@@ -1,5 +1,5 @@
 import { extensionFolderPath, oldExtensionFolderPath } from "../constants/settings.js";
-import { updatePresetNames } from "./dropdownUI.js";
+import { updateDropdownPresetNames } from "./dropdownUI.js";
 
 let mem_avatar;
 let mem_menu;
@@ -31,7 +31,7 @@ export async function initializeModal() {
 
     // Initialize popper.js for dropdowns
     initializePoppers();
-    updatePresetNames();
+    updateDropdownPresetNames();
 }
 
 /**

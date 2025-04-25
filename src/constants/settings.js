@@ -17,6 +17,7 @@ export const defaultSettings = {
     favOnly: false,
     dropdownUI: false,
     dropdownMode: "allTags",
+    presetId: 0,
     dropdownPresets: [
         { name: "Preset 1", categories: [] },
         { name: "Preset 2", categories: [] },

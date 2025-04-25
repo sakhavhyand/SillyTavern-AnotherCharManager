@@ -1,7 +1,6 @@
 import { refreshCharList } from '../../index.js';
 import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from '../utils.js';
 import { tags } from "../../../../../tags.js";
-import { addTagToCategory } from "./dropdownUI.js";
 import { tagFilterstates } from "../constants/settings.js";
 import {
     tagList,
@@ -9,6 +8,7 @@ import {
     power_user,
     saveSettingsDebounced
 } from "../constants/context.js";
+import {addTagToCategory} from "../services/settings-service.js";
 
 export { displayTag, generateTagFilter, tagFilterClick, addListenersTagFilter, renameTagKey, createTagInputCat };
 

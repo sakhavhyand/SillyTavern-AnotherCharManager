@@ -1,3 +1,5 @@
+import { characters } from "./constants/context.js";
+
 /**
  * Creates a debounced version of the provided function that delays its execution
  * until after a specified timeout period has elapsed since the last time it was invoked.
@@ -52,7 +54,6 @@ export function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-
 /**
  * Compares two strings for equality, ignoring case differences and accent marks.
  * This method determines whether the two strings are equal when case and accents are disregarded.
@@ -77,7 +78,6 @@ export function includesIgnoreCaseAndAccents(text, searchTerm) {
     return compareIgnoreCaseAndAccents(text, searchTerm, (a, b) => a?.includes(b) === true);
 }
 
-
 /**
  * A common base function for case-insensitive and accent-insensitive string comparisons.
  *
@@ -95,4 +95,10 @@ export function compareIgnoreCaseAndAccents(a, b, comparisonFunction) {
 
     // Check if the normalized strings are equal
     return comparisonFunction(normalizedA, normalizedB);
+}
+
+// Function to get the ID of a character using its avatar
+export function getIdByAvatar(avatar){
+    const index = characters.findIndex(character => character.avatar === avatar);
+    return index !== -1 ? String(index) : undefined;
 }

@@ -8,7 +8,6 @@ import {
     addCategory,
     removeCategory,
     renameCategory,
-    removeTagFromCategory,
     dropdownAllTags, dropdownCustom, dropdownCreators, renamePreset,
 } from './src/components/dropdownUI.js';
 import {
@@ -18,11 +17,18 @@ import {
     initializeTagFilterStates
 } from './src/components/tags.js';
 import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/components/altGreetings.js';
-import { debounce, getBase64Async, resetScrollHeight } from './src/utils.js';
-import { initializeSettings } from "./src/services/settings-service.js";
+import {debounce, getBase64Async, getIdByAvatar, resetScrollHeight} from './src/utils.js';
+import {
+    getCategory,
+    getPreset,
+    getSetting,
+    initializeSettings,
+    updateSetting,
+    removeTagFromCategory
+} from "./src/services/settings-service.js";
 import { initializeModal } from "./src/components/modal.js";
 import { selectedChar, setSelectedChar , tagFilterstates } from "./src/constants/settings.js";
-import {initializeEventHandlers} from "./src/events/global-events.js";
+import { initializeEventHandlers } from "./src/events/global-events.js";
 import {
     power_user,
     getTokenCount,
@@ -38,8 +44,6 @@ import {
     Popup,
     POPUP_TYPE,
     substituteParams,
-    extensionSettings,
-    saveSettingsDebounced,
     menuType, characterId
 } from "./src/constants/context.js";
 
@@ -47,13 +51,6 @@ import {
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 let mem_menu, mem_avatar;
 let searchValue = '';
-
-
-// Function to get the ID of a character using its avatar
-function getIdByAvatar(avatar){
-    const index = characters.findIndex(character => character.avatar === avatar);
-    return index !== -1 ? String(index) : undefined;
-}
 
 // Function to sort the character array based on specified property and order
 function sortCharAR(chars, sort_data, sort_order) {
@@ -182,7 +179,7 @@ function fillAdvancedDefinitions(avatar) {
 
 function searchAndFilter(){
     let filteredChars = [];
-    const charactersCopy = extensionSettings.acm.favOnly
+    const charactersCopy = getSetting('favOnly')
         ? [...characters].filter(character => character.fav === true || character.data.extensions.fav === true)
         : [...characters];
 
@@ -242,12 +239,18 @@ function searchAndFilter(){
 // Function to refresh the character list based on search and sorting parameters
 export function refreshCharList() {
     const filteredChars = searchAndFilter();
+
     if(filteredChars.length === 0){
         $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
     }
     else {
-        const sortedList = sortCharAR(filteredChars, extensionSettings.acm.sortingField, extensionSettings.acm.sortingOrder);
-        if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === "allTags"){
+        const sortingField = getSetting('sortingField');
+        const sortingOrder = getSetting('sortingOrder');
+        const dropdownUI = getSetting('dropdownUI');
+        const dropdownMode = getSetting('dropdownMode');
+        const sortedList = sortCharAR(filteredChars, sortingField, sortingOrder);
+
+        if(dropdownUI && dropdownMode === "allTags"){
             $('#character-list').html(dropdownAllTags(sortedList));
 
             document.querySelectorAll('.dropdown-container').forEach(container => {
@@ -256,7 +259,7 @@ export function refreshCharList() {
                 });
             });
         }
-        else if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === "custom"){
+        else if(dropdownUI && dropdownMode === "custom"){
             $('#character-list').html(dropdownCustom(sortedList));
 
             document.querySelectorAll('.dropdown-container').forEach(container => {
@@ -265,7 +268,7 @@ export function refreshCharList() {
                 });
             });
         }
-        else if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === "creators"){
+        else if(dropdownUI && dropdownMode === "creators"){
             $('#character-list').html(dropdownCreators(sortedList));
 
             document.querySelectorAll('.dropdown-container').forEach(container => {
@@ -380,9 +383,9 @@ export function openModal() {
         const field = option.getAttribute('data-field');
         const order = option.getAttribute('data-order');
 
-        option.selected = field === extensionSettings.acm.sortingField && order === extensionSettings.acm.sortingOrder;
+        option.selected = field === getSetting('sortingField') && order === getSetting('sortingOrder');
     });
-    document.getElementById('favOnly_checkbox').checked = extensionSettings.acm.favOnly;
+    document.getElementById('favOnly_checkbox').checked = getSetting('favOnly');
 }
 
 jQuery(async () => {
@@ -412,9 +415,8 @@ jQuery(async () => {
     });
 
     $('#acm_switch_classic').on("click", function () {
-        if (extensionSettings.acm.dropdownUI) {
-            extensionSettings.acm.dropdownUI = false;
-            saveSettingsDebounced();
+        if (getSetting('dropdownUI')) {
+            updateSetting('dropdownUI', false);
             refreshCharList();
         }
         $('#dropdown-ui-menu').toggle();
@@ -426,10 +428,9 @@ jQuery(async () => {
     });
 
     $('#acm_switch_alltags').on("click", function () {
-        if (!extensionSettings.acm.dropdownUI || (extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode !== 'allTags')) {
-            extensionSettings.acm.dropdownUI = true;
-            extensionSettings.acm.dropdownMode = "allTags";
-            saveSettingsDebounced();
+        if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'allTags')) {
+            updateSetting('dropdownUI', true);
+            updateSetting('dropdownMode', "allTags");
             refreshCharList();
         }
         $('#dropdown-ui-menu').toggle();
@@ -441,10 +442,9 @@ jQuery(async () => {
     });
 
     $('#acm_switch_creators').on("click", function () {
-        if (!extensionSettings.acm.dropdownUI || (extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode !== 'creators')) {
-            extensionSettings.acm.dropdownUI = true;
-            extensionSettings.acm.dropdownMode = "creators";
-            saveSettingsDebounced();
+        if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'creators')) {
+            updateSetting('dropdownUI', true);
+            updateSetting('dropdownMode', "creators")
             refreshCharList();
         }
         $('#dropdown-ui-menu').toggle();
@@ -464,19 +464,18 @@ jQuery(async () => {
         window.acmPoppers.UIPreset.update();
         manageCustomCategories();
         const selectedPreset = $('#preset_selector option:selected').data('preset');
-        if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === 'custom'){$('.popup-button-ok').on('click', function () {refreshCharList();});}
+        if(getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom'){$('.popup-button-ok').on('click', function () {refreshCharList();});}
         printCategoriesList(selectedPreset,true)
     });
 
     $(document).on('click', '[data-ui="preset"]', function () {
-        if (!extensionSettings.acm.dropdownUI
-            || (extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode !== 'custom')
-            || (extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === 'custom' && extensionSettings.acm.customPreset !== $(this).data('preset'))
+        if (!getSetting('dropdownUI')
+            || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'custom')
+            || (getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom' && getSetting('presetId') !== $(this).data('preset'))
         ) {
-            extensionSettings.acm.dropdownUI = true;
-            extensionSettings.acm.dropdownMode = "custom";
-            extensionSettings.acm.customPreset = $(this).data('preset');
-            saveSettingsDebounced();
+            updateSetting('dropdownUI', true);
+            updateSetting('dropdownMode', "custom");
+            updateSetting('presetId', $(this).data('preset'));
             refreshCharList();
         }
         $('#dropdown-ui-menu').toggle();
@@ -561,9 +560,8 @@ jQuery(async () => {
 
     // Trigger when the sort dropdown is used
     $(document).on('change', '#char_sort_order', function () {
-        extensionSettings.acm.sortingField = $(this).find(':selected').data('field');
-        extensionSettings.acm.sortingOrder = $(this).find(':selected').data('order');
-        saveSettingsDebounced();
+        updateSetting('sortingField', $(this).find(':selected').data('field'));
+        updateSetting('sortingOrder', $(this).find(':selected').data('order'));
         refreshCharListDebounced();
     });
 
@@ -575,12 +573,10 @@ jQuery(async () => {
 
     $('#favOnly_checkbox').on("change", function () {
         if (this.checked) {
-            extensionSettings.acm.favOnly = true;
-            saveSettingsDebounced();
+            updateSetting('favOnly', true);
             refreshCharListDebounced();
         } else {
-            extensionSettings.acm.favOnly = false;
-            saveSettingsDebounced();
+            updateSetting('favOnly', false);
             refreshCharListDebounced();
         }
     });
@@ -756,14 +752,14 @@ jQuery(async () => {
 
     $(document).on('change', '#preset_selector', function () {
         const newPreset = $(this).find(':selected').data('preset');
-        $('#preset_name').html(extensionSettings.acm.dropdownPresets[newPreset].name);
+        $('#preset_name').html(getPreset(newPreset).name);
         printCategoriesList(newPreset);
     });
 
     // Trigger on a click on the rename preset button
     $(document).on("click", ".preset_rename", async function () {
         const selectedPreset = $('#preset_selector option:selected').data('preset');
-        const newPresetName = await callPopup('<h3>New preset name:</h3>', POPUP_TYPE.INPUT, extensionSettings.acm.dropdownPresets[selectedPreset].name);
+        const newPresetName = await callPopup('<h3>New preset name:</h3>', POPUP_TYPE.INPUT, getPreset(selectedPreset).name);
         if (newPresetName && newPresetName.trim() !== '') {
             renamePreset(selectedPreset, newPresetName);
         }
@@ -789,7 +785,7 @@ jQuery(async () => {
     $(document).on("click", ".cat_rename", async function () {
         const selectedPreset = $('#preset_selector option:selected').data('preset');
         const selectedCat = $(this).closest('[data-catid]').data('catid');
-        const newCatName = await callPopup('<h3>New category name:</h3>', POPUP_TYPE.INPUT, extensionSettings.acm.dropdownPresets[selectedPreset].categories[selectedCat].name);
+        const newCatName = await callPopup('<h3>New category name:</h3>', POPUP_TYPE.INPUT, getCategory(selectedPreset, selectedCat).name);
         if (newCatName && newCatName.trim() !== '') {
             renameCategory(selectedPreset, selectedCat, newCatName);
         }
