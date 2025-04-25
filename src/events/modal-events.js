@@ -1,7 +1,7 @@
-import { closeDetails, openModal } from "../../index.js";
 import { getIdByAvatar, resetScrollHeight } from "../utils.js";
 import { mem_avatar, mem_menu, setMem_avatar } from "../constants/settings.js";
 import { setCharacterId, setMenuType } from '../../../../../../script.js';
+import { closeDetails, openModal } from "../components/modal.js";
 
 
 export function initializeModalEvents() {

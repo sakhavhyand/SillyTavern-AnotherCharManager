@@ -1,8 +1,7 @@
 import { updateSetting } from "../services/settings-service.js";
-import { refreshCharListDebounced, selectAndDisplay } from "../../index.js";
 import { selectedChar, setSearchValue } from "../constants/settings.js";
 import { callPopup, characters, POPUP_TYPE } from "../constants/context.js";
-import { renameChar } from "../components/characters.js";
+import {refreshCharListDebounced, renameChar, selectAndDisplay} from "../components/characters.js";
 import { getIdByAvatar } from "../utils.js";
 
 export function initializeToolbarEvents() {

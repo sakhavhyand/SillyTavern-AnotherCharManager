@@ -1,9 +1,10 @@
 import { callPopup, characters, event_types, eventSource, POPUP_TYPE } from "../constants/context.js";
-import { closeDetails, refreshCharList, refreshCharListDebounced, update_avatar } from "../../index.js";
+import { refreshCharList, refreshCharListDebounced, update_avatar } from "../components/characters.js";
 import { addListenersTagFilter, generateTagFilter } from "../components/tags.js";
 import { getIdByAvatar } from "../utils.js";
 import { selectedChar } from "../constants/settings.js";
 import { checkApiAvailability, dupeChar, editCharDebounced, exportChar } from "../components/characters.js";
+import { closeDetails } from "../components/modal.js";
 
 export function initializeCharactersEvents() {
     // Add listener to refresh the display on characters edit

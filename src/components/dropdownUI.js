@@ -1,5 +1,4 @@
 import { createTagInputCat, displayTag } from './tags.js';
-import { getCharBlock } from "../../index.js";
 import {
     POPUP_TYPE,
     callPopup,
@@ -13,6 +12,7 @@ import {
     updatePresetCategories,
     updatePresetName
 } from "../services/settings-service.js";
+import {getCharBlock} from "./characters.js";
 
 export { manageCustomCategories, printCategoriesList, addCategory, removeCategory, renameCategory, dropdownAllTags, dropdownCustom, dropdownCreators, renamePreset, updateDropdownPresetNames };
 

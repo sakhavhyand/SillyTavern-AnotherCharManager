@@ -1,10 +1,10 @@
 import { editCharDebounced } from "../components/characters.js";
 import { selectedChar, setMem_avatar } from "../constants/settings.js";
-import { closeDetails } from "../../index.js";
 import { getTokenCount, selectCharacterById, substituteParams } from "../constants/context.js";
 import { getIdByAvatar } from "../utils.js";
 import { addAltGreeting, delAltGreeting } from "../components/altGreetings.js";
 import { setCharacterId } from '../../../../../../script.js';
+import { closeDetails } from "../components/modal.js";
 
 
 

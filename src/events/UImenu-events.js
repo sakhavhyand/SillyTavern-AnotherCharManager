@@ -1,5 +1,5 @@
 import { getSetting, updateSetting } from "../services/settings-service.js";
-import { refreshCharList } from "../../index.js";
+import { refreshCharList } from "../components/characters.js";
 import { manageCustomCategories, printCategoriesList } from "../components/dropdownUI.js";
 
 export function initializeUIMenuEvents() {

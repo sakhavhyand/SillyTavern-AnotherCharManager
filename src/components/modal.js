@@ -1,5 +1,15 @@
-import { extensionFolderPath, oldExtensionFolderPath } from "../constants/settings.js";
+import {
+    extensionFolderPath,
+    mem_avatar,
+    oldExtensionFolderPath, selectedChar,
+    setMem_avatar,
+    setMem_menu, setSelectedChar
+} from "../constants/settings.js";
 import { updateDropdownPresetNames } from "./dropdownUI.js";
+import { characterId, characters, menuType } from "../constants/context.js";
+import { getSetting } from "../services/settings-service.js";
+import {getIdByAvatar} from "../utils.js";
+import { setCharacterId } from '../../../../../../script.js';
 
 /**
  * Initializes the modal component
@@ -68,4 +78,46 @@ function initializePoppers() {
         UISub,
         UIPreset
     };
+}
+
+
+// Function to build the modal
+export function openModal() {
+
+    // Memorize some global variables
+    if (characterId !== undefined && characterId >= 0) {
+        setMem_avatar(characters[characterId].avatar);
+    } else {
+        setMem_avatar(undefined);
+    }
+    setMem_menu(menuType);
+
+    // Display the modal with our list layout
+    $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
+    $('#acm_shadow_popup').css('display', 'block').transition({
+        opacity: 1,
+        duration: 125,
+        easing: 'ease-in-out',
+    });
+
+    const charSortOrderSelect = document.getElementById('char_sort_order');
+    Array.from(charSortOrderSelect.options).forEach(option => {
+        const field = option.getAttribute('data-field');
+        const order = option.getAttribute('data-order');
+
+        option.selected = field === getSetting('sortingField') && order === getSetting('sortingOrder');
+    });
+    document.getElementById('favOnly_checkbox').checked = getSetting('favOnly');
+}
+
+
+// Function to close the details panel
+export function closeDetails( reset = true ) {
+    if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
+
+    $('#acm_export_format_popup').hide();
+    document.querySelector(`[data-avatar="${selectedChar}"]`)?.classList.replace('char_selected','char_select');
+    document.getElementById('char-details').style.display = 'none';
+    document.getElementById('char-sep').style.display = 'none';
+    setSelectedChar(undefined);
 }
