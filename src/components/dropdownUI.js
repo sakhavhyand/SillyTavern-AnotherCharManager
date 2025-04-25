@@ -1,13 +1,15 @@
 import { createTagInputCat, displayTag } from './tags.js';
 import { getCharBlock } from "../../index.js";
+import {
+    POPUP_TYPE,
+    callPopup,
+    tagMap,
+    tagList,
+    saveSettingsDebounced
+} from "../constants/context.js";
 
 const getContext = SillyTavern.getContext;
-const POPUP_TYPE = getContext().POPUP_TYPE;
-const callPopup = getContext().callGenericPopup;
-const tagMap = getContext().tagMap;
-const tagList = getContext().tags;
 const extensionSettings = getContext().extensionSettings.acm;
-const saveSettingsDebounced = getContext().saveSettingsDebounced;
 
 export { manageCustomCategories, printCategoriesList, addCategory, removeCategory, renameCategory, addTagToCategory, removeTagFromCategory, dropdownAllTags, dropdownCustom, dropdownCreators, renamePreset, updatePresetNames };
 

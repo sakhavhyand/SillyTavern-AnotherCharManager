@@ -5,6 +5,11 @@ export const extensionFolderPath = `scripts/extensions/third-party/${extensionNa
 export const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
 
 export let selectedChar;
+export const setSelectedChar = (value) => {
+    selectedChar = value;
+};
+
+export const tagFilterstates = new Map();
 
 export const defaultSettings = {
     sortingField: "name",

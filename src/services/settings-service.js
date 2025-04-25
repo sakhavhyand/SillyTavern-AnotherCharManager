@@ -1,8 +1,5 @@
 import { defaultSettings } from '../constants/settings.js';
-
-const getContext = SillyTavern.getContext;
-const extensionSettings = getContext().extensionSettings;
-const saveSettingsDebounced = getContext().saveSettingsDebounced;
+import { extensionSettings, saveSettingsDebounced } from '../constants/context.js';
 
 /**
  * Initializes the settings for the extension

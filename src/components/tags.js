@@ -1,16 +1,25 @@
-import { refreshCharList, tagFilterstates } from '../../index.js';
+import { refreshCharList } from '../../index.js';
 import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from '../utils.js';
 import { tags } from "../../../../../tags.js";
 import { addTagToCategory } from "./dropdownUI.js";
-
-const getContext = SillyTavern.getContext;
-const tagList = getContext().tags;
-const tag_map = getContext().tagMap;
-const power_user = getContext().powerUserSettings;
-const saveSettingsDebounced = getContext().saveSettingsDebounced;
+import { tagFilterstates } from "../constants/settings.js";
+import {
+    tagList,
+    tagMap,
+    power_user,
+    saveSettingsDebounced
+} from "../constants/context.js";
 
 export { displayTag, generateTagFilter, tagFilterClick, addListenersTagFilter, renameTagKey, createTagInputCat };
 
+/**
+ * Initializes tag filter states
+ */
+export function initializeTagFilterStates() {
+    tagList.forEach(tag => {
+        tagFilterstates.set(tag.id, 1);
+    });
+}
 
 /**
  * Renders a tag as an HTML string based on the provided tag ID and an optional category flag.
@@ -57,7 +66,6 @@ function generateTagFilter() {
         tagBlock += `<span id="${tag.id}" class="acm_tag" tabIndex="0" style="display: inline; background-color: ${tag.color}; color: ${tag.color2};">
                                 <span class="acm_tag_name">${tag.name}</span>
                      </span>`;
-        tagFilterstates.set(tag.id, 1);
     });
 
     $('#tags-list').html(tagBlock);
@@ -124,9 +132,9 @@ function tagFilterClick(tag) {
  * @return {object} tag - Returns the updated tag map after the rename operation.
  */
 function renameTagKey(oldKey, newKey) {
-    const value = tag_map[oldKey];
-    tag_map[newKey] = value || [];
-    delete tag_map[oldKey];
+    const value = tagMap[oldKey];
+    tagMap[newKey] = value || [];
+    delete tagMap[oldKey];
     saveSettingsDebounced();
 }
 

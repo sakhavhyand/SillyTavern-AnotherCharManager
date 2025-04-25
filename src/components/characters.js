@@ -5,21 +5,21 @@ import { ensureImageFormatSupported } from '../../../../../utils.js';
 import { renameGroupMember } from '../../../../../group-chats.js';
 import { renameTagKey } from './tags.js';
 import { debounce, delay } from '../utils.js';
+import {
+    event_types,
+    eventSource,
+    getRequestHeaders,
+    characters,
+    callPopup,
+    POPUP_TYPE,
+    selectCharacterById,
+    characterId,
+    getThumbnailUrl
+} from "../constants/context.js";
 
 export { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability };
 
-const getContext = SillyTavern.getContext;
-const event_types = getContext().eventTypes;
-const eventSource = getContext().eventSource;
-const getRequestHeaders = getContext().getRequestHeaders;
-const characters = getContext().characters;
-const callPopup = getContext().callGenericPopup;
-const POPUP_TYPE = getContext().POPUP_TYPE;
-const selectCharacterById = getContext().selectCharacterById;
-const this_chid = getContext().characterId;
-const getThumbnailUrl = getContext().getThumbnailUrl;
 const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
-
 
 /**
  * Checks the availability of the AvatarEdit API by making a POST request to the probe endpoint.
@@ -55,7 +55,7 @@ async function editChar(update) {
 
     if (response.ok) {
         await getCharacters();
-        await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: this_chid, character: characters[this_chid] } });
+        await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: characterId, character: characters[characterId] } });
     } else {
         console.log('Error!');
     }

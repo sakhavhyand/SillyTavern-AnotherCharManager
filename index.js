@@ -9,38 +9,45 @@ import {
     removeCategory,
     renameCategory,
     removeTagFromCategory,
-    dropdownAllTags, dropdownCustom, dropdownCreators, renamePreset, updatePresetNames
+    dropdownAllTags, dropdownCustom, dropdownCreators, renamePreset,
 } from './src/components/dropdownUI.js';
-import { displayTag, generateTagFilter, addListenersTagFilter } from './src/components/tags.js';
+import {
+    displayTag,
+    generateTagFilter,
+    addListenersTagFilter,
+    initializeTagFilterStates
+} from './src/components/tags.js';
 import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/components/altGreetings.js';
 import { debounce, getBase64Async, resetScrollHeight } from './src/utils.js';
-import {initializeSettings} from "./src/services/settings-service.js";
-import {extensionFolderPath, oldExtensionFolderPath} from "./src/constants/settings.js";
-
-const getContext = SillyTavern.getContext;
-const power_user = getContext().powerUserSettings;
-const getTokenCount = getContext().getTokenCount;
-const getThumbnailUrl = getContext().getThumbnailUrl;
-const callPopup = getContext().callGenericPopup;
-const eventSource = getContext().eventSource;
-const event_types = getContext().eventTypes;
-const characters = getContext().characters;
-const unshallowCharacter = getContext().unshallowCharacter;
-const tagMap = getContext().tagMap;
-const tagList = getContext().tags;
-const selectCharacterById = getContext().selectCharacterById;
-const Popup = getContext().Popup;
-const POPUP_TYPE = getContext().POPUP_TYPE;
-const substituteParams = getContext().substituteParams;
-const extensionSettings = getContext().extensionSettings;
-const saveSettingsDebounced = getContext().saveSettingsDebounced;
+import { initializeSettings } from "./src/services/settings-service.js";
+import { initializeModal } from "./src/components/modal.js";
+import { selectedChar, setSelectedChar , tagFilterstates } from "./src/constants/settings.js";
+import {initializeEventHandlers} from "./src/events/global-events.js";
+import {
+    power_user,
+    getTokenCount,
+    getThumbnailUrl,
+    callPopup,
+    eventSource,
+    event_types,
+    characters,
+    unshallowCharacter,
+    tagMap,
+    tagList,
+    selectCharacterById,
+    Popup,
+    POPUP_TYPE,
+    substituteParams,
+    extensionSettings,
+    saveSettingsDebounced,
+    menuType, characterId
+} from "./src/constants/context.js";
 
 // Initializing some variables
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
-export let selectedChar;
 let mem_menu, mem_avatar;
 let searchValue = '';
-export const tagFilterstates = new Map();
+
 
 // Function to get the ID of a character using its avatar
 function getIdByAvatar(avatar){
@@ -176,8 +183,8 @@ function fillAdvancedDefinitions(avatar) {
 function searchAndFilter(){
     let filteredChars = [];
     const charactersCopy = extensionSettings.acm.favOnly
-        ? [...getContext().characters].filter(character => character.fav === true || character.data.extensions.fav === true)
-        : [...getContext().characters];
+        ? [...characters].filter(character => character.fav === true || character.data.extensions.fav === true)
+        : [...characters];
 
     // Get tags states
     const tagStates = [...tagFilterstates.entries()];
@@ -271,7 +278,7 @@ export function refreshCharList() {
             $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
         }
     }
-    $('#charNumber').empty().append(`Total characters : ${getContext().characters.length}`);
+    $('#charNumber').empty().append(`Total characters : ${characters.length}`);
 }
 
 // Function to display the selected character
@@ -282,7 +289,7 @@ function selectAndDisplay(avatar) {
         document.querySelector(`[data-avatar="${selectedChar}"]`).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
-    selectedChar = avatar;
+    setSelectedChar(avatar);
     setCharacterId(getIdByAvatar(avatar));
 
     $('#acm_export_format_popup').hide();
@@ -339,26 +346,26 @@ async function update_avatar(input){
 }
 
 // Function to close the details panel
-function closeDetails( reset = true ) {
+export function closeDetails( reset = true ) {
     if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
 
     $('#acm_export_format_popup').hide();
     document.querySelector(`[data-avatar="${selectedChar}"]`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
-    selectedChar = undefined;
+    setSelectedChar(undefined);
 }
 
 // Function to build the modal
-function openModal() {
+export function openModal() {
 
     // Memorize some global variables
-    if (getContext().characterId !== undefined && getContext().characterId >= 0) {
-        mem_avatar = characters[getContext().characterId].avatar;
+    if (characterId !== undefined && characterId >= 0) {
+        mem_avatar = characters[characterId].avatar;
     } else {
         mem_avatar = undefined;
     }
-    mem_menu = getContext().menuType;
+    mem_menu = menuType;
 
     // Display the modal with our list layout
     $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
@@ -381,51 +388,27 @@ function openModal() {
 jQuery(async () => {
 
     await initializeSettings();
+    await initializeTagFilterStates();
+    await initializeModal();
+    initializeEventHandlers();
 
-    // Create the shadow div
-    let modalHtml;
-    try {
-        modalHtml = await $.get(`${extensionFolderPath}/modal.html`);
-    } catch (error) {
-        console.error(`Error fetching modal.html from ${extensionFolderPath}. This is a normal error if you have the old folder name and you don't have to do anything.`);
-        try {
-            modalHtml = await $.get(`${oldExtensionFolderPath}/modal.html`);
-        } catch (secondError) {
-            console.error(`Error fetching modal.html from ${oldExtensionFolderPath}:`, secondError);
-            return;
-        }
-    }
-    $('#background_template').after(modalHtml);
 
-    updatePresetNames();
 
-    let acmExportPopper = Popper.createPopper(document.getElementById('acm_export_button'), document.getElementById('acm_export_format_popup'), {
-        placement: 'left',
-    });
-    let acmUIPopper = Popper.createPopper(document.getElementById('acm_switch_ui'), document.getElementById('dropdown-ui-menu'), {
-        placement: 'top',
-    });
-    let acmUISubPopper = Popper.createPopper(document.getElementById('acm_dropdown_sub'), document.getElementById('dropdown-submenu'), {
-        placement: 'right',
-    });
-    let acmUIPresetPopper = Popper.createPopper(document.getElementById('acm_dropdown_cat'), document.getElementById('preset-submenu'), {
-        placement: 'right',
-    });
 
     // Switch UI
     $('#acm_switch_ui').on("click", function () {
         $('#dropdown-ui-menu').toggle();
-        acmUIPopper.update();
+        window.acmPoppers.UI.update();
     });
 
     $('#acm_dropdown_sub').on("click", function () {
         $('#dropdown-submenu').toggle();
-        acmUISubPopper.update();
+        window.acmPoppers.UISub.update();
     });
 
     $('#acm_dropdown_cat').on("click", function () {
         $('#preset-submenu').toggle();
-        acmUIPresetPopper.update();
+        window.acmPoppers.UIPreset.update();
     });
 
     $('#acm_switch_classic').on("click", function () {
@@ -435,11 +418,11 @@ jQuery(async () => {
             refreshCharList();
         }
         $('#dropdown-ui-menu').toggle();
-        acmUIPopper.update();
+        window.acmPoppers.UI.update();
         $('#dropdown-submenu').toggle(false);
-        acmUISubPopper.update();
+        window.acmPoppers.UISub.update();
         $('#preset-submenu').toggle(false);
-        acmUIPresetPopper.update();
+        window.acmPoppers.UIPreset.update();
     });
 
     $('#acm_switch_alltags').on("click", function () {
@@ -450,11 +433,11 @@ jQuery(async () => {
             refreshCharList();
         }
         $('#dropdown-ui-menu').toggle();
-        acmUIPopper.update();
+        window.acmPoppers.UI.update();
         $('#dropdown-submenu').toggle(false);
-        acmUISubPopper.update();
+        window.acmPoppers.UISub.update();
         $('#preset-submenu').toggle(false);
-        acmUIPresetPopper.update();
+        window.acmPoppers.UIPreset.update();
     });
 
     $('#acm_switch_creators').on("click", function () {
@@ -465,20 +448,20 @@ jQuery(async () => {
             refreshCharList();
         }
         $('#dropdown-ui-menu').toggle();
-        acmUIPopper.update();
+        window.acmPoppers.UI.update();
         $('#dropdown-submenu').toggle(false);
-        acmUISubPopper.update();
+        window.acmPoppers.UISub.update();
         $('#preset-submenu').toggle(false);
-        acmUIPresetPopper.update();
+        window.acmPoppers.UIPreset.update();
     });
 
     $('#acm_manage_categories').on("click", function () {
         $('#dropdown-ui-menu').toggle();
-        acmUIPopper.update();
+        window.acmPoppers.UI.update();
         $('#dropdown-submenu').toggle(false);
-        acmUISubPopper.update();
+        window.acmPoppers.UISub.update();
         $('#preset-submenu').toggle(false);
-        acmUIPresetPopper.update();
+        window.acmPoppers.UIPreset.update();
         manageCustomCategories();
         const selectedPreset = $('#preset_selector option:selected').data('preset');
         if(extensionSettings.acm.dropdownUI && extensionSettings.acm.dropdownMode === 'custom'){$('.popup-button-ok').on('click', function () {refreshCharList();});}
@@ -497,11 +480,11 @@ jQuery(async () => {
             refreshCharList();
         }
         $('#dropdown-ui-menu').toggle();
-        acmUIPopper.update();
+        window.acmPoppers.UI.update();
         $('#dropdown-submenu').toggle(false);
-        acmUISubPopper.update();
+        window.acmPoppers.UISub.update();
         $('#preset-submenu').toggle(false);
-        acmUIPresetPopper.update();
+        window.acmPoppers.UIPreset.update();
     })
 
     // Close Popper menu when clicking outside
@@ -523,12 +506,8 @@ jQuery(async () => {
         }
     });
 
-    // Put the button before rm_button_group_chats in the form_character_search_form
-    // on hover, should say "Open Char Manager"
-    $('#rm_button_group_chats').before('<button id="tag-manager" class="menu_button fa-solid fa-users faSmallFontSquareFix" title="Open Char Manager"></button>');
-    $('#tag-manager').on('click', function () {
-        openModal();
-    });
+
+
 
     // Add listener to refresh the display on characters edit
     eventSource.on('character_edited', function () {
@@ -606,10 +585,7 @@ jQuery(async () => {
         }
     });
 
-    // Trigger when clicking on the separator to close the character details
-    $(document).on('click', '#char-sep', function () {
-        closeDetails();
-    });
+
 
     // Trigger when clicking on a drawer to open/close it
     $(document).on('click', '.altgreetings-drawer-toggle', function () {
@@ -693,7 +669,7 @@ jQuery(async () => {
     // Export character
     $('#acm_export_button').on("click", function () {
         $('#acm_export_format_popup').toggle();
-        acmExportPopper.update();
+        window.acmPoppers.Export.update();
     });
 
     $(document).on('click', '.acm_export_format', function () {
@@ -751,30 +727,7 @@ jQuery(async () => {
         setTimeout(function () { $('#acm_character_popup').css('display', 'none'); }, 125);
     });
 
-    // Adding textarea trigger on input
-    const elementsToUpdate = {
-        '#desc_zone': function () {const descZone=$('#desc_zone');const update={avatar:selectedChar,description:String(descZone.val()),data:{description:String(descZone.val()),},};editCharDebounced(update);$('#desc_Tokens').html(`Tokens: ${getTokenCount(substituteParams(String(descZone.val())))}`);},
-        '#firstMes_zone': function () {const firstMesZone=$('#firstMes_zone');const update={avatar:selectedChar,first_mes:String(firstMesZone.val()),data:{first_mes:String(firstMesZone.val()),},};editCharDebounced(update);$('#firstMess_tokens').html(`Tokens: ${getTokenCount(substituteParams(String(firstMesZone.val())))}`);},
-        '#acm_creator_notes_textarea': function () {const creatorNotes=$('#acm_creator_notes_textarea');const update={avatar:selectedChar,creatorcomment:String(creatorNotes.val()),data:{creator_notes:String(creatorNotes.val()),},};editCharDebounced(update);},
-        '#acm_character_version_textarea': function () { const update = {avatar:selectedChar,data:{character_version:String($('#acm_character_version_textarea').val()),},};editCharDebounced(update);},
-        '#acm_system_prompt_textarea': function () {const sysPrompt=$('#acm_system_prompt_textarea');const update={avatar:selectedChar,data:{system_prompt:String(sysPrompt.val()),},};editCharDebounced(update);$('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(sysPrompt.val())))}`);},
-        '#acm_post_history_instructions_textarea': function () {const postHistory=$('#acm_post_history_instructions_textarea');const update={avatar:selectedChar,data:{post_history_instructions:String(postHistory.val()),},};editCharDebounced(update);$('#acm_post_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(postHistory.val())))}`);},
-        '#acm_creator_textarea': function () {const update={ avatar:selectedChar,data:{creator:String($('#acm_creator_textarea').val()),},};editCharDebounced(update);},
-        '#acm_personality_textarea': function () {const personality=$('#acm_personality_textarea');const update={avatar:selectedChar,personality:String(personality.val()),data:{personality:String(personality.val()),},};editCharDebounced(update);$('#acm_personality_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(personality.val())))}`);},
-        '#acm_scenario_pole': function () {const scenario=$('#acm_scenario_pole');const update={avatar:selectedChar,scenario: String(scenario.val()),data:{scenario:String(scenario.val()),},};editCharDebounced(update);$('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(scenario.val())))}`);},
-        '#acm_depth_prompt_prompt': function () {const depthPrompt=$('#acm_depth_prompt_prompt');const update={avatar:selectedChar,data:{ extensions:{depth_prompt:{prompt:String(depthPrompt.val()),}}},};editCharDebounced(update);$('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(substituteParams(String(depthPrompt.val())))}`);},
-        '#acm_depth_prompt_depth': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{depth:$('#acm_depth_prompt_depth').val(),}}},};editCharDebounced(update);},
-        '#acm_depth_prompt_role': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{role:String($('#acm_depth_prompt_role').val()),}}},};editCharDebounced(update);},
-        '#acm_talkativeness_slider': function () {const talkativeness=$('#acm_talkativeness_slider');const update={avatar:selectedChar,talkativeness:String(talkativeness.val()),data:{extensions:{talkativeness:String(talkativeness.val()),}}};editCharDebounced(update);},
-        '#acm_mes_example_textarea': function () {const example=$('#acm_mes_example_textarea');const update={avatar:selectedChar,mes_example:String(example.val()),data:{mes_example:String(example.val()),},};editCharDebounced(update);$('#acm_messages_examples').text(`Tokens: ${getTokenCount(substituteParams(String(example.val())))}`);},
-        '#acm_tags_textarea': function () {const tagZone=$('#acm_tags_textarea');const update={avatar:selectedChar,tags:tagZone.val().split(', '),data:{tags:tagZone.val().split(', '), },};editCharDebounced(update);}
-    };
 
-    Object.keys(elementsToUpdate).forEach(function (id) {
-        $(id).on('input', function () {
-            elementsToUpdate[id]();
-        });
-    });
 
     // Add a new alternative greetings
     $(document).on('click', '.fa-circle-plus', async function (event) {

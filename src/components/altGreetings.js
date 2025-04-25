@@ -1,9 +1,6 @@
-import { selectedChar } from '../../index.js';
 import { editCharDebounced } from './characters.js';
-
-const getContext = SillyTavern.getContext;
-const getTokenCount = getContext().getTokenCount;
-const substituteParams = getContext().substituteParams;
+import { selectedChar } from "../constants/settings.js";
+import { getTokenCount, substituteParams } from "../constants/context.js";
 
 export { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings };
 
