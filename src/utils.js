@@ -1,6 +1,3 @@
-
-export { debounce, getBase64Async, resetScrollHeight, delay, equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents };
-
 /**
  * Creates a debounced version of the provided function that delays its execution
  * until after a specified timeout period has elapsed since the last time it was invoked.
@@ -9,7 +6,7 @@ export { debounce, getBase64Async, resetScrollHeight, delay, equalsIgnoreCaseAnd
  * @param {number} [timeout=300] - The time, in milliseconds, to delay the function execution.
  * @return {Function} A new debounced function that delays the execution of the original function.
  */
-function debounce(func, timeout = 300) {
+export function debounce(func, timeout = 300) {
     let timer;
     return (...args) => {
         clearTimeout(timer);
@@ -22,7 +19,7 @@ function debounce(func, timeout = 300) {
  * @param {Blob} file The file to read.
  * @returns {Promise<string>} A promise that resolves to the base64 encoded string.
  */
-function getBase64Async(file) {
+export function getBase64Async(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -41,7 +38,7 @@ function getBase64Async(file) {
  * @param {HTMLElement} element - The HTML element whose height needs to be reset.
  * @return {void} This function does not return a value.
  */
-async function resetScrollHeight(element) {
+export async function resetScrollHeight(element) {
     $(element).css('height', '0px');
     $(element).css('height', $(element).prop('scrollHeight') + 3 + 'px');
 }
@@ -51,7 +48,7 @@ async function resetScrollHeight(element) {
  * @param {number} ms Milliseconds to wait
  * @returns {Promise<void>} Promise that resolves after the given amount of milliseconds
  */
-function delay(ms) {
+export function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
@@ -64,7 +61,7 @@ function delay(ms) {
  * @param {string} b - The second string to compare.
  * @return {boolean} Returns true if the two strings are equal ignoring case and accents; otherwise, false.
  */
-function equalsIgnoreCaseAndAccents(a, b) {
+export function equalsIgnoreCaseAndAccents(a, b) {
     return compareIgnoreCaseAndAccents(a, b, (a, b) => a === b);
 }
 
@@ -76,7 +73,7 @@ function equalsIgnoreCaseAndAccents(a, b) {
  * @param {string} searchTerm - The substring to search for in the text
  * @returns {boolean} true if the searchTerm is found within the text, otherwise returns false
  */
-function includesIgnoreCaseAndAccents(text, searchTerm) {
+export function includesIgnoreCaseAndAccents(text, searchTerm) {
     return compareIgnoreCaseAndAccents(text, searchTerm, (a, b) => a?.includes(b) === true);
 }
 
@@ -89,7 +86,7 @@ function includesIgnoreCaseAndAccents(text, searchTerm) {
  * @param {(a:string,b:string)=>boolean} comparisonFunction - The function to use for the comparison.
  * @returns {*} - The result of the comparison.
  */
-function compareIgnoreCaseAndAccents(a, b, comparisonFunction) {
+export function compareIgnoreCaseAndAccents(a, b, comparisonFunction) {
     if (!a || !b) return comparisonFunction(a, b); // Return the comparison result if either string is empty
 
     // Normalize and remove diacritics, then convert to lower case

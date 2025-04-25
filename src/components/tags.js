@@ -1,5 +1,5 @@
 import { refreshCharList, tagFilterstates } from '../../index.js';
-import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from './utils.js';
+import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from '../utils.js';
 import { tags } from "../../../../../tags.js";
 import { addTagToCategory } from "./dropdownUI.js";
 

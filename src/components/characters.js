@@ -4,7 +4,7 @@ import {
 import { ensureImageFormatSupported } from '../../../../../utils.js';
 import { renameGroupMember } from '../../../../../group-chats.js';
 import { renameTagKey } from './tags.js';
-import { debounce, delay } from './utils.js';
+import { debounce, delay } from '../utils.js';
 
 export { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability };
 

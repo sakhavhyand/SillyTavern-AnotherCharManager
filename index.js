@@ -13,7 +13,9 @@ import {
 } from './src/components/dropdownUI.js';
 import { displayTag, generateTagFilter, addListenersTagFilter } from './src/components/tags.js';
 import { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings } from './src/components/altGreetings.js';
-import { debounce, getBase64Async, resetScrollHeight } from './src/components/utils.js';
+import { debounce, getBase64Async, resetScrollHeight } from './src/utils.js';
+import {initializeSettings} from "./src/services/settings-service.js";
+import {extensionFolderPath, oldExtensionFolderPath} from "./src/constants/settings.js";
 
 const getContext = SillyTavern.getContext;
 const power_user = getContext().powerUserSettings;
@@ -34,40 +36,11 @@ const extensionSettings = getContext().extensionSettings;
 const saveSettingsDebounced = getContext().saveSettingsDebounced;
 
 // Initializing some variables
-const extensionName = 'SillyTavern-AnotherCharManager';
-const oldExtensionName = 'SillyTavern-AnotherTagManager';
-const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
-const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
-const defaultSettings = {
-    sortingField: "name",
-    sortingOrder: "asc",
-    favOnly: false,
-    dropdownUI: false,
-    dropdownMode: "allTags",
-    dropdownPresets: [
-        { name: "Preset 1", categories: [] },
-        { name: "Preset 2", categories: [] },
-        { name: "Preset 3", categories: [] },
-        { name: "Preset 4", categories: [] },
-        { name: "Preset 5", categories: [] }
-    ]};
 const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 export let selectedChar;
 let mem_menu, mem_avatar;
 let searchValue = '';
 export const tagFilterstates = new Map();
-
-// Loads the extension settings if they exist, otherwise initializes them to the defaults.
-async function loadSettings() {
-    //Create the settings if they don't exist
-    extensionSettings.acm = extensionSettings.acm || {};
-    // Add default settings for any missing keys
-    for (const key in defaultSettings) {
-        if (!extensionSettings.acm.hasOwnProperty(key)) {
-            extensionSettings.acm[key] = defaultSettings[key];
-        }
-    }
-}
 
 // Function to get the ID of a character using its avatar
 function getIdByAvatar(avatar){
@@ -407,7 +380,7 @@ function openModal() {
 
 jQuery(async () => {
 
-    await loadSettings();
+    await initializeSettings();
 
     // Create the shadow div
     let modalHtml;
