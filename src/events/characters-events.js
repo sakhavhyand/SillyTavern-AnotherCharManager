@@ -5,7 +5,13 @@ import { getIdByAvatar } from "../utils.js";
 import { selectedChar } from "../constants/settings.js";
 import { closeDetails } from "../components/modal.js";
 import { addListenersTagFilter } from "./tags-events.js";
-import { checkApiAvailability, dupeChar, editCharDebounced } from "../services/characters-service.js";
+import {
+    checkApiAvailability,
+    dupeChar,
+    editCharDebounced,
+    exportChar,
+    renameChar
+} from "../services/characters-service.js";
 
 export function initializeCharactersEvents() {
     // Add listener to refresh the display on characters edit
@@ -30,7 +36,7 @@ export function initializeCharactersEvents() {
     eventSource.on('character_page_loaded', function () {
         generateTagFilter();
         addListenersTagFilter();
-        rrefreshCharListDebounced();
+        refreshCharListDebounced();
     });
 
     // Trigger when a character is selected in the list
@@ -99,5 +105,12 @@ export function initializeCharactersEvents() {
                 toastr.warning('Please check if the needed plugin is installed! Link in the README.');
             }
         });
+    });
+
+    // Rename character
+    $('#acm_rename_button').on("click", async function () {
+        const charID = getIdByAvatar(selectedChar);
+        const newName = await callPopup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
+        await renameChar(selectedChar, charID, newName);
     });
 }

@@ -1,6 +1,6 @@
 const getContext = SillyTavern.getContext;
 export const power_user = getContext().powerUserSettings;
-export const getTokenCount = getContext().getTokenCount;
+export const getTokenCountAsync = getContext().getTokenCountAsync;
 export const getThumbnailUrl = getContext().getThumbnailUrl;
 export const callPopup = getContext().callGenericPopup;
 export const eventSource = getContext().eventSource;
@@ -18,3 +18,4 @@ export const saveSettingsDebounced = getContext().saveSettingsDebounced;
 export const characterId = getContext().characterId;
 export const menuType = getContext().menuType;
 export const getRequestHeaders = getContext().getRequestHeaders;
+export const getCharacters = getContext().getCharacters;

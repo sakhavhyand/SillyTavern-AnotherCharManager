@@ -1,4 +1,4 @@
-import { getTokenCount, substituteParams } from "../constants/context.js";
+import { getTokenCountAsync, substituteParams } from "../constants/context.js";
 import { saveAltGreetings } from "../services/altGreetings-service.js";
 
 /**
@@ -97,7 +97,7 @@ export function delAltGreeting(index, inlineDrawer){
  * @param {string[]} item - An array of strings where each string represents a greeting.
  * @return {string} The generated HTML as a string. If the `item` array is empty, a placeholder HTML string is returned.
  */
-export function displayAltGreetings(item) {
+export async function displayAltGreetings(item) {
     let altGreetingsHTML = '';
 
     if (!item || item.length === 0) {
@@ -112,7 +112,7 @@ export function displayAltGreetings(item) {
                             Greeting #
                             <span class="greeting_index">${greetingNumber}</span>
                         </strong>
-                        <span class="tokens_count drawer-header-item">Tokens: ${getTokenCount(substituteParams(item[i]))}</span>
+                        <span class="tokens_count drawer-header-item">Tokens: ${await getTokenCountAsync(substituteParams(item[i]))}</span>
                     </div>
                     <div class="altGreetings_buttons">
                         <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>

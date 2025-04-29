@@ -1,9 +1,6 @@
 import { updateSetting } from "../services/settings-service.js";
 import { selectedChar, setSearchValue } from "../constants/settings.js";
-import { callPopup, characters, POPUP_TYPE } from "../constants/context.js";
 import { refreshCharListDebounced } from "../components/characters.js";
-import { getIdByAvatar } from "../utils.js";
-import { renameChar } from "../services/characters-service.js";
 
 export function initializeToolbarEvents() {
 
@@ -58,12 +55,5 @@ export function initializeToolbarEvents() {
     // Import character by URL
     $('#acm_external_import_button').on("click", function () {
         $('#external_import_button').trigger("click");
-    });
-
-    // Import character by file
-    $('#acm_rename_button').on("click", async function () {
-        const charID = getIdByAvatar(selectedChar);
-        const newName = await callPopup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
-        await renameChar(selectedChar, charID, newName);
     });
 }

@@ -1,5 +1,5 @@
 import { selectedChar } from "../constants/settings.js";
-import { getTokenCount, substituteParams } from "../constants/context.js";
+import { getTokenCountAsync, substituteParams } from "../constants/context.js";
 import { editCharDebounced } from './characters-service.js';
 
 /**
@@ -25,7 +25,7 @@ function generateGreetingArray() {
  *                             Pass null if no event is available.
  * @return {void} This function does not return a value.
  */
-export function saveAltGreetings(event = null){
+export async function saveAltGreetings(event = null){
     const greetings = generateGreetingArray();
     const update = {
         avatar: selectedChar,
@@ -39,7 +39,7 @@ export function saveAltGreetings(event = null){
     if (event) {
         const textarea = event.target;
         const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
-        tokensSpan.textContent = `Tokens: ${getTokenCount(substituteParams(textarea.value))}`;
+        tokensSpan.textContent = `Tokens: ${await getTokenCountAsync(substituteParams(textarea.value))}`;
     }
 
     // Edit the Alt Greetings number on the main drawer

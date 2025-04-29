@@ -4,6 +4,7 @@ import { tagList } from "../constants/context.js";
 import { addTagToCategory } from "../services/settings-service.js";
 import { refreshCharListDebounced } from "./characters.js";
 import { findTag } from "../services/tags-service.js";
+import { equalsIgnoreCaseAndAccents } from "../utils.js";
 
 /**
  * Renders a tag as an HTML string based on the provided tag ID and an optional category flag.

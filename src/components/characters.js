@@ -13,7 +13,7 @@ import {
     getThumbnailUrl,
     tagMap,
     unshallowCharacter,
-    getTokenCount,
+    getTokenCountAsync,
     substituteParams, power_user, Popup, POPUP_TYPE,
 } from "../constants/context.js";
 import { selectedChar, setSelectedChar } from "../constants/settings.js";
@@ -116,25 +116,31 @@ async function fillDetails(avatar) {
     $('#ch_infos_lastchat').text(`Last chat: ${char.date_last_chat ? new Date(char.date_last_chat).toISOString().substring(0, 10) : " - "}`);
     $('#ch_infos_adddate').text(`Added: ${char.date_added ? new Date(char.date_added).toISOString().substring(0, 10) : " - "}`);
     $('#ch_infos_link').html(char.data.extensions.chub?.full_path ? `Link: <a href="https://chub.ai/${char.data.extensions.chub.full_path}" target="_blank">Chub</a>` : "Link: -");
-    const tokens = getTokenCount(substituteParams(char.name)) +
-        getTokenCount(substituteParams(char.description)) +
-        getTokenCount(substituteParams(char.first_mes)) +
-        getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? '')) +
-        getTokenCount(substituteParams(char.data?.post_history_instructions || '')) +
-        getTokenCount(substituteParams(char.personality)) +
-        getTokenCount(substituteParams(char.scenario)) +
-        getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? '')) +
-        getTokenCount(substituteParams(char.mes_example));
+    const text = substituteParams(
+        char.name +
+        char.description +
+        char.first_mes +
+        (char.data?.extensions?.depth_prompt?.prompt ?? '') +
+        (char.data?.post_history_instructions || '') +
+        char.personality +
+        char.scenario +
+        (char.data?.extensions?.depth_prompt?.prompt ?? '') +
+        char.mes_example
+    );
+    const tokens = await getTokenCountAsync(text);
     $('#ch_infos_tokens').text(`Tokens: ${tokens}`);
-    const permTokens = getTokenCount(substituteParams(char.name)) +
-        getTokenCount(substituteParams(char.description)) +
-        getTokenCount(substituteParams(char.personality)) +
-        getTokenCount(substituteParams(char.scenario)) +
-        getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''));
+    const permText = substituteParams(
+        char.name +
+        char.description +
+        char.personality +
+        char.scenario +
+        (char.data?.extensions?.depth_prompt?.prompt ?? '')
+    );
+    const permTokens = await getTokenCountAsync(permText);
     $('#ch_infos_permtokens').text(`Perm. Tokens: ${permTokens}`);
-    $('#desc_Tokens').text(`Tokens: ${getTokenCount(substituteParams(char.description))}`);
+    $('#desc_Tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.description))}`);
     $('#desc_zone').val(char.description);
-    $('#firstMess_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.first_mes))}`);
+    $('#firstMess_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.first_mes))}`);
     $('#firstMes_zone').val(char.first_mes);
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
@@ -145,29 +151,29 @@ async function fillDetails(avatar) {
     addAltGreetingsTrigger()
 }
 
-function fillAdvancedDefinitions(avatar) {
+async function fillAdvancedDefinitions(avatar) {
     const char = characters[getIdByAvatar(avatar)];
 
     $('#acm_character_popup-button-h3').text(char.name);
     $('#acm_creator_notes_textarea').val(char.data?.creator_notes || char.creatorcomment);
     $('#acm_character_version_textarea').val(char.data?.character_version || '');
     $('#acm_system_prompt_textarea').val(char.data?.system_prompt || '');
-    $('#acm_main_prompt_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.data?.system_prompt || ''))}`);
+    $('#acm_main_prompt_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.data?.system_prompt || ''))}`);
     $('#acm_post_history_instructions_textarea').val(char.data?.post_history_instructions || '');
-    $('#acm_post_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.data?.post_history_instructions || ''))}`);
+    $('#acm_post_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.data?.post_history_instructions || ''))}`);
     $('#acm_tags_textarea').val(Array.isArray(char.data?.tags) ? char.data.tags.join(', ') : '');
     $('#acm_creator_textarea').val(char.data?.creator);
     $('#acm_personality_textarea').val(char.personality);
-    $('#acm_personality_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.personality))}`);
+    $('#acm_personality_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.personality))}`);
     $('#acm_scenario_pole').val(char.scenario);
-    $('#acm_scenario_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.scenario))}`);
+    $('#acm_scenario_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.scenario))}`);
     $('#acm_depth_prompt_prompt').val(char.data?.extensions?.depth_prompt?.prompt ?? '');
-    $('#acm_char_notes_tokens').text(`Tokens: ${getTokenCount(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''))}`);
+    $('#acm_char_notes_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''))}`);
     $('#acm_depth_prompt_depth').val(char.data?.extensions?.depth_prompt?.depth ?? depth_prompt_depth_default);
     $('#acm_depth_prompt_role').val(char.data?.extensions?.depth_prompt?.role ?? depth_prompt_role_default);
     $('#acm_talkativeness_slider').val(char.talkativeness || talkativeness_default);
     $('#acm_mes_example_textarea').val(char.mes_example);
-    $('#acm_messages_examples').text(`Tokens: ${getTokenCount(substituteParams(char.mes_example))}`);
+    $('#acm_messages_examples').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.mes_example))}`);
 
 }
 

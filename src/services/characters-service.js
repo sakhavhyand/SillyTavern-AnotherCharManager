@@ -1,12 +1,12 @@
 import {
-    getCharacters,
     getPastCharacterChats,
     reloadCurrentChat,
     setCharacterId,
     system_message_types
 } from '../../../../../../script.js';
-import { ensureImageFormatSupported } from '../../../../../utils.js';
+import { ensureImageFormatSupported, getCharaFilename } from '../../../../../utils.js';
 import { renameGroupMember } from '../../../../../group-chats.js';
+import { world_info } from '../../../../../world-info.js';
 import {
     event_types,
     eventSource,
@@ -14,12 +14,16 @@ import {
     characters,
     callPopup,
     POPUP_TYPE,
-    selectCharacterById,
     characterId,
-    getThumbnailUrl
+    getThumbnailUrl,
+    saveSettingsDebounced,
+    extensionSettings,
+    getCharacters
 } from "../constants/context.js";
 import { debounce, delay } from '../utils.js';
 import { renameTagKey } from './tags-service.js';
+import { selectAndDisplay } from "../components/characters.js";
+import {setSelectedChar} from "../constants/settings.js";
 
 /**
  * Checks the availability of the AvatarEdit API by making a POST request to the probe endpoint.
@@ -165,10 +169,29 @@ export async function renameChar(oldAvatar, charID, newName) {
             if (response.ok) {
                 const data = await response.json();
                 const newAvatar = data.avatar;
+                const oldName = getCharaFilename(null, { manualAvatarKey: oldAvatar });
 
                 // Replace tags list
                 renameTagKey(oldAvatar, newAvatar);
 
+                // Addtional lore books
+                const charLore = world_info.charLore?.find(x => x.name == oldName);
+                if (charLore) {
+                    charLore.name = newName;
+                    saveSettingsDebounced();
+                }
+
+                // Char-bound Author's Notes
+                const charNote = extensionSettings.note.chara?.find(x => x.name == oldName);
+                if (charNote) {
+                    charNote.name = newName;
+                    saveSettingsDebounced();
+                }
+
+                await eventSource.emit(event_types.CHARACTER_RENAMED, oldAvatar, newAvatar);
+
+                // Unload current character
+                setCharacterId(undefined);
                 // Reload characters list
                 await getCharacters();
 
@@ -177,8 +200,8 @@ export async function renameChar(oldAvatar, charID, newName) {
 
                 if (newChId !== -1) {
                     // Select the character after the renaming
-                    setCharacterId(-1);
-                    await selectCharacterById(String(newChId));
+                    setCharacterId(newChId);
+                    setSelectedChar(newAvatar);
 
                     // Async delay to update UI
                     await delay(1);
@@ -196,7 +219,6 @@ export async function renameChar(oldAvatar, charID, newName) {
 
                     if (renamePastChatsConfirm) {
                         await renamePastChats(newAvatar, newName);
-                        await reloadCurrentChat();
                         toastr.success('Character renamed and past chats updated!');
                     }
                 }

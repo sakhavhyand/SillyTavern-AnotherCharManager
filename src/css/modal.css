@@ -51,7 +51,7 @@
 }
 
 /* Character popup */
-#acm_character_popup {
+#acm_character_popup, #acm_create_popup {
     display: none;
     background-color: var(--SmartThemeBlurTintColor);
     backdrop-filter: blur(calc(var(--SmartThemeBlurStrength)*2));

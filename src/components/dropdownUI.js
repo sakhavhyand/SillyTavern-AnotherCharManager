@@ -70,7 +70,7 @@ export function dropdownCustom(sortedList){
         return "Looks like our categories went on vacation! 🏖️ Check back when they're done sunbathing!";
     }
     return categories.map(category => {
-        const members = category.members;
+        const members = category.tags;
         const charactersForCat = sortedList
             .filter(item => members.every(memberId => tagMap[item.avatar]?.includes(String(memberId))))
             .map(item => item.avatar);
@@ -217,7 +217,7 @@ export function printCategoriesList(presetID, init = false){
                         </div>`;
             const catElement = $(catHTML);
             const catTagList = catElement.find(`#acm_catTagList_${index}`);
-            cat.members.forEach(tag => {
+            cat.tags.forEach(tag => {
                 catTagList.append(displayTag(tag, true));
             });
             catTagList.append(`<label for="input_cat_tag_${index}" title="Search or create a tag.">
