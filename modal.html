@@ -353,7 +353,7 @@
     <div id="acm_character_popup_ok" class="menu_button interactable" data-i18n="Save">Save</div>
 </div>
 <div id="acm_create_popup" class="flex-container flexFlowColumn flexNoGap">
-    <div style="display: flex;height: 100vh;">
+    <div style="display: flex;height: 100vh;min-height:0;">
         <form id="acm_form_create" action="javascript:voidnull;" method="post" enctype="multipart/form-data" style="display:flex;flex:1;">
             <div id="acm_left_panel" class="panel-transition">
                 <div class="avatar-and-name-block">
@@ -603,8 +603,8 @@
         </form>
     </div>
     <hr>
-    <div id="acm_create_popup_controls">
-        <div id="acm_create_popup_create" class="acm_popup_buttons menu_button">Create</div>
-        <div id="acm_create_popup_close" class="menu_button">Cancel</div>
+    <div class="popup-controls">
+        <div id="acm_create_popup_create" class="menu_button">Create</div>
+        <div id="acm_create_popup_close" class="menu_button popup-button-ok">Cancel</div>
     </div>
 </div>

@@ -11,8 +11,6 @@ import { getSetting } from "../services/settings-service.js";
 import { getIdByAvatar } from "../utils.js";
 import { setCharacterId, setMenuType } from '../../../../../../script.js';
 
-export let showAdvanced = true;
-
 /**
  * Initializes the modal component
  */
@@ -41,7 +39,7 @@ export async function initializeModal() {
     // Initialize popper.js for dropdowns
     initializePoppers();
     updateDropdownPresetNames();
-    updateLayout();
+    updateLayout(false);
 }
 
 /**
@@ -140,8 +138,8 @@ export function closeModal() {
     }, 125);
 }
 
-export function updateLayout() {
-    if (showAdvanced) {
+export function updateLayout(showAdvanced) {
+    if (!showAdvanced) {
         $('#acm_left_panel').removeClass('panel-hidden');
         $('#acm_right_panel').addClass('panel-hidden');
         $('#separator-label').text('Advanced Definitions');

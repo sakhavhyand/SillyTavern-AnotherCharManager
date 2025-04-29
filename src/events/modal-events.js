@@ -1,5 +1,5 @@
 import { resetScrollHeight } from "../utils.js";
-import { closeModal, openModal, showAdvanced, updateLayout } from "../components/modal.js";
+import { closeModal, openModal, updateLayout } from "../components/modal.js";
 
 
 export function initializeModalEvents() {
@@ -49,7 +49,11 @@ export function initializeModalEvents() {
     });
 
     $('#column-separator').on('click', function () {
-        showAdvanced = !showAdvanced;
-        updateLayout();
+        if ($('#acm_left_panel').hasClass('panel-hidden')){
+            updateLayout(false);
+        }
+        else {
+            updateLayout(true);
+        }
     });
 }

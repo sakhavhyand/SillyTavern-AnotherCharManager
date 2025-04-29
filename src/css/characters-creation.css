@@ -1,4 +1,9 @@
 /* Character creation */
+#acm_right_panel, #acm_left_panel {
+    overflow-y: auto;
+    padding: 10px;
+}
+
 .avatar-and-name-block {
     justify-content: space-between;
     display: flex;
@@ -16,7 +21,7 @@
 }
 
 #acm_create_first, #acm_create_desc {
-    height: 26dvh;
+    height: 25dvh;
 }
 
 .column-separator {
@@ -24,35 +29,31 @@
     align-items: center;
     justify-content: center;
     writing-mode: vertical-lr;
-    text-align: center;
-    color: #333;
-    font-weight: bold;
-    padding: 10px;
-    width: 40px;
+    transform: rotate(180deg);
+    width: 30px;
     min-height: 100%;
-    border-left: 1px solid #ccc;
-    border-right: 1px solid #ccc;
+    padding: 10px;
+    background-image: linear-gradient(348deg, var(--white30a)2%, var(--grey30a)10%, var(--black70a)95%, var(--SmartThemeQuoteColor)100%);
+    border-radius: 10px;
+    border: 1px solid var(--SmartThemeBorderColor);
     user-select: none;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .column-separator .arrow {
-    cursor: pointer;
-    font-size: 18px;
     margin: 6px 0;
     display: block;
     transition: color 0.2s ease;
 }
 
-.column-separator .arrow:hover {
-    color: #000;
-}
-
 #separator-label {
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
     margin: 12px 0;
-    font-size: 14px;
+    /* Typographie */
+    color: var(--SmartThemeBodyColor);
+    font-weight: 500;
+    letter-spacing: 1px;
+    font-size: var(--mainFontSize);
 }
 
 /* Slide transition panels */
