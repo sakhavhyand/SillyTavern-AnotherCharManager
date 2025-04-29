@@ -1,5 +1,5 @@
 import { resetScrollHeight } from "../utils.js";
-import { closeModal, openModal } from "../components/modal.js";
+import { closeModal, openModal, showAdvanced, updateLayout } from "../components/modal.js";
 
 
 export function initializeModalEvents() {
@@ -22,5 +22,34 @@ export function initializeModalEvents() {
     // Trigger when the modal is closed to reset some global parameters
     $('#acm_popup_close').on("click", function () {
         closeModal();
+    });
+
+    // Display character creation popup
+    $('#acm_character_create_button').on("click", function () {
+        const $popup = $('#acm_create_popup');
+        if ($popup.css('display') === 'none') {
+            $popup.css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
+                opacity: 1.0,
+                duration: 125,
+                easing: 'ease-in-out',
+            });
+        } else {
+            $popup.css('display', 'none').removeClass('open');
+        }
+    });
+
+    // Close character creation popup
+    $('#acm_create_popup_close').on("click", function () {
+        $('acm_create_popup').transition({
+            opacity: 0,
+            duration: 125,
+            easing: 'ease-in-out',
+        });
+        setTimeout(function () { $('#acm_create_popup').css('display', 'none'); }, 125);
+    });
+
+    $('#column-separator').on('click', function () {
+        showAdvanced = !showAdvanced;
+        updateLayout();
     });
 }

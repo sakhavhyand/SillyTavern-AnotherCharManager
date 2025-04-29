@@ -1,0 +1,72 @@
+/* Character creation */
+.avatar-and-name-block {
+    justify-content: space-between;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#acmTagInput {
+    height: 26px;
+    margin-bottom: 0;
+}
+
+#acmDescription_div, #acmFirst_message_div {
+    display: flex;
+    align-items: center;
+}
+
+#acm_create_first, #acm_create_desc {
+    height: 26dvh;
+}
+
+.column-separator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    writing-mode: vertical-lr;
+    text-align: center;
+    color: #333;
+    font-weight: bold;
+    padding: 10px;
+    width: 40px;
+    min-height: 100%;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    user-select: none;
+    transition: background-color 0.3s ease;
+}
+
+.column-separator .arrow {
+    cursor: pointer;
+    font-size: 18px;
+    margin: 6px 0;
+    display: block;
+    transition: color 0.2s ease;
+}
+
+.column-separator .arrow:hover {
+    color: #000;
+}
+
+#separator-label {
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    margin: 12px 0;
+    font-size: 14px;
+}
+
+/* Slide transition panels */
+.panel-transition {
+    transition: all 0.5s ease;
+    overflow: hidden;
+    max-width: 100%;
+    flex: 1;
+}
+
+.panel-hidden {
+    flex: 0 !important;
+    max-width: 0 !important;
+    padding: 0 !important;
+    opacity: 0;
+    pointer-events: none;
+}

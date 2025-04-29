@@ -11,6 +11,8 @@ import { getSetting } from "../services/settings-service.js";
 import { getIdByAvatar } from "../utils.js";
 import { setCharacterId, setMenuType } from '../../../../../../script.js';
 
+export let showAdvanced = true;
+
 /**
  * Initializes the modal component
  */
@@ -39,6 +41,7 @@ export async function initializeModal() {
     // Initialize popper.js for dropdowns
     initializePoppers();
     updateDropdownPresetNames();
+    updateLayout();
 }
 
 /**
@@ -135,4 +138,16 @@ export function closeModal() {
         $('#acm_shadow_popup').css('display', 'none');
         $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
     }, 125);
+}
+
+export function updateLayout() {
+    if (showAdvanced) {
+        $('#acm_left_panel').removeClass('panel-hidden');
+        $('#acm_right_panel').addClass('panel-hidden');
+        $('#separator-label').text('Advanced Definitions');
+    } else {
+        $('#acm_right_panel').removeClass('panel-hidden');
+        $('#acm_left_panel').addClass('panel-hidden');
+        $('#separator-label').text('Main Definitions');
+    }
 }
