@@ -1,15 +1,18 @@
-import { createTagInputCat, displayTag } from './acm_tags.js';
-import { getCharBlock } from "../index.js";
-
-const getContext = SillyTavern.getContext;
-const POPUP_TYPE = getContext().POPUP_TYPE;
-const callPopup = getContext().callGenericPopup;
-const tagMap = getContext().tagMap;
-const tagList = getContext().tags;
-const extensionSettings = getContext().extensionSettings.acm;
-const saveSettingsDebounced = getContext().saveSettingsDebounced;
-
-export { manageCustomCategories, printCategoriesList, addCategory, removeCategory, renameCategory, addTagToCategory, removeTagFromCategory, dropdownAllTags, dropdownCustom, dropdownCreators, renamePreset, updatePresetNames };
+import { createTagInputCat, displayTag } from './tags.js';
+import {
+    POPUP_TYPE,
+    callPopup,
+    tagMap,
+    tagList,
+} from "../constants/context.js";
+import {
+    addPresetCategory,
+    getPreset,
+    getSetting, removePresetCategory, updateCategoryName,
+    updatePresetCategories,
+    updatePresetName
+} from "../services/settings-service.js";
+import { getCharBlock } from "./characters.js";
 
 /**
  * Generates a dropdown HTML structure categorizing items based on tags
@@ -18,7 +21,7 @@ export { manageCustomCategories, printCategoriesList, addCategory, removeCategor
  * @param {Array} sortedList A sorted array of objects representing the items with `avatar` property to associate with tags.
  * @return {string} The HTML string containing the dropdown containers for each tag and a section for untagged items.
  */
-function dropdownAllTags(sortedList){
+export function dropdownAllTags(sortedList){
     const html = tagList.map(tag => {
         const charactersForTag = sortedList
             .filter(item => tagMap[item.avatar]?.includes(tag.id))
@@ -60,11 +63,14 @@ function dropdownAllTags(sortedList){
  * @param {Array} sortedList - An array of objects representing sorted items, where each item contains an `avatar` property.
  * @return {string} A string containing HTML elements for categorized dropdowns.
  */
-function dropdownCustom(sortedList){
-    const preset = extensionSettings.customPreset;
-    const categories = extensionSettings.dropdownPresets[preset].categories;
+export function dropdownCustom(sortedList){
+    const preset = getSetting('presetId');
+    const categories = getPreset(preset).categories;
+    if (categories.length === 0) {
+        return "Looks like our categories went on vacation! 🏖️ Check back when they're done sunbathing!";
+    }
     return categories.map(category => {
-        const members = category.members;
+        const members = category.tags;
         const charactersForCat = sortedList
             .filter(item => members.every(memberId => tagMap[item.avatar]?.includes(String(memberId))))
             .map(item => item.avatar);
@@ -91,7 +97,7 @@ function dropdownCustom(sortedList){
  * @return {string} A concatenated string of HTML dropdowns, where each dropdown represents a creator
  * and their associated avatars. Includes a special case for items with no creator.
  */
-function dropdownCreators(sortedList){
+export function dropdownCreators(sortedList){
     return Object.entries(
         sortedList.reduce((groups, item) => {
             const creator = item.data.creator;
@@ -140,13 +146,13 @@ function dropdownCreators(sortedList){
  *
  * @return {Promise<void>} A Promise that resolves when the popup dialog is fully displayed and the operation is complete.
  */
-async function manageCustomCategories(){
+export async function manageCustomCategories(){
     const html = $(document.createElement('div'));
     html.attr('id', 'acm_custom_categories');
     const selectElement = $(`
         <select id="preset_selector" title="Preset Selector"></select>
     `);
-    extensionSettings.dropdownPresets.forEach((preset, index) => {
+    getSetting('dropdownPresets').forEach((preset, index) => {
         selectElement.append(`<option data-preset="${index}">${preset.name}</option>`);
     });
     html.append(`
@@ -158,7 +164,7 @@ async function manageCustomCategories(){
     </div>
      <div>
         <div style="display:flex;">
-             <h4 id="preset_name">${extensionSettings.dropdownPresets[0].name}</h4>
+             <h4 id="preset_name">${getPreset(0).name}</h4>
              <i class="menu_button fa-solid fa-edit preset_rename" title="Rename preset"></i>
         </div>
         <div class="acm_catCreate">
@@ -185,12 +191,12 @@ async function manageCustomCategories(){
  * @param {boolean} [init=false] - Indicates whether the category container is being initialized for the first time. Defaults to `false`.
  * @return {void} This method does not return a value.
  */
-function printCategoriesList(presetID, init = false){
+export function printCategoriesList(presetID, init = false){
     const catContainer = init
         ? $('<div id="catContainer"></div>')
         : $("#catContainer").empty() && $("#catContainer");
 
-    const preset = extensionSettings.dropdownPresets[presetID];
+    const preset = getPreset(presetID);
     if(preset.categories.length === 0){
         catContainer.append("No category defined");
         $('#acm_custom_categories').append(catContainer);
@@ -211,7 +217,7 @@ function printCategoriesList(presetID, init = false){
                         </div>`;
             const catElement = $(catHTML);
             const catTagList = catElement.find(`#acm_catTagList_${index}`);
-            cat.members.forEach(tag => {
+            cat.tags.forEach(tag => {
                 catTagList.append(displayTag(tag, true));
             });
             catTagList.append(`<label for="input_cat_tag_${index}" title="Search or create a tag.">
@@ -246,9 +252,8 @@ function makeCategoryDraggable(containerSelector) {
                 newOrder.push($(this).data("catid"));
             });
             const presetID = $('#preset_selector option:selected').data('preset');
-            const currentCategories = extensionSettings.dropdownPresets[presetID].categories;
-            extensionSettings.dropdownPresets[presetID].categories = newOrder.map(index => currentCategories[index]);
-            saveSettingsDebounced();
+            const currentCategories = getPreset(presetID).categories;
+            updatePresetCategories(presetID, newOrder.map(index => currentCategories[index]));
         },
     });
 
@@ -265,12 +270,11 @@ function makeCategoryDraggable(containerSelector) {
  * @param {string} newName - The new name to assign to the preset.
  * @return {void}
  */
-function renamePreset(preset, newName) {
-    extensionSettings.dropdownPresets[preset].name = newName;
-    saveSettingsDebounced();
+export function renamePreset(preset, newName) {
+    updatePresetName(preset, newName);
     $('#preset_name').html(newName);
     $(`#preset_selector option`).filter((_, element) => $(element).data('preset') === preset).text(newName);
-    updatePresetNames();
+    updateDropdownPresetNames();
 }
 
 /**
@@ -280,12 +284,8 @@ function renamePreset(preset, newName) {
  * @param {string} catName - The name of the new category to be added.
  * @return {void} This function does not return a value.
  */
-function addCategory(preset, catName){
-    extensionSettings.dropdownPresets[preset].categories.push({
-        name: catName,
-        members: [],
-    });
-    saveSettingsDebounced();
+export function addCategory(preset, catName){
+    addPresetCategory(preset, catName);
     printCategoriesList(preset);
 }
 
@@ -296,10 +296,8 @@ function addCategory(preset, catName){
  * @param {number} category - The index of the category to remove in the preset's category list.
  * @return {void} This method does not return a value.
  */
-function removeCategory(preset, category) {
-    extensionSettings.dropdownPresets[preset].categories
-        .splice(category, 1);
-    saveSettingsDebounced();
+export function removeCategory(preset, category) {
+    removePresetCategory(preset, category);
     printCategoriesList(preset);
 }
 
@@ -311,58 +309,21 @@ function removeCategory(preset, category) {
  * @param {string} newName - The new name to assign to the category.
  * @return {void} This function does not return any value.
  */
-function renameCategory(preset, category, newName) {
-    extensionSettings.dropdownPresets[preset].categories[category].name = newName;
-    saveSettingsDebounced();
+export function renameCategory(preset, category, newName) {
+    updateCategoryName(preset, category, newName);
     printCategoriesList(preset);
 }
 
 /**
- * Adds a tag to a specific category within a given preset.
+ * Updates the names of the preset items in a dropdown menu by iterating through each dropdown item,
+ * fetching the associated preset using its index, and setting its name as the item's text content.
  *
- * @param {string} preset - The name of the preset to which the category belongs.
- * @param {string} category - The name of the category to which the tag will be added.
- * @param {string} tag - The tag to be added to the category.
- * @return {string} The tag that was added to the category.
+ * @return {void} This function does not return a value.
  */
-function addTagToCategory(preset, category, tag) {
-    extensionSettings.dropdownPresets[preset].categories[category].members.push(tag);
-    saveSettingsDebounced();
-}
-
-/**
- * Removes a specified tag from a category within the given preset.
- *
- * The method searches for the tag in the list of members of the specified category
- * and removes it if present. Once the tag is removed, the settings are saved
- * using a debounced save function.
- *
- * @param {string} preset - The name of the preset containing the category.
- * @param {string} category - The category from which the tag should be removed.
- * @param {string} tag - The tag to be removed from the category.
- * @return {string} The tag that was removed.
- */
-function removeTagFromCategory(preset, category, tag) {
-    const members = extensionSettings.dropdownPresets[preset].categories[category].members;
-    const tagIndex = members.indexOf(tag);
-
-    if (tagIndex !== -1) {
-        members.splice(tagIndex, 1);
-        saveSettingsDebounced();
-    }
-}
-
-/**
- * Updates the names of preset options in a dropdown menu based on the current configuration.
- * The method iterates through each dropdown item, retrieves its preset index,
- * and updates its text with the corresponding name from the `extensionSettings.dropdownPresets` object.
- *
- * @return {void} This method does not return a value.
- */
-function updatePresetNames() {
+export function updateDropdownPresetNames() {
     $('#preset-submenu .dropdown-ui-item').each(function () {
         const presetIndex = $(this).data('preset');
-        const newName = extensionSettings.dropdownPresets[presetIndex]?.name;
+        const newName = getPreset(presetIndex).name;
         if (newName) {
             $(this).text(newName);
         }

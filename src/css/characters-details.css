@@ -1,0 +1,146 @@
+/* ===== CHARACTER DETAILS COMPONENTS ===== */
+#char-sep {
+    padding: 3px;
+}
+
+#char-sep:hover {
+    cursor: pointer;
+    background-color: white;
+}
+
+#char-details {
+    display: flex;
+    gap: 5px;
+    min-height: 50%;
+}
+
+#char-details-block {
+    flex: 1;
+}
+
+.char-details-summary {
+    display: flex;
+    gap: 10px;
+    padding: 5px;
+}
+
+#avatar_title {
+    position: relative;
+}
+
+.char-details-img {
+    border-radius: 20%;
+}
+
+#edit_icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: none;
+}
+
+#edit_icon:hover {
+    color: goldenrod;
+}
+
+#avatar_title:hover #edit_icon {
+    display: block;
+}
+
+.char-details-summary-desc {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    text-align: left;
+}
+
+#ch_name_details {
+    font-weight: bolder;
+}
+
+.ch_infos_container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.ch_infos_column {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+}
+
+.ch_infos_item {
+    margin-top: 5px;
+}
+
+#acm_details_buttons_block {
+    display: flex;
+    flex: 1;
+    gap: 5px;
+    align-items: center;
+    justify-content: start;
+    flex-wrap: wrap;
+}
+
+#acm_delete_button:hover {
+    background-color: var(--fullred) !important;
+}
+
+.char-details-tags {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* ===== DRAWER COMPONENTS ===== */
+.inline-drawer-design {
+    background-image: linear-gradient(348deg, var(--white30a)2%, var(--grey30a)10%, var(--black70a)95%, var(--SmartThemeQuoteColor)100%);
+    margin-bottom: 5px;
+    border-radius: 10px;
+    padding: 2px 5px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    transition: all 250ms;
+}
+
+.drawer-header-item {
+    flex-basis: 50%;
+    flex-grow: 0;
+    flex-shrink: 0;
+    text-align: start;
+}
+
+#altGreetings_number {
+    padding-left: 13px;
+}
+
+.tokens_count {
+    padding-left: 13px;
+}
+
+#char-details-desc {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.desc_container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.altGreetings_buttons {
+    flex-direction: row;
+    display: flex;
+    align-items: center;
+}
+
+.inline-drawer-icon.fa-circle-plus,
+.inline-drawer-icon.fa-circle-minus {
+    margin-right: 5px;
+}
+
+#desc_zone,
+#firstMes_zone,
+.altGreeting_zone {
+    resize: none;
+}

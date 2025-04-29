@@ -1,27 +1,5 @@
-import { selectedChar } from '../index.js';
-import { editCharDebounced } from './acm_characters.js';
-
-const getContext = SillyTavern.getContext;
-const getTokenCount = getContext().getTokenCount;
-const substituteParams = getContext().substituteParams;
-
-export { addAltGreetingsTrigger, addAltGreeting, delAltGreeting, displayAltGreetings };
-
-/**
- * Collects the values of all textareas with the class 'altGreeting_zone'
- * and returns them as an array of strings.
- *
- * @return {string[]} An array containing the values of the textareas with the class 'altGreeting_zone'.
- */
-function generateGreetingArray() {
-    const textareas = document.querySelectorAll('.altGreeting_zone');
-    const greetingArray = [];
-
-    textareas.forEach(textarea => {
-        greetingArray.push(textarea.value);
-    });
-    return greetingArray;
-}
+import { getTokenCountAsync, substituteParams } from "../constants/context.js";
+import { saveAltGreetings } from "../services/altGreetings-service.js";
 
 /**
  * Attaches an event listener to all elements with the class 'altGreeting_zone'.
@@ -29,7 +7,7 @@ function generateGreetingArray() {
  *
  * @return {void} This function does not return anything.
  */
-function addAltGreetingsTrigger(){
+export function addAltGreetingsTrigger(){
     document.querySelectorAll('.altGreeting_zone').forEach(textarea => {
         textarea.addEventListener('input', (event) => {saveAltGreetings(event);});
     });
@@ -41,7 +19,7 @@ function addAltGreetingsTrigger(){
  *
  * @return {void} Does not return anything.
  */
-function addAltGreeting(){
+export function addAltGreeting(){
     const drawerContainer = document.getElementById('altGreetings_content');
 
     // Determine the new greeting index
@@ -89,7 +67,7 @@ function addAltGreeting(){
  * @param {Object} inlineDrawer The DOM element representing the alternative greeting block to remove.
  * @return {void} The function does not return a value.
  */
-function delAltGreeting(index, inlineDrawer){
+export function delAltGreeting(index, inlineDrawer){
     // Delete the AltGreeting block
     inlineDrawer.remove();
 
@@ -119,7 +97,7 @@ function delAltGreeting(index, inlineDrawer){
  * @param {string[]} item - An array of strings where each string represents a greeting.
  * @return {string} The generated HTML as a string. If the `item` array is empty, a placeholder HTML string is returned.
  */
-function displayAltGreetings(item) {
+export async function displayAltGreetings(item) {
     let altGreetingsHTML = '';
 
     if (!item || item.length === 0) {
@@ -134,7 +112,7 @@ function displayAltGreetings(item) {
                             Greeting #
                             <span class="greeting_index">${greetingNumber}</span>
                         </strong>
-                        <span class="tokens_count drawer-header-item">Tokens: ${getTokenCount(substituteParams(item[i]))}</span>
+                        <span class="tokens_count drawer-header-item">Tokens: ${await getTokenCountAsync(substituteParams(item[i]))}</span>
                     </div>
                     <div class="altGreetings_buttons">
                         <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
@@ -148,31 +126,4 @@ function displayAltGreetings(item) {
         }
         return altGreetingsHTML;
     }
-}
-
-/**
- * Saves alternate greetings for the selected character and updates the relevant UI elements.
- *
- * @param {Event|null} event - The event object triggered by a user action, used to update token count.
- *                             Pass null if no event is available.
- * @return {void} This function does not return a value.
- */
-function saveAltGreetings(event = null){
-    const greetings = generateGreetingArray();
-    const update = {
-        avatar: selectedChar,
-        data: {
-            alternate_greetings: greetings,
-        },
-    };
-    editCharDebounced(update);
-    // Update token count if necessary
-    if (event) {
-        const textarea = event.target;
-        const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
-        tokensSpan.textContent = `Tokens: ${getTokenCount(substituteParams(textarea.value))}`;
-    }
-
-    // Edit the Alt Greetings number on the main drawer
-    $('#altGreetings_number').html(`Numbers: ${greetings.length}`);
 }
