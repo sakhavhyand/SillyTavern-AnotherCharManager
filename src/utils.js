@@ -86,7 +86,7 @@ export function includesIgnoreCaseAndAccents(text, searchTerm) {
  * @param {(a:string,b:string)=>boolean} comparisonFunction - The function to use for the comparison.
  * @returns {*} - The result of the comparison.
  */
-export function compareIgnoreCaseAndAccents(a, b, comparisonFunction) {
+function compareIgnoreCaseAndAccents(a, b, comparisonFunction) {
     if (!a || !b) return comparisonFunction(a, b); // Return the comparison result if either string is empty
 
     // Normalize and remove diacritics, then convert to lower case

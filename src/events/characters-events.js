@@ -1,10 +1,11 @@
 import { callPopup, characters, event_types, eventSource, POPUP_TYPE } from "../constants/context.js";
-import { refreshCharList, refreshCharListDebounced, update_avatar } from "../components/characters.js";
-import { addListenersTagFilter, generateTagFilter } from "../components/tags.js";
+import { refreshCharListDebounced, selectAndDisplay, update_avatar } from "../components/characters.js";
+import { generateTagFilter } from "../components/tags.js";
 import { getIdByAvatar } from "../utils.js";
 import { selectedChar } from "../constants/settings.js";
-import { checkApiAvailability, dupeChar, editCharDebounced, exportChar } from "../components/characters.js";
 import { closeDetails } from "../components/modal.js";
+import { addListenersTagFilter } from "./tags-events.js";
+import { checkApiAvailability, dupeChar, editCharDebounced } from "../services/characters-service.js";
 
 export function initializeCharactersEvents() {
     // Add listener to refresh the display on characters edit
@@ -29,7 +30,12 @@ export function initializeCharactersEvents() {
     eventSource.on('character_page_loaded', function () {
         generateTagFilter();
         addListenersTagFilter();
-        refreshCharList();
+        rrefreshCharListDebounced();
+    });
+
+    // Trigger when a character is selected in the list
+    $(document).on('click', '.char_select', function () {
+        selectAndDisplay(this.dataset.avatar);
     });
 
     // Trigger when the favorites button is clicked

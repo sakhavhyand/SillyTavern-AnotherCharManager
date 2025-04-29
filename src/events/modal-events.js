@@ -1,7 +1,5 @@
-import { getIdByAvatar, resetScrollHeight } from "../utils.js";
-import { mem_avatar, mem_menu, setMem_avatar } from "../constants/settings.js";
-import { setCharacterId, setMenuType } from '../../../../../../script.js';
-import { closeDetails, openModal } from "../components/modal.js";
+import { resetScrollHeight } from "../utils.js";
+import { closeModal, openModal } from "../components/modal.js";
 
 
 export function initializeModalEvents() {
@@ -23,19 +21,6 @@ export function initializeModalEvents() {
 
     // Trigger when the modal is closed to reset some global parameters
     $('#acm_popup_close').on("click", function () {
-        closeDetails();
-        setCharacterId(getIdByAvatar(mem_avatar));
-        setMenuType(mem_menu);
-        setMem_avatar(undefined);
-
-        $('#acm_shadow_popup').transition({
-            opacity: 0,
-            duration: 125,
-            easing: 'ease-in-out',
-        });
-        setTimeout(function () {
-            $('#acm_shadow_popup').css('display', 'none');
-            $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
-        }, 125);
+        closeModal();
     });
 }

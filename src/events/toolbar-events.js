@@ -1,14 +1,11 @@
 import { updateSetting } from "../services/settings-service.js";
 import { selectedChar, setSearchValue } from "../constants/settings.js";
 import { callPopup, characters, POPUP_TYPE } from "../constants/context.js";
-import {refreshCharListDebounced, renameChar, selectAndDisplay} from "../components/characters.js";
+import { refreshCharListDebounced } from "../components/characters.js";
 import { getIdByAvatar } from "../utils.js";
+import { renameChar } from "../services/characters-service.js";
 
 export function initializeToolbarEvents() {
-    // Trigger when a character is selected in the list
-    $(document).on('click', '.char_select', function () {
-        selectAndDisplay(this.dataset.avatar);
-    });
 
     // Add trigger to open/close tag list for filtering
     $(document).on('click', '#acm_tags_filter', function () {

@@ -24,15 +24,15 @@ export function searchAndFilter(){
     let tagfilteredChars = charactersCopy.filter(item => {
         const characterTags = tagMap[item.avatar] || [];
 
-        // Check if there is included tags
+        // Check if there are included tags
         const hasIncludedTag = includedTagIds.length === 0 || characterTags.some(tagId => includedTagIds.includes(tagId));
 
-        // Check if there is excluded tags
+        // Check if there are excluded tags
         const hasExcludedTag = characterTags.some(tagId => excludedTagIds.includes(tagId));
 
-        // Return true if :
-        // 1. There is no excluded tags
-        // 2. There is at least one included tags
+        // Return true if:
+        // 1. There are no excluded tags
+        // 2. There are at least one included tags
         return hasIncludedTag && !hasExcludedTag;
     });
 

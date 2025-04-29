@@ -1,5 +1,5 @@
 import { getSetting, updateSetting } from "../services/settings-service.js";
-import { refreshCharList } from "../components/characters.js";
+import { refreshCharListDebounced } from "../components/characters.js";
 import { manageCustomCategories, printCategoriesList } from "../components/dropdownUI.js";
 
 export function initializeUIMenuEvents() {
@@ -22,7 +22,7 @@ export function initializeUIMenuEvents() {
     $('#acm_switch_classic').on("click", function () {
         if (getSetting('dropdownUI')) {
             updateSetting('dropdownUI', false);
-            refreshCharList();
+            refreshCharListDebounced();
         }
         $('#dropdown-ui-menu').toggle();
         window.acmPoppers.UI.update();
@@ -36,7 +36,7 @@ export function initializeUIMenuEvents() {
         if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'allTags')) {
             updateSetting('dropdownUI', true);
             updateSetting('dropdownMode', "allTags");
-            refreshCharList();
+            refreshCharListDebounced();
         }
         $('#dropdown-ui-menu').toggle();
         window.acmPoppers.UI.update();
@@ -50,7 +50,7 @@ export function initializeUIMenuEvents() {
         if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'creators')) {
             updateSetting('dropdownUI', true);
             updateSetting('dropdownMode', "creators")
-            refreshCharList();
+            refreshCharListDebounced();
         }
         $('#dropdown-ui-menu').toggle();
         window.acmPoppers.UI.update();
@@ -69,7 +69,7 @@ export function initializeUIMenuEvents() {
         window.acmPoppers.UIPreset.update();
         manageCustomCategories();
         const selectedPreset = $('#preset_selector option:selected').data('preset');
-        if(getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom'){$('.popup-button-ok').on('click', function () {refreshCharList();});}
+        if(getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom'){$('.popup-button-ok').on('click', function () {refreshCharListDebounced();});}
         printCategoriesList(selectedPreset,true)
     });
 
@@ -81,7 +81,7 @@ export function initializeUIMenuEvents() {
             updateSetting('dropdownUI', true);
             updateSetting('dropdownMode', "custom");
             updateSetting('presetId', $(this).data('preset'));
-            refreshCharList();
+            refreshCharListDebounced();
         }
         $('#dropdown-ui-menu').toggle();
         window.acmPoppers.UI.update();

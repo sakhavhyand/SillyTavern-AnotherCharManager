@@ -1,6 +1,6 @@
 import {
     extensionFolderPath,
-    mem_avatar,
+    mem_avatar, mem_menu,
     oldExtensionFolderPath, selectedChar,
     setMem_avatar,
     setMem_menu, setSelectedChar
@@ -8,8 +8,8 @@ import {
 import { updateDropdownPresetNames } from "./dropdownUI.js";
 import { characterId, characters, menuType } from "../constants/context.js";
 import { getSetting } from "../services/settings-service.js";
-import {getIdByAvatar} from "../utils.js";
-import { setCharacterId } from '../../../../../../script.js';
+import { getIdByAvatar } from "../utils.js";
+import { setCharacterId, setMenuType } from '../../../../../../script.js';
 
 /**
  * Initializes the modal component
@@ -80,7 +80,6 @@ function initializePoppers() {
     };
 }
 
-
 // Function to build the modal
 export function openModal() {
 
@@ -110,7 +109,6 @@ export function openModal() {
     document.getElementById('favOnly_checkbox').checked = getSetting('favOnly');
 }
 
-
 // Function to close the details panel
 export function closeDetails( reset = true ) {
     if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
@@ -120,4 +118,21 @@ export function closeDetails( reset = true ) {
     document.getElementById('char-details').style.display = 'none';
     document.getElementById('char-sep').style.display = 'none';
     setSelectedChar(undefined);
+}
+
+export function closeModal() {
+    closeDetails();
+    setCharacterId(getIdByAvatar(mem_avatar));
+    setMenuType(mem_menu);
+    setMem_avatar(undefined);
+
+    $('#acm_shadow_popup').transition({
+        opacity: 0,
+        duration: 125,
+        easing: 'ease-in-out',
+    });
+    setTimeout(function () {
+        $('#acm_shadow_popup').css('display', 'none');
+        $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
+    }, 125);
 }
