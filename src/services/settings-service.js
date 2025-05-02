@@ -100,7 +100,7 @@ export function updatePresetCategories(presetIndex, categories) {
     if (!Array.isArray(categories)) {
         throw new Error('Categories must be an array');
     }
-    // Vérifie que chaque catégorie a le bon format
+
     if (!categories.every(category =>
         typeof category === 'object' &&
         typeof category.name === 'string' &&

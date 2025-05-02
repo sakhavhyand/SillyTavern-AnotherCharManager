@@ -33,12 +33,17 @@
     width: 30px;
     min-height: 100%;
     padding: 10px;
-    background-image: linear-gradient(348deg, var(--white30a)2%, var(--grey30a)10%, var(--black70a)95%, var(--SmartThemeQuoteColor)100%);
+    background-image: linear-gradient(348deg, var(--white30a)15%, var(--grey30a)20%, var(--black70a)80%, var(--SmartThemeQuoteColor)100%);
     border-radius: 10px;
     border: 1px solid var(--SmartThemeBorderColor);
     user-select: none;
     transition: all 0.3s ease;
     cursor: pointer;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+.column-separator:hover {
+    box-shadow: 0 0 10px var(--SmartThemeQuoteColor), 0 0 20px var(--white30a);
 }
 
 .column-separator .arrow {
@@ -49,7 +54,6 @@
 
 #separator-label {
     margin: 12px 0;
-    /* Typographie */
     color: var(--SmartThemeBodyColor);
     font-weight: 500;
     letter-spacing: 1px;
