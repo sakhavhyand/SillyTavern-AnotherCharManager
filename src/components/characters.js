@@ -1,13 +1,11 @@
 import {
-    setCharacterId,
-    setMenuType,
     depth_prompt_depth_default,
     depth_prompt_role_default,
     talkativeness_default
 } from '../../../../../../script.js';
 import { createTagInput } from '../../../../../tags.js';
 import { displayTag } from './tags.js';
-import { debounce, getBase64Async, getIdByAvatar } from '../utils.js';
+import { getBase64Async, getIdByAvatar } from '../utils.js';
 import {
     characters,
     getThumbnailUrl,
@@ -16,14 +14,11 @@ import {
     getTokenCountAsync,
     substituteParams, power_user, Popup, POPUP_TYPE,
 } from "../constants/context.js";
-import { selectedChar, setSelectedChar } from "../constants/settings.js";
-import { addAltGreetingsTrigger, displayAltGreetings } from "./altGreetings.js";
-import { searchAndFilter, sortCharAR } from "../services/searchAndFilter-service.js";
-import { getSetting } from "../services/settings-service.js";
-import { dropdownAllTags, dropdownCreators, dropdownCustom } from "./dropdownUI.js";
-import { replaceAvatar } from "../services/characters-service.js";
+import { selectedChar } from "../constants/settings.js";
+import {replaceAvatar, saveAltGreetings} from "../services/characters-service.js";
+import {addAltGreetingsTrigger} from "../events/characters-events.js";
 // Initializing some variables
-export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
+
 
 // Function not used at this moment, leaving it here just in case
 // async function delChar(avatar, delChats = true) {
@@ -47,57 +42,9 @@ export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 2
 //     }
 // }
 
-// Function to generate the HTML block for a character
-export function getCharBlock(avatar) {
-    const id = getIdByAvatar(avatar);
-    const avatarThumb = getThumbnailUrl('avatar', avatar);
-    let isFav;
-
-    const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
-    const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
-    if ( characters[id].fav || characters[id].data.extensions.fav ) {
-        isFav = 'fav';
-    }
-    else {
-        isFav = '';
-    }
-
-    return `<div class="character_item ${charClass} ${isFav}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]" data-avatar="${avatar}">
-                    <div class="avatar_item">
-                        <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
-                    </div>
-                    <div class="char_name">
-                        <div class="char_name_block">
-                            <span>${characters[id].name} : ${tagMap[avatar].length}</span>
-                        </div>
-                    </div>
-                </div>`;
-}
-
-// Function to display the selected character
-export function selectAndDisplay(avatar) {
-
-    // Check if a visible character is already selected
-    if(typeof selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${selectedChar}"]`) !== null){
-        document.querySelector(`[data-avatar="${selectedChar}"]`).classList.replace('char_selected','char_select');
-    }
-    setMenuType('character_edit');
-    setSelectedChar(avatar);
-    setCharacterId(getIdByAvatar(avatar));
-
-    $('#acm_export_format_popup').hide();
-
-    fillDetails(avatar);
-    fillAdvancedDefinitions(avatar);
-
-    document.querySelector(`[data-avatar="${avatar}"]`).classList.replace('char_select','char_selected');
-    document.getElementById('char-sep').style.display = 'block';
-    document.getElementById('char-details').style.removeProperty('display');
-
-}
 
 // Function to fill details in the character details block
-async function fillDetails(avatar) {
+export async function fillDetails(avatar) {
     if (typeof characters[getIdByAvatar(avatar)].data.alternate_greetings === 'undefined') {
         await unshallowCharacter(getIdByAvatar(avatar));
     }
@@ -151,7 +98,7 @@ async function fillDetails(avatar) {
     addAltGreetingsTrigger()
 }
 
-async function fillAdvancedDefinitions(avatar) {
+export async function fillAdvancedDefinitions(avatar) {
     const char = characters[getIdByAvatar(avatar)];
 
     $('#acm_character_popup-button-h3').text(char.name);
@@ -175,54 +122,6 @@ async function fillAdvancedDefinitions(avatar) {
     $('#acm_mes_example_textarea').val(char.mes_example);
     $('#acm_messages_examples').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.mes_example))}`);
 
-}
-
-// Function to refresh the character list based on search and sorting parameters
-function refreshCharList() {
-    const filteredChars = searchAndFilter();
-
-    if(filteredChars.length === 0){
-        $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
-    }
-    else {
-        const sortingField = getSetting('sortingField');
-        const sortingOrder = getSetting('sortingOrder');
-        const dropdownUI = getSetting('dropdownUI');
-        const dropdownMode = getSetting('dropdownMode');
-        const sortedList = sortCharAR(filteredChars, sortingField, sortingOrder);
-
-        if(dropdownUI && dropdownMode === "allTags"){
-            $('#character-list').html(dropdownAllTags(sortedList));
-
-            document.querySelectorAll('.dropdown-container').forEach(container => {
-                container.querySelector('.dropdown-title').addEventListener('click', () => {
-                    container.classList.toggle('open');
-                });
-            });
-        }
-        else if(dropdownUI && dropdownMode === "custom"){
-            $('#character-list').html(dropdownCustom(sortedList));
-
-            document.querySelectorAll('.dropdown-container').forEach(container => {
-                container.querySelector('.dropdown-title').addEventListener('click', () => {
-                    container.classList.toggle('open');
-                });
-            });
-        }
-        else if(dropdownUI && dropdownMode === "creators"){
-            $('#character-list').html(dropdownCreators(sortedList));
-
-            document.querySelectorAll('.dropdown-container').forEach(container => {
-                container.querySelector('.dropdown-title').addEventListener('click', () => {
-                    container.classList.toggle('open');
-                });
-            });
-        }
-        else {
-            $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
-        }
-    }
-    $('#charNumber').empty().append(`Total characters : ${characters.length}`);
 }
 
 // Function to replace the avatar with a new one
@@ -264,5 +163,120 @@ export async function update_avatar(input){
                 toast.error("Something went wrong.");
             }
         }
+    }
+}
+
+/**
+ * Adds a new alternate greeting section to the DOM within the 'altGreetings_content' container.
+ * Each new section is dynamically created and appended to the container, including appropriate event listeners.
+ *
+ * @return {void} Does not return anything.
+ */
+export function addAltGreeting(){
+    const drawerContainer = document.getElementById('altGreetings_content');
+
+    // Determine the new greeting index
+    const greetingIndex = drawerContainer.getElementsByClassName('inline-drawer').length + 1;
+
+    // Create the new inline-drawer block
+    const altGreetingDiv = document.createElement('div');
+    altGreetingDiv.className = 'inline-drawer';
+    altGreetingDiv.innerHTML = `<div id="altGreetDrawer${greetingIndex}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
+                    <div style="display: flex;flex-grow: 1;">
+                        <strong class="drawer-header-item">
+                            Greeting #
+                            <span class="greeting_index">${greetingIndex}</span>
+                        </strong>
+                        <span class="tokens_count drawer-header-item">Tokens: 0</span>
+                    </div>
+                    <div class="altGreetings_buttons">
+                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
+                        <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
+                    </div>
+                </div>
+                <div class="inline-drawer-content">
+                    <textarea class="altGreeting_zone autoSetHeight"></textarea>
+                </div>
+            </div>`;
+
+    // Add the new inline-drawer block
+    $('#chicken').empty();
+    drawerContainer.appendChild(altGreetingDiv);
+
+    // Add the event on the textarea
+    altGreetingDiv.querySelector(`.altGreeting_zone`).addEventListener('input', (event) => {
+        saveAltGreetings(event);
+    });
+
+    // Save it
+    saveAltGreetings();
+}
+
+/**
+ * Deletes an alternative greeting block, updates the indices of remaining blocks,
+ * and ensures a proper UI display for the alternative greetings section.
+ *
+ * @param {number} index The index of the alternative greeting block to be deleted.
+ * @param {Object} inlineDrawer The DOM element representing the alternative greeting block to remove.
+ * @return {void} The function does not return a value.
+ */
+export function delAltGreeting(index, inlineDrawer){
+    // Delete the AltGreeting block
+    inlineDrawer.remove();
+
+    // Update the others AltGreeting blocks
+    const $altGreetingsToggle = $('.altgreetings-drawer-toggle');
+
+    if ($('div[id^="altGreetDrawer"]').length === 0) {
+        $('#altGreetings_content').html('<span id="chicken">Nothing here but chickens!!</span>');
+    }
+    else {
+        $altGreetingsToggle.each(function() {
+            const currentIndex = parseInt($(this).find('.greeting_index').text());
+            if (currentIndex > index) {
+                $(this).find('.greeting_index').text(currentIndex - 1);
+                $(this).attr('id', `altGreetDrawer${currentIndex - 1}`);
+            }
+        });
+    }
+
+    // Save it
+    saveAltGreetings();
+}
+
+/**
+ * Generates and returns HTML content for alternative greetings based on the provided items.
+ *
+ * @param {string[]} item - An array of strings where each string represents a greeting.
+ * @return {string} The generated HTML as a string. If the `item` array is empty, a placeholder HTML string is returned.
+ */
+export async function displayAltGreetings(item) {
+    let altGreetingsHTML = '';
+
+    if (!item || item.length === 0) {
+        return '<span id="chicken">Nothing here but chickens!!</span>';
+    } else {
+        for (let i = 0; i < item.length; i++) {
+            let greetingNumber = i + 1;
+            altGreetingsHTML += `<div class="inline-drawer">
+                <div id="altGreetDrawer${greetingNumber}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
+                    <div style="display: flex;flex-grow: 1;">
+                        <strong class="drawer-header-item">
+                            Greeting #
+                            <span class="greeting_index">${greetingNumber}</span>
+                        </strong>
+                        <span class="tokens_count drawer-header-item">Tokens: ${await getTokenCountAsync(substituteParams(item[i]))}</span>
+                    </div>
+                    <div class="altGreetings_buttons">
+                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
+                        <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
+                    </div>
+                </div>
+                <div class="inline-drawer-content">
+                    <textarea class="altGreeting_zone autoSetHeight">${item[i]}</textarea>
+                </div>
+            </div>`;
+        }
+        return altGreetingsHTML;
     }
 }

@@ -1,5 +1,8 @@
 import { resetScrollHeight } from "../utils.js";
-import { closeModal, openModal, updateLayout } from "../components/modal.js";
+import { closeDetails, closeModal, openModal } from "../components/modal.js";
+import { getSetting, updateSetting } from "../services/settings-service.js";
+import { refreshCharListDebounced } from "../components/charactersList.js";
+import { manageCustomCategories, printCategoriesList } from "../components/presets.js";
 
 
 export function initializeModalEvents() {
@@ -24,36 +27,117 @@ export function initializeModalEvents() {
         closeModal();
     });
 
-    // Display character creation popup
-    $('#acm_character_create_button').on("click", function () {
-        const $popup = $('#acm_create_popup');
-        if ($popup.css('display') === 'none') {
-            $popup.css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
-                opacity: 1.0,
-                duration: 125,
-                easing: 'ease-in-out',
-            });
-        } else {
-            $popup.css('display', 'none').removeClass('open');
-        }
+    // Trigger when clicking on the separator to close the character details
+    $(document).on('click', '#char-sep', function () {
+        closeDetails();
+    });
+}
+
+export function initializeUIMenuEvents() {
+    // Switch UI
+    $('#acm_switch_ui').on("click", function () {
+        $('#dropdown-ui-menu').toggle();
+        window.acmPoppers.UI.update();
     });
 
-    // Close character creation popup
-    $('#acm_create_popup_close').on("click", function () {
-        $('acm_create_popup').transition({
-            opacity: 0,
-            duration: 125,
-            easing: 'ease-in-out',
-        });
-        setTimeout(function () { $('#acm_create_popup').css('display', 'none'); }, 125);
+    $('#acm_dropdown_sub').on("click", function () {
+        $('#dropdown-submenu').toggle();
+        window.acmPoppers.UISub.update();
     });
 
-    $('#column-separator').on('click', function () {
-        if ($('#acm_left_panel').hasClass('panel-hidden')){
-            updateLayout(false);
+    $('#acm_dropdown_cat').on("click", function () {
+        $('#preset-submenu').toggle();
+        window.acmPoppers.UIPreset.update();
+    });
+
+    $('#acm_switch_classic').on("click", function () {
+        if (getSetting('dropdownUI')) {
+            updateSetting('dropdownUI', false);
+            refreshCharListDebounced();
         }
-        else {
-            updateLayout(true);
+        $('#dropdown-ui-menu').toggle();
+        window.acmPoppers.UI.update();
+        $('#dropdown-submenu').toggle(false);
+        window.acmPoppers.UISub.update();
+        $('#preset-submenu').toggle(false);
+        window.acmPoppers.UIPreset.update();
+    });
+
+    $('#acm_switch_alltags').on("click", function () {
+        if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'allTags')) {
+            updateSetting('dropdownUI', true);
+            updateSetting('dropdownMode', "allTags");
+            refreshCharListDebounced();
+        }
+        $('#dropdown-ui-menu').toggle();
+        window.acmPoppers.UI.update();
+        $('#dropdown-submenu').toggle(false);
+        window.acmPoppers.UISub.update();
+        $('#preset-submenu').toggle(false);
+        window.acmPoppers.UIPreset.update();
+    });
+
+    $('#acm_switch_creators').on("click", function () {
+        if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'creators')) {
+            updateSetting('dropdownUI', true);
+            updateSetting('dropdownMode', "creators")
+            refreshCharListDebounced();
+        }
+        $('#dropdown-ui-menu').toggle();
+        window.acmPoppers.UI.update();
+        $('#dropdown-submenu').toggle(false);
+        window.acmPoppers.UISub.update();
+        $('#preset-submenu').toggle(false);
+        window.acmPoppers.UIPreset.update();
+    });
+
+    $('#acm_manage_categories').on("click", function () {
+        $('#dropdown-ui-menu').toggle();
+        window.acmPoppers.UI.update();
+        $('#dropdown-submenu').toggle(false);
+        window.acmPoppers.UISub.update();
+        $('#preset-submenu').toggle(false);
+        window.acmPoppers.UIPreset.update();
+        manageCustomCategories();
+        const selectedPreset = $('#preset_selector option:selected').data('preset');
+        if(getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom'){$('.popup-button-ok').on('click', function () {refreshCharListDebounced();});}
+        printCategoriesList(selectedPreset,true)
+    });
+
+    $(document).on('click', '[data-ui="preset"]', function () {
+        if (!getSetting('dropdownUI')
+            || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'custom')
+            || (getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom' && getSetting('presetId') !== $(this).data('preset'))
+        ) {
+            updateSetting('dropdownUI', true);
+            updateSetting('dropdownMode', "custom");
+            updateSetting('presetId', $(this).data('preset'));
+            refreshCharListDebounced();
+        }
+        $('#dropdown-ui-menu').toggle();
+        window.acmPoppers.UI.update();
+        $('#dropdown-submenu').toggle(false);
+        window.acmPoppers.UISub.update();
+        $('#preset-submenu').toggle(false);
+        window.acmPoppers.UIPreset.update();
+    })
+
+// Close the Popper menu when clicking outside
+    document.addEventListener('click', (event) => {
+        const menuElements = [
+            document.getElementById('dropdown-ui-menu'),
+            document.getElementById('dropdown-submenu'),
+            document.getElementById('preset-submenu'),
+            document.getElementById('acm_switch_ui')
+        ];
+
+        if (!menuElements.some(menu => menu && menu.contains(event.target))) {
+            document.getElementById('dropdown-ui-menu').style.display = 'none';
+            document.getElementById('dropdown-submenu').style.display = 'none';
+            document.getElementById('preset-submenu').style.display = 'none';
+        }
+        if (!document.getElementById('acm_export_format_popup').contains(event.target) && !document.getElementById('acm_export_button').contains(event.target)) {
+            document.getElementById('acm_export_format_popup').style.display = 'none';
         }
     });
 }

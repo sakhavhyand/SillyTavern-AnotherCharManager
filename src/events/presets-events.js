@@ -1,12 +1,6 @@
 import { getCategory, getPreset, removeTagFromCategory } from "../services/settings-service.js";
-import {
-    addCategory,
-    printCategoriesList,
-    removeCategory,
-    renameCategory,
-    renamePreset
-} from "../components/dropdownUI.js";
 import { callPopup, POPUP_TYPE } from "../constants/context.js";
+import {addCategory, printCategoriesList, removeCategory, renameCategory, renamePreset} from "../components/presets.js";
 
 export function initializePresetsEvents() {
     $(document).on('change', '#preset_selector', function () {

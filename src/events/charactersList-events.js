@@ -1,10 +1,17 @@
-import { updateSetting } from "../services/settings-service.js";
-import { selectedChar, setSearchValue } from "../constants/settings.js";
-import { refreshCharListDebounced } from "../components/characters.js";
+import {refreshCharListDebounced, selectAndDisplay} from "../components/charactersList.js";
+import {updateSetting} from "../services/settings-service.js";
+import {setSearchValue} from "../constants/settings.js";
+
+export function initializeCharactersListEvents() {
+    // Trigger when a character is selected in the list
+    $(document).on('click', '.char_select', function () {
+        selectAndDisplay(this.dataset.avatar);
+    });
+}
 
 export function initializeToolbarEvents() {
 
-    // Add trigger to open/close tag list for filtering
+    // Add trigger to open or close the tag list for filtering
     $(document).on('click', '#acm_tags_filter', function () {
         const tagsList = document.getElementById('tags-list');
 
@@ -55,5 +62,19 @@ export function initializeToolbarEvents() {
     // Import character by URL
     $('#acm_external_import_button').on("click", function () {
         $('#external_import_button').trigger("click");
+    });
+
+    // Display character creation popup
+    $('#acm_character_create_button').on("click", function () {
+        const $popup = $('#acm_create_popup');
+        if ($popup.css('display') === 'none') {
+            $popup.css({ 'display': 'flex', 'opacity': 0.0 }).addClass('open').transition({
+                opacity: 1.0,
+                duration: 125,
+                easing: 'ease-in-out',
+            });
+        } else {
+            $popup.css('display', 'none').removeClass('open');
+        }
     });
 }

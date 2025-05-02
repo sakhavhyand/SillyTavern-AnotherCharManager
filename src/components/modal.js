@@ -5,11 +5,12 @@ import {
     setMem_avatar,
     setMem_menu, setSelectedChar
 } from "../constants/settings.js";
-import { updateDropdownPresetNames } from "./dropdownUI.js";
 import { characterId, characters, menuType } from "../constants/context.js";
 import { getSetting } from "../services/settings-service.js";
 import { getIdByAvatar } from "../utils.js";
 import { setCharacterId, setMenuType } from '../../../../../../script.js';
+import { updateDropdownPresetNames } from "./charactersList.js";
+import { updateLayout } from "./characterCreation.js";
 
 /**
  * Initializes the modal component
@@ -33,7 +34,7 @@ export async function initializeModal() {
     $('#background_template').after(modalHtml);
 
     // Put the button before rm_button_group_chats in the form_character_search_form
-    // on hover, should say "Open Char Manager"
+    // on hover, should say: "Open Char Manager"
     $('#rm_button_group_chats').before('<button id="acm-manager" class="menu_button fa-solid fa-users faSmallFontSquareFix" title="Open Char Manager"></button>');
 
     // Initialize popper.js for dropdowns
@@ -138,14 +139,3 @@ export function closeModal() {
     }, 125);
 }
 
-export function updateLayout(showAdvanced) {
-    if (!showAdvanced) {
-        $('#acm_left_panel').removeClass('panel-hidden');
-        $('#acm_right_panel').addClass('panel-hidden');
-        $('#separator-label').text('Advanced Definitions');
-    } else {
-        $('#acm_right_panel').removeClass('panel-hidden');
-        $('#acm_left_panel').addClass('panel-hidden');
-        $('#separator-label').text('Main Definitions');
-    }
-}

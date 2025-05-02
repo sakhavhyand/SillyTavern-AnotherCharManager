@@ -2,7 +2,7 @@ import { tags } from "../../../../../tags.js";
 import { tagFilterstates } from "../constants/settings.js";
 import { tagList } from "../constants/context.js";
 import { addTagToCategory } from "../services/settings-service.js";
-import { refreshCharListDebounced } from "./characters.js";
+import { refreshCharListDebounced } from "./charactersList.js";
 import { findTag } from "../services/tags-service.js";
 import { equalsIgnoreCaseAndAccents } from "../utils.js";
 
@@ -95,11 +95,12 @@ export function tagFilterClick(tag) {
 }
 
 /**
- * Create a tag input by enabling the autocomplete feature of a given input element. Tags will be added to the given list.
+ * Creates a tag input field with autocomplete functionality for categories.
  *
- * @param {string} inputSelector - the selector for the tag input control
- * @param {string} listSelector - the selector for the list of the tags modified by the input control
- * @param {PrintTagListOptions} [tagListOptions] - Optional parameters for printing the tag list. Can be set to be consistent with the expected behavior of tags in the list that was defined before.
+ * @param {string} inputSelector - The selector for the input field where tags can be entered.
+ * @param {string} listSelector - The selector for the tag list element used for displaying autocomplete suggestions.
+ * @param {Object} [tagListOptions={}] - Optional configuration object for customizing the tag list behavior.
+ * @return {void} - This method does not return a value.
  */
 export function createTagInputCat(inputSelector, listSelector, tagListOptions = {}) {
     $(inputSelector)

@@ -35,7 +35,7 @@ export function renameTagKey(oldKey, newKey) {
  * Finds tags based on the provided request, resolving the result with filtered and sorted tags that match the search term.
  *
  * @param {Object} request - The search request containing a `term` property to match tags.
- * @param {Function} resolve - A callback function to resolve the results array.
+ * @param {Function} resolve - A callback function to resolve the result array.
  * @param {string} listSelector - Selector for the list element containing tags, used to exclude tags already present in the list.
  * @return {Array<string>} - The filtered and sorted list of tag names matching the search term, including the term itself if no exact match is found.
  */
