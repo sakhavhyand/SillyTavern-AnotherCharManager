@@ -15,8 +15,8 @@ import {
     substituteParams, power_user, Popup, POPUP_TYPE,
 } from "../constants/context.js";
 import { selectedChar } from "../constants/settings.js";
-import {replaceAvatar, saveAltGreetings} from "../services/characters-service.js";
-import {addAltGreetingsTrigger} from "../events/characters-events.js";
+import { replaceAvatar, saveAltGreetings } from "../services/characters-service.js";
+import { addAltGreetingsTrigger } from "../events/characters-events.js";
 // Initializing some variables
 
 
@@ -250,7 +250,7 @@ export function delAltGreeting(index, inlineDrawer){
  * @param {string[]} item - An array of strings where each string represents a greeting.
  * @return {string} The generated HTML as a string. If the `item` array is empty, a placeholder HTML string is returned.
  */
-export async function displayAltGreetings(item) {
+async function displayAltGreetings(item) {
     let altGreetingsHTML = '';
 
     if (!item || item.length === 0) {

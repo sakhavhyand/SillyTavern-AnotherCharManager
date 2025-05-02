@@ -1,7 +1,4 @@
-import {
-    setCharacterId,
-    setMenuType
-} from '../../../../../../script.js';
+import { setCharacterId, setMenuType } from '../../../../../../script.js';
 import { debounce, getIdByAvatar } from "../utils.js";
 import { characters, getThumbnailUrl, tagList, tagMap } from "../constants/context.js";
 import { selectedChar, setSelectedChar } from "../constants/settings.js";
@@ -12,7 +9,7 @@ import { getPreset, getSetting } from "../services/settings-service.js";
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 
 // Function to generate the HTML block for a character
-export function getCharBlock(avatar) {
+function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
     let isFav;
@@ -115,7 +112,7 @@ function refreshCharList() {
  * @param {Array} sortedList A sorted array of objects representing the items with `avatar` property to associate with tags.
  * @return {string} The HTML string containing the dropdown containers for each tag and a section for untagged items.
  */
-export function dropdownAllTags(sortedList){
+function dropdownAllTags(sortedList){
     const html = tagList.map(tag => {
         const charactersForTag = sortedList
             .filter(item => tagMap[item.avatar]?.includes(tag.id))
@@ -157,7 +154,7 @@ export function dropdownAllTags(sortedList){
  * @param {Array} sortedList - An array of objects representing sorted items, where each item contains an `avatar` property.
  * @return {string} A string containing HTML elements for categorized dropdowns.
  */
-export function dropdownCustom(sortedList){
+function dropdownCustom(sortedList){
     const preset = getSetting('presetId');
     const categories = getPreset(preset).categories;
     if (categories.length === 0) {
@@ -191,7 +188,7 @@ export function dropdownCustom(sortedList){
  * @return {string} A concatenated string of HTML dropdowns, where each dropdown represents a creator
  * and their associated avatars. Includes a special case for items with no creator.
  */
-export function dropdownCreators(sortedList){
+function dropdownCreators(sortedList){
     return Object.entries(
         sortedList.reduce((groups, item) => {
             const creator = item.data.creator;
