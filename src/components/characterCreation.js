@@ -1,5 +1,3 @@
-
-
 export function updateLayout(showAdvanced) {
     if (!showAdvanced) {
         $('#acm_left_panel').removeClass('panel-hidden');

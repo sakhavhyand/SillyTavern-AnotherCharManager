@@ -92,7 +92,11 @@ export async function fillDetails(avatar) {
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
     createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
-    $('#altGreetings_content').html(displayAltGreetings(char.data.alternate_greetings));
+    //$('#altGreetings_content').html(await displayAltGreetings(char.data.alternate_greetings));
+    displayAltGreetings(char.data.alternate_greetings).then(html => {
+        $('#altGreetings_content').html(html);
+    });
+
     $('#acm_favorite_button').toggleClass('fav_on', char.fav || char.data.extensions.fav).toggleClass('fav_off', !(char.fav || char.data.extensions.fav));
 
     addAltGreetingsTrigger()
