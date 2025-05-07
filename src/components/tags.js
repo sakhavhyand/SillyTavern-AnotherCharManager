@@ -1,10 +1,10 @@
 import { tags } from "../../../../../tags.js";
 import { tagFilterstates } from "../constants/settings.js";
 import { tagList } from "../constants/context.js";
-import { addTagToCategory } from "../services/settings-service.js";
 import { refreshCharListDebounced } from "./charactersList.js";
 import { findTag } from "../services/tags-service.js";
 import { equalsIgnoreCaseAndAccents } from "../utils.js";
+import {addTagToCategory} from "../services/presets-service.js";
 
 /**
  * Renders a tag as an HTML string based on the provided tag ID and an optional category flag.

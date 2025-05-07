@@ -1,4 +1,3 @@
-import { getCategory, getPreset, removeTagFromCategory } from "../services/settings-service.js";
 import { callPopup, POPUP_TYPE } from "../constants/context.js";
 import {
     addCategory,
@@ -9,6 +8,7 @@ import {
     toggleTagButton,
     displayPresetName
 } from "../components/presets.js";
+import {getCategory, removeTagFromCategory} from "../services/presets-service.js";
 
 export function initializePresetsEvents() {
     $(document).on('change', '#preset_selector', function () {

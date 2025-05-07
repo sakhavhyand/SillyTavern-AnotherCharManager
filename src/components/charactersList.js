@@ -4,7 +4,8 @@ import { characters, getThumbnailUrl, tagList, tagMap } from "../constants/conte
 import { selectedChar, setSearchValue, setSelectedChar } from "../constants/settings.js";
 import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
 import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
-import { etPreset, getSetting, updateSetting } from "../services/settings-service.js";
+import { getSetting, updateSetting } from "../services/settings-service.js";
+import { getPreset } from "../services/presets-service.js";
 
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 

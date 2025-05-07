@@ -1,13 +1,14 @@
-import {
-    addPresetCategory,
-    getPreset,
-    getSetting, removePresetCategory, updateCategoryName,
-    updatePresetCategories,
-    updatePresetName
-} from "../services/settings-service.js";
+import { getSetting } from "../services/settings-service.js";
 import { callPopup, POPUP_TYPE } from "../constants/context.js";
 import { createTagInputCat, displayTag } from "./tags.js";
 import { updateDropdownPresetNames } from "./charactersList.js";
+import {
+    addPresetCategory,
+    getPreset,
+    removePresetCategory, updateCategoryName,
+    updatePresetCategories,
+    updatePresetName
+} from "../services/presets-service.js";
 
 /**
  * Manages the custom categories interface in the application.
