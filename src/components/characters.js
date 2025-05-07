@@ -5,19 +5,26 @@ import {
 } from '../../../../../../script.js';
 import { createTagInput } from '../../../../../tags.js';
 import { displayTag } from './tags.js';
-import { getBase64Async, getIdByAvatar } from '../utils.js';
+import { getBase64Async, getIdByAvatar, updateTokenCounter } from '../utils.js';
 import {
     characters,
     getThumbnailUrl,
     tagMap,
     unshallowCharacter,
     getTokenCountAsync,
-    substituteParams, power_user, Popup, POPUP_TYPE,
+    substituteParams, power_user, Popup, POPUP_TYPE, callPopup, selectCharacterById,
 } from "../constants/context.js";
-import { selectedChar } from "../constants/settings.js";
-import { replaceAvatar, saveAltGreetings } from "../services/characters-service.js";
+import { selectedChar, setMem_avatar } from "../constants/settings.js";
+import {
+    dupeChar,
+    editCharDebounced,
+    exportChar, renameChar,
+    replaceAvatar,
+    saveAltGreetings
+} from "../services/characters-service.js";
 import { addAltGreetingsTrigger } from "../events/characters-events.js";
-// Initializing some variables
+import { closeDetails } from "./modal.js";
+import { setCharacterId } from '../../../../../../script.js';
 
 
 // Function not used at this moment, leaving it here just in case
@@ -42,6 +49,29 @@ import { addAltGreetingsTrigger } from "../events/characters-events.js";
 //     }
 // }
 
+export function initializeFieldUpdaters() {
+    const elementsToUpdate = {
+        '#desc_zone': async function () {const descZone=$('#desc_zone');const update={avatar:selectedChar,description:String(descZone.val()),data:{description:String(descZone.val()),},};editCharDebounced(update);await updateTokenCounter('desc_Tokens', String(descZone.val()));},
+        '#firstMes_zone': async function () {const firstMesZone=$('#firstMes_zone');const update={avatar:selectedChar,first_mes:String(firstMesZone.val()),data:{first_mes:String(firstMesZone.val()),},};editCharDebounced(update);await updateTokenCounter('firstMess_tokens', String(firstMesZone.val()));},
+        '#acm_creator_notes_textarea': function () {const creatorNotes=$('#acm_creator_notes_textarea');const update={avatar:selectedChar,creatorcomment:String(creatorNotes.val()),data:{creator_notes:String(creatorNotes.val()),},};editCharDebounced(update);},
+        '#acm_character_version_textarea': function () { const update = {avatar:selectedChar,data:{character_version:String($('#acm_character_version_textarea').val()),},};editCharDebounced(update);},
+        '#acm_system_prompt_textarea': async function () {const sysPrompt=$('#acm_system_prompt_textarea');const update={avatar:selectedChar,data:{system_prompt:String(sysPrompt.val()),},};editCharDebounced(update);await updateTokenCounter('acm_main_prompt_tokens', String(sysPrompt.val()));},
+        '#acm_post_history_instructions_textarea': async function () {const postHistory=$('#acm_post_history_instructions_textarea');const update={avatar:selectedChar,data:{post_history_instructions:String(postHistory.val()),},};editCharDebounced(update);await updateTokenCounter('acm_post_tokens', String(postHistory.val()));},
+        '#acm_creator_textarea': function () {const update={ avatar:selectedChar,data:{creator:String($('#acm_creator_textarea').val()),},};editCharDebounced(update);},
+        '#acm_personality_textarea': async function () {const personality=$('#acm_personality_textarea');const update={avatar:selectedChar,personality:String(personality.val()),data:{personality:String(personality.val()),},};editCharDebounced(update);await updateTokenCounter('acm_personality_tokens', String(personality.val()));},
+        '#acm_scenario_pole': async function () {const scenario=$('#acm_scenario_pole');const update={avatar:selectedChar,scenario: String(scenario.val()),data:{scenario:String(scenario.val()),},};editCharDebounced(update);await updateTokenCounter('acm_scenario_tokens', String(scenario.val()));},
+        '#acm_depth_prompt_prompt': async function () {const depthPrompt=$('#acm_depth_prompt_prompt');const update={avatar:selectedChar,data:{ extensions:{depth_prompt:{prompt:String(depthPrompt.val()),}}},};editCharDebounced(update);await updateTokenCounter('acm_char_notes_tokens', String(depthPrompt.val()));},
+        '#acm_depth_prompt_depth': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{depth:$('#acm_depth_prompt_depth').val(),}}},};editCharDebounced(update);},
+        '#acm_depth_prompt_role': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{role:String($('#acm_depth_prompt_role').val()),}}},};editCharDebounced(update);},
+        '#acm_talkativeness_slider': function () {const talkativeness=$('#acm_talkativeness_slider');const update={avatar:selectedChar,talkativeness:String(talkativeness.val()),data:{extensions:{talkativeness:String(talkativeness.val()),}}};editCharDebounced(update);},
+        '#acm_mes_example_textarea': async function () {const example=$('#acm_mes_example_textarea');const update={avatar:selectedChar,mes_example:String(example.val()),data:{mes_example:String(example.val()),},};editCharDebounced(update);await updateTokenCounter('acm_messages_examples', String(example.val()));},
+        '#acm_tags_textarea': function () {const tagZone=$('#acm_tags_textarea');const update={avatar:selectedChar,tags:tagZone.val().split(', '),data:{tags:tagZone.val().split(', '), },};editCharDebounced(update);}
+    };
+
+    Object.keys(elementsToUpdate).forEach(function (id) {
+        $(id).on('input', elementsToUpdate[id]);
+    });
+}
 
 // Function to fill details in the character details block
 export async function fillDetails(avatar) {
@@ -92,11 +122,9 @@ export async function fillDetails(avatar) {
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
     createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
-    //$('#altGreetings_content').html(await displayAltGreetings(char.data.alternate_greetings));
     displayAltGreetings(char.data.alternate_greetings).then(html => {
         $('#altGreetings_content').html(html);
     });
-
     $('#acm_favorite_button').toggleClass('fav_on', char.fav || char.data.extensions.fav).toggleClass('fav_off', !(char.fav || char.data.extensions.fav));
 
     addAltGreetingsTrigger()
@@ -128,6 +156,111 @@ export async function fillAdvancedDefinitions(avatar) {
 
 }
 
+export function toggleFavoriteStatus() {
+    const id = getIdByAvatar(selectedChar);
+    const isFavorite = characters[id].fav || characters[id].data.extensions.fav;
+
+    const update = {
+        avatar: selectedChar,
+        fav: !isFavorite,
+        data: {
+            extensions: {
+                fav: !isFavorite
+            }
+        }
+    };
+
+    editCharDebounced(update);
+
+    const favoriteButton = $('#acm_favorite_button')[0];
+    if (isFavorite) {
+        favoriteButton.classList.replace('fav_on', 'fav_off');
+    } else {
+        favoriteButton.classList.replace('fav_off', 'fav_on');
+    }
+}
+
+export function exportCharacter(format) {
+    exportChar(format, selectedChar);
+}
+
+export async function duplicateCharacter() {
+    if (!selectedChar) {
+        toastr.warning('You must first select a character to duplicate!');
+        return;
+    }
+
+    const confirmed = await showDuplicateConfirmation();
+    if (!confirmed) {
+        console.log('User cancelled duplication');
+        return;
+    }
+
+    await dupeChar(selectedChar);
+}
+
+export async function showDuplicateConfirmation() {
+    const confirmMessage = `
+        <h3>Are you sure you want to duplicate this character?</h3>
+        <span>If you just want to start a new chat with the same character, use "Start new chat" option in the bottom-left options menu.</span><br><br>`;
+
+    return await callPopup(confirmMessage, POPUP_TYPE.CONFIRM);
+}
+
+export async function showRenameDialog(characterAvatar) {
+    const charID = getIdByAvatar(characterAvatar);
+    return await callPopup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
+}
+
+export async function renameCharacter() {
+    const charID = getIdByAvatar(selectedChar);
+    const newName = await showRenameDialog(selectedChar);
+    await renameChar(selectedChar, charID, newName);
+}
+
+export function openCharacterChat() {
+    setCharacterId(undefined);
+    setMem_avatar(undefined);
+    selectCharacterById(getIdByAvatar(selectedChar));
+    closeDetails(false);
+
+    $('#acm_shadow_popup').transition({
+        opacity: 0,
+        duration: 125,
+        easing: 'ease-in-out',
+    });
+    setTimeout(function () {
+        $('#acm_shadow_popup').css('display', 'none');
+        $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
+    }, 125);
+}
+
+export function toggleAdvancedDefinitionsPopup() {
+    const $popup = $('#acm_character_popup');
+
+    if ($popup.css('display') === 'none') {
+        $popup.css({ 'display': 'flex', 'opacity': 0.0 })
+            .addClass('open')
+            .transition({
+                opacity: 1.0,
+                duration: 125,
+                easing: 'ease-in-out',
+            });
+    } else {
+        $popup.css('display', 'none').removeClass('open');
+    }
+}
+
+export function closeCharacterPopup() {
+    $('#character_popup').transition({
+        opacity: 0,
+        duration: 125,
+        easing: 'ease-in-out',
+    });
+    setTimeout(function () {
+        $('#acm_character_popup').css('display', 'none');
+    }, 125);
+}
 // Function to replace the avatar with a new one
 export async function update_avatar(input){
     if (input.files && input.files[0]) {

@@ -1,10 +1,10 @@
 import { setCharacterId, setMenuType } from '../../../../../../script.js';
 import { debounce, getIdByAvatar } from "../utils.js";
 import { characters, getThumbnailUrl, tagList, tagMap } from "../constants/context.js";
-import { selectedChar, setSelectedChar } from "../constants/settings.js";
+import { selectedChar, setSearchValue, setSelectedChar } from "../constants/settings.js";
 import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
 import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
-import { getPreset, getSetting } from "../services/settings-service.js";
+import { etPreset, getSetting, updateSetting } from "../services/settings-service.js";
 
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 
@@ -244,3 +244,59 @@ export function updateDropdownPresetNames() {
         }
     });
 }
+
+export function toggleTagsList() {
+    const tagsList = document.getElementById('tags-list');
+
+    if (tagsList.classList.contains('open')) {
+        // Fermeture de la liste
+        setTimeout(() => {
+            tagsList.style.minHeight = '0';
+            tagsList.style.height = '0';
+        }, 10);
+    } else {
+        // Ouverture de la liste
+        setTimeout(() => {
+            const calculatedHeight = tagsList.scrollHeight > 80 ? '80px' : (tagsList.scrollHeight + 5) + 'px';
+            tagsList.style.minHeight = calculatedHeight;
+            tagsList.style.height = calculatedHeight;
+        }, 10);
+    }
+
+    tagsList.classList.toggle('open');
+}
+
+export function toggleCharacterCreationPopup() {
+    const $popup = $('#acm_create_popup');
+
+    if ($popup.css('display') === 'none') {
+        // Affichage du popup
+        $popup.css({ 'display': 'flex', 'opacity': 0.0 })
+            .addClass('open')
+            .transition({
+                opacity: 1.0,
+                duration: 125,
+                easing: 'ease-in-out',
+            });
+    } else {
+        // Masquage du popup
+        $popup.css('display', 'none').removeClass('open');
+    }
+}
+
+export function updateSortOrder(selectedOption) {
+    updateSetting('sortingField', selectedOption.data('field'));
+    updateSetting('sortingOrder', selectedOption.data('order'));
+    refreshCharListDebounced();
+}
+
+export function updateSearchFilter(searchText) {
+    setSearchValue(String(searchText).toLowerCase());
+    refreshCharListDebounced();
+}
+
+export function toggleFavoritesOnly(isChecked) {
+    updateSetting('favOnly', isChecked);
+    refreshCharListDebounced();
+}
+

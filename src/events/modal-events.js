@@ -1,5 +1,11 @@
 import { resetScrollHeight } from "../utils.js";
-import { closeDetails, closeModal, openModal } from "../components/modal.js";
+import {
+    closeDetails,
+    closeModal,
+    initializeDropdownClickOutside,
+    openModal,
+    toggleDropdownMenus
+} from "../components/modal.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
 import { refreshCharListDebounced } from "../components/charactersList.js";
 import { manageCustomCategories, printCategoriesList } from "../components/presets.js";
@@ -34,110 +40,70 @@ export function initializeModalEvents() {
 }
 
 export function initializeUIMenuEvents() {
-    // Switch UI
-    $('#acm_switch_ui').on("click", function () {
-        $('#dropdown-ui-menu').toggle();
-        window.acmPoppers.UI.update();
+    $('#acm_switch_ui').on("click", () => {
+        toggleDropdownMenus({ menuToToggle: 'main' });
     });
 
-    $('#acm_dropdown_sub').on("click", function () {
-        $('#dropdown-submenu').toggle();
-        window.acmPoppers.UISub.update();
+    // Sous-menu
+    $('#acm_dropdown_sub').on("click", () => {
+        toggleDropdownMenus({ menuToToggle: 'sub' });
     });
 
-    $('#acm_dropdown_cat').on("click", function () {
-        $('#preset-submenu').toggle();
-        window.acmPoppers.UIPreset.update();
+    // Menu des catégories
+    $('#acm_dropdown_cat').on("click", () => {
+        toggleDropdownMenus({ menuToToggle: 'preset' });
     });
 
-    $('#acm_switch_classic').on("click", function () {
-        if (getSetting('dropdownUI')) {
-            updateSetting('dropdownUI', false);
-            refreshCharListDebounced();
+    const menuActions = {
+        '#acm_switch_classic': () => {
+            if (getSetting('dropdownUI')) {
+                updateSetting('dropdownUI', false);
+                refreshCharListDebounced();
+            }
+        },
+        '#acm_switch_alltags': () => {
+            if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'allTags')) {
+                updateSetting('dropdownUI', true);
+                updateSetting('dropdownMode', "allTags");
+                refreshCharListDebounced();
+            }
+        },
+        '#acm_switch_creators': () => {
+            if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'creators')) {
+                updateSetting('dropdownUI', true);
+                updateSetting('dropdownMode', "creators");
+                refreshCharListDebounced();
+            }
+        },
+        '#acm_manage_categories': () => {
+            manageCustomCategories();
+            const selectedPreset = $('#preset_selector option:selected').data('preset');
+            if(getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom') {
+                $('.popup-button-ok').on('click', refreshCharListDebounced);
+            }
+            printCategoriesList(selectedPreset, true);
+        },
+        '[data-ui="preset"]': function() {
+            const presetId = $(this).data('preset');
+            if (!getSetting('dropdownUI') ||
+                (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'custom') ||
+                (getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom' && getSetting('presetId') !== presetId)) {
+                updateSetting('dropdownUI', true);
+                updateSetting('dropdownMode', "custom");
+                updateSetting('presetId', presetId);
+                refreshCharListDebounced();
+            }
         }
-        $('#dropdown-ui-menu').toggle();
-        window.acmPoppers.UI.update();
-        $('#dropdown-submenu').toggle(false);
-        window.acmPoppers.UISub.update();
-        $('#preset-submenu').toggle(false);
-        window.acmPoppers.UIPreset.update();
+    };
+
+    Object.entries(menuActions).forEach(([selector, action]) => {
+        $(document).on('click', selector, function() {
+            action.call(this);
+            toggleDropdownMenus({ closeAll: true });
+        });
     });
 
-    $('#acm_switch_alltags').on("click", function () {
-        if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'allTags')) {
-            updateSetting('dropdownUI', true);
-            updateSetting('dropdownMode', "allTags");
-            refreshCharListDebounced();
-        }
-        $('#dropdown-ui-menu').toggle();
-        window.acmPoppers.UI.update();
-        $('#dropdown-submenu').toggle(false);
-        window.acmPoppers.UISub.update();
-        $('#preset-submenu').toggle(false);
-        window.acmPoppers.UIPreset.update();
-    });
+    // Gestionnaire de clic extérieur
+    document.addEventListener('click', initializeDropdownClickOutside());
 
-    $('#acm_switch_creators').on("click", function () {
-        if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'creators')) {
-            updateSetting('dropdownUI', true);
-            updateSetting('dropdownMode', "creators")
-            refreshCharListDebounced();
-        }
-        $('#dropdown-ui-menu').toggle();
-        window.acmPoppers.UI.update();
-        $('#dropdown-submenu').toggle(false);
-        window.acmPoppers.UISub.update();
-        $('#preset-submenu').toggle(false);
-        window.acmPoppers.UIPreset.update();
-    });
-
-    $('#acm_manage_categories').on("click", function () {
-        $('#dropdown-ui-menu').toggle();
-        window.acmPoppers.UI.update();
-        $('#dropdown-submenu').toggle(false);
-        window.acmPoppers.UISub.update();
-        $('#preset-submenu').toggle(false);
-        window.acmPoppers.UIPreset.update();
-        manageCustomCategories();
-        const selectedPreset = $('#preset_selector option:selected').data('preset');
-        if(getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom'){$('.popup-button-ok').on('click', function () {refreshCharListDebounced();});}
-        printCategoriesList(selectedPreset,true)
-    });
-
-    $(document).on('click', '[data-ui="preset"]', function () {
-        if (!getSetting('dropdownUI')
-            || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'custom')
-            || (getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom' && getSetting('presetId') !== $(this).data('preset'))
-        ) {
-            updateSetting('dropdownUI', true);
-            updateSetting('dropdownMode', "custom");
-            updateSetting('presetId', $(this).data('preset'));
-            refreshCharListDebounced();
-        }
-        $('#dropdown-ui-menu').toggle();
-        window.acmPoppers.UI.update();
-        $('#dropdown-submenu').toggle(false);
-        window.acmPoppers.UISub.update();
-        $('#preset-submenu').toggle(false);
-        window.acmPoppers.UIPreset.update();
-    })
-
-// Close the Popper menu when clicking outside
-    document.addEventListener('click', (event) => {
-        const menuElements = [
-            document.getElementById('dropdown-ui-menu'),
-            document.getElementById('dropdown-submenu'),
-            document.getElementById('preset-submenu'),
-            document.getElementById('acm_switch_ui')
-        ];
-
-        if (!menuElements.some(menu => menu && menu.contains(event.target))) {
-            document.getElementById('dropdown-ui-menu').style.display = 'none';
-            document.getElementById('dropdown-submenu').style.display = 'none';
-            document.getElementById('preset-submenu').style.display = 'none';
-        }
-        if (!document.getElementById('acm_export_format_popup').contains(event.target) && !document.getElementById('acm_export_button').contains(event.target)) {
-            document.getElementById('acm_export_format_popup').style.display = 'none';
-        }
-    });
 }

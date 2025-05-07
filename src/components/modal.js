@@ -139,3 +139,67 @@ export function closeModal() {
     }, 125);
 }
 
+export function toggleDropdownMenus(options = {}) {
+    const {
+        closeAll = false,
+        menuToToggle = null,
+        updatePoppers = true
+    } = options;
+
+    // Éléments de menu
+    const menus = {
+        main: {
+            element: '#dropdown-ui-menu',
+            popper: 'UI'
+        },
+        sub: {
+            element: '#dropdown-submenu',
+            popper: 'UISub'
+        },
+        preset: {
+            element: '#preset-submenu',
+            popper: 'UIPreset'
+        },
+        export: {
+            element: '#acm_export_format_popup',
+            popper: 'Export'
+        }
+    };
+
+    if (closeAll) {
+        // Ferme tous les menus
+        Object.values(menus).forEach(menu => {
+            $(menu.element).toggle(false);
+        });
+    } else if (menuToToggle && menus[menuToToggle]) {
+        // Toggle un menu spécifique
+        $(menus[menuToToggle].element).toggle();
+    }
+
+    // Mise à jour des poppers si nécessaire
+    if (updatePoppers && window.acmPoppers) {
+        Object.values(menus).forEach(menu => {
+            if (window.acmPoppers[menu.popper]) {
+                window.acmPoppers[menu.popper].update();
+            }
+        });
+    }
+}
+
+// Fonction utilitaire pour fermer les menus lors d'un clic extérieur
+export function initializeDropdownClickOutside() {
+    const excludedElements = [
+        'dropdown-ui-menu',
+        'dropdown-submenu',
+        'preset-submenu',
+        'acm_switch_ui',
+        'acm_export_format_popup',
+        'acm_export_button'
+    ].map(id => document.getElementById(id));
+
+    return function handleClickOutside(event) {
+        if (!excludedElements.some(element => element?.contains(event.target))) {
+            toggleDropdownMenus({ closeAll: true });
+        }
+    };
+}

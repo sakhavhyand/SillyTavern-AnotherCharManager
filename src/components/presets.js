@@ -184,3 +184,25 @@ export function renameCategory(preset, category, newName) {
     updateCategoryName(preset, category, newName);
     printCategoriesList(preset);
 }
+
+export function toggleTagButton(button, selectedCat) {
+    if (button.hasClass('addCatTag')) {
+        button
+            .removeClass('addCatTag')
+            .addClass('cancelCatTag')
+            .removeClass('fa-plus')
+            .addClass('fa-minus');
+        $(`#input_cat_tag_${selectedCat}`).show();
+    } else {
+        button
+            .addClass('addCatTag')
+            .removeClass('cancelCatTag')
+            .addClass('fa-plus')
+            .removeClass('fa-minus');
+        $(`#input_cat_tag_${selectedCat}`).hide();
+    }
+}
+
+export function displayPresetName(newPreset) {
+    $('#preset_name').html(getPreset(newPreset).name);
+}

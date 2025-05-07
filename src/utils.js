@@ -1,4 +1,4 @@
-import { characters } from "./constants/context.js";
+import { characters, getTokenCountAsync, substituteParams } from "./constants/context.js";
 
 /**
  * Creates a debounced version of the provided function that delays its execution
@@ -101,4 +101,10 @@ function compareIgnoreCaseAndAccents(a, b, comparisonFunction) {
 export function getIdByAvatar(avatar){
     const index = characters.findIndex(character => character.avatar === avatar);
     return index !== -1 ? String(index) : undefined;
+}
+
+export async function updateTokenCounter(elementId, content) {
+    const tokenCount = await getTokenCountAsync(substituteParams(content));
+    $(`#${elementId}`).text(`Tokens: ${tokenCount}`);
+    return tokenCount;
 }
