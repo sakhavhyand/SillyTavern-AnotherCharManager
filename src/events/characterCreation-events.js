@@ -2,8 +2,8 @@ import {
     closeCreationPopup,
     FIELD_CONFIGURATIONS,
     updateLayout,
-    updateTokenCount
 } from "../components/characterCreation.js";
+import { updateTokenCount } from "../utils.js";
 
 export function initializeCharacterCreationEvents() {
 

@@ -1,4 +1,4 @@
-import {getTokenCountAsync, substituteParams} from "../constants/context.js";
+import { updateTokenCount } from "../utils.js";
 
 export const FIELD_CONFIGURATIONS = {
     'name': '#acm_create_name',
@@ -22,14 +22,6 @@ export function updateLayout(showAdvanced) {
         $('#acm_left_panel').addClass('panel-hidden');
         $('#separator-label').text('Main Definitions');
     }
-}
-
-export async function updateTokenCount(fieldId) {
-    const inputElement = $(fieldId);
-    const tokenCountElement = $(`${fieldId}_tokens`);
-    const inputValue = String(inputElement.val());
-    const tokenCount = await getTokenCountAsync(substituteParams(inputValue));
-    tokenCountElement.html(`Tokens: ${tokenCount}`);
 }
 
 export function closeCreationPopup() {

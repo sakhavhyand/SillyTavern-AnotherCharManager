@@ -103,8 +103,10 @@ export function getIdByAvatar(avatar){
     return index !== -1 ? String(index) : undefined;
 }
 
-export async function updateTokenCounter(elementId, content) {
-    const tokenCount = await getTokenCountAsync(substituteParams(content));
-    $(`#${elementId}`).text(`Tokens: ${tokenCount}`);
-    return tokenCount;
+export async function updateTokenCount(fieldId) {
+    const inputElement = $(fieldId);
+    const tokenCountElement = $(`${fieldId}_tokens`);
+    const inputValue = String(inputElement.val());
+    const tokenCount = await getTokenCountAsync(substituteParams(inputValue));
+    tokenCountElement.html(`Tokens: ${tokenCount}`);
 }

@@ -139,18 +139,18 @@
     margin-right: 5px;
 }
 
-#desc_zone,
-#firstMes_zone,
+#acm_description,
+#acm_firstMess,
 .altGreeting_zone {
     resize: none;
 }
 
 /* ===== FORM ELEMENTS ===== */
-#acm_personality_textarea {
+#acm_personality {
     width: 100%;
 }
 
-#acm_scenario_pole {
+#acm_scenario {
     width: 100%;
     margin-left: 0;
 }
@@ -165,7 +165,7 @@
     flex-grow: 1;
 }
 
-#acm_mes_example_textarea {
+#acm_mes_examples {
     width: 100%;
     height: 100%;
     margin-left: 0;
