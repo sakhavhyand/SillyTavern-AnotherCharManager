@@ -1,6 +1,6 @@
 import { updateTokenCount } from "../utils.js";
 
-export const FIELD_CONFIGURATIONS = {
+const FIELD_CONFIGURATIONS = {
     'name': '#acm_create_name',
     'description': '#acm_create_desc',
     'firstMessage': '#acm_create_first',
@@ -43,4 +43,27 @@ export function closeCreationPopup() {
     if ($('#acm_left_panel').hasClass('panel-hidden')){
         updateLayout(false);
     }
+}
+
+export function loadAvatar(input){
+    return new Promise((resolve) => {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                // Stocker le fichier dans une variable pour un usage ultérieur
+                window.selectedAvatar = input.files[0];
+
+                // Afficher la miniature dans l'élément avec l'ID acm_create_avatar
+                $('#acm_create_avatar').attr('src', e.target.result);
+
+                resolve();
+            };
+
+            // Lire le fichier comme une URL de données
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            resolve();
+        }
+    });
 }

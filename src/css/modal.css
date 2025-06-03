@@ -165,11 +165,6 @@
     overflow-y: auto;
 }
 
-.dropdown-submenu-item {
-    padding: 8px 12px;
-    cursor: pointer;
-}
-
 .dropdown-separator {
     border: none;
     border-top: 1px solid #ccc;

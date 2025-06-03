@@ -6,6 +6,7 @@ import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
 import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
 import { getPreset } from "../services/presets-service.js";
+import { createTagInput } from '../../../../../tags.js';
 
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 
@@ -271,6 +272,8 @@ export function toggleCharacterCreationPopup() {
     const $popup = $('#acm_create_popup');
 
     if ($popup.css('display') === 'none') {
+
+        createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
         // Affichage du popup
         $popup.css({ 'display': 'flex', 'opacity': 0.0 })
             .addClass('open')

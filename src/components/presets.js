@@ -130,8 +130,8 @@ function makeCategoryDraggable(containerSelector) {
     });
 
     $(".drag-handle")
-        .mousedown(function () { $(this).css("cursor", "grabbing"); })
-        .mouseup(function () { $(this).css("cursor", "grab"); }
+        .on('mousedown',function () { $(this).css("cursor", "grabbing"); })
+        .on('mouseup', function () { $(this).css("cursor", "grab"); }
         );
 }
 

@@ -49,30 +49,6 @@ import { setCharacterId } from '../../../../../../script.js';
 //     }
 // }
 
-export function initializeFieldUpdaters() {
-    const elementsToUpdate = {
-        '#acm_description': async function () {const descZone=$('#acm_description');const update={avatar:selectedChar,description:String(descZone.val()),data:{description:String(descZone.val()),},};editCharDebounced(update);await updateTokenCount('#acm_description');},
-        '#acm_firstMess': async function () {const firstMesZone=$('#acm_firstMess');const update={avatar:selectedChar,first_mes:String(firstMesZone.val()),data:{first_mes:String(firstMesZone.val()),},};editCharDebounced(update);await updateTokenCount('#acm_firstMess');},
-        '#acm_creator_notes_textarea': function () {const creatorNotes=$('#acm_creator_notes_textarea');const update={avatar:selectedChar,creatorcomment:String(creatorNotes.val()),data:{creator_notes:String(creatorNotes.val()),},};editCharDebounced(update);},
-        '#acm_character_version_textarea': function () { const update = {avatar:selectedChar,data:{character_version:String($('#acm_character_version_textarea').val()),},};editCharDebounced(update);},
-        '#acm_system_prompt': async function () {const sysPrompt=$('#acm_system_prompt');const update={avatar:selectedChar,data:{system_prompt:String(sysPrompt.val()),},};editCharDebounced(update);await updateTokenCount('#acm_system_prompt');},
-        '#acm_post_history_prompt': async function () {const postHistory=$('#acm_post_history_prompt');const update={avatar:selectedChar,data:{post_history_instructions:String(postHistory.val()),},};editCharDebounced(update);await updateTokenCount('#acm_post_history_prompt');},
-        '#acm_creator_textarea': function () {const update={ avatar:selectedChar,data:{creator:String($('#acm_creator_textarea').val()),},};editCharDebounced(update);},
-        '#acm_personality': async function () {const personality=$('#acm_personality');const update={avatar:selectedChar,personality:String(personality.val()),data:{personality:String(personality.val()),},};editCharDebounced(update);await updateTokenCount('#acm_personality');},
-        '#acm_scenario': async function () {const scenario=$('#acm_scenario');const update={avatar:selectedChar,scenario: String(scenario.val()),data:{scenario:String(scenario.val()),},};editCharDebounced(update);await updateTokenCount('#acm_scenario');},
-        '#acm_character_notes': async function () {const depthPrompt=$('#acm_character_notes');const update={avatar:selectedChar,data:{ extensions:{depth_prompt:{prompt:String(depthPrompt.val()),}}},};editCharDebounced(update);await updateTokenCount('#acm_character_notes');},
-        '#acm_character_notes_depth': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{depth:$('#acm_character_notes_depth').val(),}}},};editCharDebounced(update);},
-        '#acm_character_notes_role': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{role:String($('#acm_character_notes_role').val()),}}},};editCharDebounced(update);},
-        '#acm_talkativeness_slider': function () {const talkativeness=$('#acm_talkativeness_slider');const update={avatar:selectedChar,talkativeness:String(talkativeness.val()),data:{extensions:{talkativeness:String(talkativeness.val()),}}};editCharDebounced(update);},
-        '#acm_mes_examples': async function () {const example=$('#acm_mes_examples');const update={avatar:selectedChar,mes_example:String(example.val()),data:{mes_example:String(example.val()),},};editCharDebounced(update);await updateTokenCount('#acm_mes_examples');},
-        '#acm_tags_textarea': function () {const tagZone=$('#acm_tags_textarea');const update={avatar:selectedChar,tags:tagZone.val().split(', '),data:{tags:tagZone.val().split(', '), },};editCharDebounced(update);}
-    };
-
-    Object.keys(elementsToUpdate).forEach(function (id) {
-        $(id).on('input', elementsToUpdate[id]);
-    });
-}
-
 // Function to fill details in the character details block
 export async function fillDetails(avatar) {
     if (typeof characters[getIdByAvatar(avatar)].data.alternate_greetings === 'undefined') {
@@ -261,6 +237,7 @@ export function closeCharacterPopup() {
         $('#acm_character_popup').css('display', 'none');
     }, 125);
 }
+
 // Function to replace the avatar with a new one
 export async function update_avatar(input){
     if (input.files && input.files[0]) {
