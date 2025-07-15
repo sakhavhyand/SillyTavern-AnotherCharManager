@@ -342,32 +342,6 @@
     background-color: var(--white30a);
 }
 
-.avatar_item {
-    --big-avatar-height-factor: 3 !important;
-    --big-avatar-width-factor: 2 !important;
-    --big-avatar-border-factor: 2 !important;
-    flex: unset;
-    height: calc(var(--avatar-base-height) * var(--big-avatar-height-factor));
-    width: unset;
-    border-style: none;
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    align-items: center;
-    overflow: visible;
-    border-radius: calc(var(--avatar-base-border-radius) * var(--big-avatar-border-factor));
-    align-self: center;
-    transition: 250ms;
-}
-
-.avatar_item > img {
-    border-radius: 20%;
-}
-
-.fav .avatar_item > img {
-    border: 3px solid goldenrod;
-}
-
 .char_name {
     width: 100%;
     max-width: unset !important;
