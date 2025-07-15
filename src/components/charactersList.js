@@ -1,12 +1,12 @@
-import { setCharacterId, setMenuType } from '../../../../../../script.js';
-import { debounce, getIdByAvatar } from "../utils.js";
-import { characters, getThumbnailUrl, tagList, tagMap } from "../constants/context.js";
-import { selectedChar, setSearchValue, setSelectedChar } from "../constants/settings.js";
-import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
-import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
-import { getSetting, updateSetting } from "../services/settings-service.js";
-import { getPreset } from "../services/presets-service.js";
-import { createTagInput } from '../../../../../tags.js';
+import {setCharacterId, setMenuType} from '../../../../../../script.js';
+import {debounce, getIdByAvatar} from "../utils.js";
+import {characters, getThumbnailUrl, tagList, tagMap} from "../constants/context.js";
+import {selectedChar, setSearchValue, setSelectedChar} from "../constants/settings.js";
+import {fillAdvancedDefinitions, fillDetails} from "./characters.js";
+import {searchAndFilter, sortCharAR} from "../services/charactersList-service.js";
+import {getSetting, updateSetting} from "../services/settings-service.js";
+import {getPreset} from "../services/presets-service.js";
+import {createTagInput} from '../../../../../tags.js';
 
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 
@@ -26,7 +26,7 @@ function getCharBlock(avatar) {
     }
 
     return `<div class="character_item ${charClass} ${isFav}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]" data-avatar="${avatar}">
-                    <div class="avatar_item">
+                    <div class="avatar">
                         <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
                     </div>
                     <div class="char_name">
