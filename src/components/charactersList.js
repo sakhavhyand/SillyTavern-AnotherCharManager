@@ -14,16 +14,11 @@ export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 2
 function getCharBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
-    let isFav;
 
     const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
     const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
-    if ( characters[id].fav || characters[id].data.extensions.fav ) {
-        isFav = 'fav';
-    }
-    else {
-        isFav = '';
-    }
+    const isFav = (characters[id].fav || characters[id].data.extensions.fav) ? 'fav' : '';
+
 
     return `<div class="character_item ${charClass} ${isFav}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]" data-avatar="${avatar}">
                     <div class="avatar">
@@ -36,6 +31,72 @@ function getCharBlock(avatar) {
                     </div>
                 </div>`;
 }
+
+function createCharacterElementNative(avatar) {
+    const id = getIdByAvatar(avatar);
+    const avatarThumb = getThumbnailUrl('avatar', avatar);
+
+    const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
+    const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
+    const isFav = (characters[id].fav || characters[id].data.extensions.fav) ? 'fav' : '';
+
+    // Créer l'élément avec DOM natif
+    const div = document.createElement('div');
+    div.className = `character_item ${charClass} ${isFav}`;
+    div.title = `[${characters[id].name} - Tags: ${tagMap[avatar].length}]`;
+    div.setAttribute('data-avatar', avatar);
+
+    div.innerHTML = `
+        <div class="avatar">
+            <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
+        </div>
+        <div class="char_name">
+            <div class="char_name_block">
+                <span>${characters[id].name} : ${tagMap[avatar].length}</span>
+            </div>
+        </div>
+    `;
+
+    return div;
+}
+
+function renderCharactersIndividually(sortedList) {
+    const container = $('#character-list')[0]; // Obtenir l'élément DOM natif
+    container.innerHTML = ''; // Vider le container
+
+    const BATCH_SIZE = 20;
+    let currentIndex = 0;
+
+    function processBatch() {
+        const startTime = performance.now();
+        const fragment = document.createDocumentFragment();
+        let batchCount = 0;
+
+        // Traiter un batch avec limite sur le nombre ET le temps
+        while (currentIndex < sortedList.length &&
+        batchCount < BATCH_SIZE &&
+        (performance.now() - startTime) < 12) {
+
+            const item = sortedList[currentIndex];
+            const charElement = createCharacterElementNative(item.avatar);
+            fragment.appendChild(charElement);
+
+            currentIndex++;
+            batchCount++;
+        }
+
+        // Ajouter le fragment au DOM (une seule opération)
+        container.appendChild(fragment);
+
+        // Continuer s'il reste des personnages
+        if (currentIndex < sortedList.length) {
+            requestAnimationFrame(processBatch);
+        }
+    }
+
+    requestAnimationFrame(processBatch);
+}
+
 
 // Function to display the selected character
 export function selectAndDisplay(avatar) {
@@ -101,7 +162,8 @@ function refreshCharList() {
             });
         }
         else {
-            $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
+            // $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
+            renderCharactersIndividually(sortedList);
         }
     }
     $('#charNumber').empty().append(`Total characters : ${characters.length}`);
