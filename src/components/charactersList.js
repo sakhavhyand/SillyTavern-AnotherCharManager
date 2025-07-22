@@ -162,7 +162,6 @@ function refreshCharList() {
             });
         }
         else {
-            // $('#character-list').html(sortedList.map((item) => getCharBlock(item.avatar)).join(''));
             renderCharactersIndividually(sortedList);
         }
     }
