@@ -1,17 +1,19 @@
-import { getCategory, getPreset, removeTagFromCategory } from "../services/settings-service.js";
+import { callPopup, POPUP_TYPE } from "../constants/context.js";
 import {
     addCategory,
     printCategoriesList,
     removeCategory,
     renameCategory,
-    renamePreset
-} from "../components/dropdownUI.js";
-import { callPopup, POPUP_TYPE } from "../constants/context.js";
+    renamePreset,
+    toggleTagButton,
+    displayPresetName
+} from "../components/presets.js";
+import {getCategory, removeTagFromCategory} from "../services/presets-service.js";
 
 export function initializePresetsEvents() {
     $(document).on('change', '#preset_selector', function () {
         const newPreset = $(this).find(':selected').data('preset');
-        $('#preset_name').html(getPreset(newPreset).name);
+        displayPresetName(newPreset);
         printCategoriesList(newPreset);
     });
 
@@ -53,23 +55,13 @@ export function initializePresetsEvents() {
     // Trigger on a click on the add tag button in a category
     $(document).on("click", ".addCatTag", function () {
         const selectedCat = $(this).closest('[data-catid]').data('catid');
-        $(this)
-            .removeClass('addCatTag')
-            .addClass('cancelCatTag')
-            .removeClass('fa-plus')
-            .addClass('fa-minus');
-        $(`#input_cat_tag_${selectedCat}`).show();
+        toggleTagButton($(this), selectedCat);
     });
 
     // Trigger on a click on the minus tag button in a category
     $(document).on("click", ".cancelCatTag", function () {
         const selectedCat = $(this).closest('[data-catid]').data('catid');
-        $(this)
-            .addClass('addCatTag')
-            .removeClass('cancelCatTag')
-            .addClass('fa-plus')
-            .removeClass('fa-minus');
-        $(`#input_cat_tag_${selectedCat}`).hide();
+        toggleTagButton($(this), selectedCat);
     });
 
     $(document).on("click", ".tag_cat_remove", function () {

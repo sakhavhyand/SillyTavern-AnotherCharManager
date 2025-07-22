@@ -1,4 +1,4 @@
-import { characters } from "./constants/context.js";
+import { characters, getTokenCountAsync, substituteParams } from "./constants/context.js";
 
 /**
  * Creates a debounced version of the provided function that delays its execution
@@ -46,9 +46,9 @@ export async function resetScrollHeight(element) {
 }
 
 /**
- * Delays the current async function by the given amount of milliseconds.
+ * Delays the current async function by the given number of milliseconds.
  * @param {number} ms Milliseconds to wait
- * @returns {Promise<void>} Promise that resolves after the given amount of milliseconds
+ * @returns {Promise<void>} Promise that resolves after the given number of milliseconds
  */
 export function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -101,4 +101,12 @@ function compareIgnoreCaseAndAccents(a, b, comparisonFunction) {
 export function getIdByAvatar(avatar){
     const index = characters.findIndex(character => character.avatar === avatar);
     return index !== -1 ? String(index) : undefined;
+}
+
+export async function updateTokenCount(fieldId) {
+    const inputElement = $(fieldId);
+    const tokenCountElement = $(`${fieldId}_tokens`);
+    const inputValue = String(inputElement.val());
+    const tokenCount = await getTokenCountAsync(substituteParams(inputValue));
+    tokenCountElement.html(`Tokens: ${tokenCount}`);
 }

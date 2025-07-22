@@ -1,8 +1,7 @@
 @import url('src/css/modal.css');
-@import url('src/css/forms.css');
-@import url('src/css/dropdown.css');
-@import url('src/css/characters-list.css');
-@import url('src/css/characters-details.css');
+@import url('src/css/charactersList.css');
+@import url('src/css/characters.css');
 @import url('src/css/tags.css');
 @import url('src/css/utils.css');
 @import url('src/css/presets.css');
+@import url('src/css/charactersCreation.css');

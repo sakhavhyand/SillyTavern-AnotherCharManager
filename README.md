@@ -2,7 +2,7 @@
 
 ## DISCLAIMER
 * I'm not a developer, so yes, my code is not perfect (especially the CSS, I hate that).
-* This extension has not been tested on mobile phones, so expect the UI to be unusable on them. I don't intend to work on it, because I'm really bad with UI.
+* This extension has not been tested on mobile phones, so expect the UI to be unusable on them. I don't intend to work on it, because I'm terrible with UI.
 
 ## What is this extension doing?
 
@@ -19,13 +19,13 @@ I've decided to work on it to have something that better suits my needs, because
 
 ## Prerequisites
 
-This extension has been tested from SillyTavern 1.11.0 to 1.12.5.
+This extension has been tested from SillyTavern 1.11.0 to the last stable version.
 
 To be able to use the replace avatar feature, you will need the [SillyTavern-AvatarEdit](https://github.com/sakhavhyand/SillyTavern-AvatarEdit) plugin.
 
 ## Installation
 
-Utilize SillyTavern's third party extension importer to install like any other extension.
+Use SillyTavern's third party extension importer to install like any other extension.
 
 ## Usage
 

@@ -1,9 +1,8 @@
-import { initializeCharDetailsEvents } from "./characterDetails-events.js";
-import { initializeModalEvents } from "./modal-events.js";
-import { initializeUIMenuEvents } from "./UImenu-events.js";
+import { initializeModalEvents, initializeUIMenuEvents } from "./modal-events.js";
 import { initializeCharactersEvents } from "./characters-events.js";
-import { initializeToolbarEvents } from "./toolbar-events.js";
 import { initializePresetsEvents } from "./presets-events.js";
+import { initializeCharactersListEvents, initializeToolbarEvents } from "./charactersList-events.js";
+import { initializeCharacterCreationEvents } from "./characterCreation-events.js";
 
 
 /**
@@ -11,10 +10,11 @@ import { initializePresetsEvents } from "./presets-events.js";
  */
 export function initializeEventHandlers() {
     // Initialize event handlers for different components
-    initializeCharDetailsEvents();
-    initializeCharactersEvents();
     initializeModalEvents();
-    initializeUIMenuEvents();
     initializeToolbarEvents();
+    initializeUIMenuEvents();
     initializePresetsEvents();
+    initializeCharactersListEvents();
+    initializeCharactersEvents();
+    initializeCharacterCreationEvents();
 }

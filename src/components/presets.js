@@ -1,142 +1,14 @@
-import { createTagInputCat, displayTag } from './tags.js';
-import {
-    POPUP_TYPE,
-    callPopup,
-    tagMap,
-    tagList,
-} from "../constants/context.js";
+import { getSetting } from "../services/settings-service.js";
+import { callPopup, POPUP_TYPE } from "../constants/context.js";
+import { createTagInputCat, displayTag } from "./tags.js";
+import { updateDropdownPresetNames } from "./charactersList.js";
 import {
     addPresetCategory,
     getPreset,
-    getSetting, removePresetCategory, updateCategoryName,
+    removePresetCategory, updateCategoryName,
     updatePresetCategories,
     updatePresetName
-} from "../services/settings-service.js";
-import { getCharBlock } from "./characters.js";
-
-/**
- * Generates a dropdown HTML structure categorizing items based on tags
- * and includes a section for items without any associated tags.
- *
- * @param {Array} sortedList A sorted array of objects representing the items with `avatar` property to associate with tags.
- * @return {string} The HTML string containing the dropdown containers for each tag and a section for untagged items.
- */
-export function dropdownAllTags(sortedList){
-    const html = tagList.map(tag => {
-        const charactersForTag = sortedList
-            .filter(item => tagMap[item.avatar]?.includes(tag.id))
-            .map(item => item.avatar);
-
-        if (charactersForTag.length === 0) {
-            return '';
-        }
-
-        const characterBlocks = charactersForTag.map(character => getCharBlock(character)).join('');
-
-        return `<div class="dropdown-container">
-                            <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${tag.name} (${charactersForTag.length})</div>
-                            <div class="dropdown-content character-list">
-                                ${characterBlocks}
-                            </div>
-                        </div>`;
-    }).join('');
-
-    const noTagsCharacters = sortedList
-        .filter(item => !tagMap[item.avatar] || tagMap[item.avatar].length === 0)
-        .map(item => item.avatar);
-
-    const noTagsHtml = noTagsCharacters.length > 0
-        ? `<div class="dropdown-container">
-                        <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">No Tags (${noTagsCharacters.length})</div>
-                        <div class="dropdown-content character-list">
-                            ${noTagsCharacters.map(character => getCharBlock(character)).join('')}
-                        </div>
-                    </div>`
-        : '';
-
-    return html + noTagsHtml;
-}
-
-/**
- * Generates a custom dropdown structure based on a sorted list and predefined categories.
- *
- * @param {Array} sortedList - An array of objects representing sorted items, where each item contains an `avatar` property.
- * @return {string} A string containing HTML elements for categorized dropdowns.
- */
-export function dropdownCustom(sortedList){
-    const preset = getSetting('presetId');
-    const categories = getPreset(preset).categories;
-    if (categories.length === 0) {
-        return "Looks like our categories went on vacation! 🏖️ Check back when they're done sunbathing!";
-    }
-    return categories.map(category => {
-        const members = category.tags;
-        const charactersForCat = sortedList
-            .filter(item => members.every(memberId => tagMap[item.avatar]?.includes(String(memberId))))
-            .map(item => item.avatar);
-
-        if (charactersForCat.length === 0) {
-            return '';
-        }
-
-        const characterBlocks = charactersForCat.map(character => getCharBlock(character)).join('');
-
-        return `<div class="dropdown-container">
-                            <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${category.name} (${charactersForCat.length})</div>
-                            <div class="dropdown-content character-list">
-                                ${characterBlocks}
-                            </div>
-                        </div>`;
-    }).join('');
-}
-
-/**
- * Generates dropdown HTML elements grouped by creator names for the provided sorted list of items.
- *
- * @param {Array} sortedList - An array of objects representing sorted items, where each item contains an `avatar` property.
- * @return {string} A concatenated string of HTML dropdowns, where each dropdown represents a creator
- * and their associated avatars. Includes a special case for items with no creator.
- */
-export function dropdownCreators(sortedList){
-    return Object.entries(
-        sortedList.reduce((groups, item) => {
-            const creator = item.data.creator;
-
-            if (creator) {
-                if (!groups[creator]) {
-                    groups[creator] = [];
-                }
-                groups[creator].push(item.avatar);
-            } else {
-                if (!groups['No Creator']) {
-                    groups['No Creator'] = [];
-                }
-                groups['No Creator'].push(item.avatar);
-            }
-
-            return groups;
-        }, {})
-    ).sort(([creatorA], [creatorB]) => {
-        if (creatorA === 'No Creator') return 1;
-        if (creatorB === 'No Creator') return -1;
-        return creatorA.localeCompare(creatorB);
-    })
-        .map(([creator, avatars]) => {
-        if (avatars.length === 0) {
-            return '';
-        }
-
-        const characterBlocks = avatars.map(character => getCharBlock(character)).join('');
-        const creatorName = creator === 'No Creator' ? "No Creators" : creator;
-
-        return `<div class="dropdown-container">
-                <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${creatorName} (${avatars.length})</div>
-                <div class="dropdown-content character-list">
-                    ${characterBlocks}
-                </div>
-            </div>`;
-    }).join('');
-}
+} from "../services/presets-service.js";
 
 /**
  * Manages the custom categories interface in the application.
@@ -258,9 +130,9 @@ function makeCategoryDraggable(containerSelector) {
     });
 
     $(".drag-handle")
-        .mousedown(function () { $(this).css("cursor", "grabbing"); })
-        .mouseup(function () { $(this).css("cursor", "grab"); }
-    );
+        .on('mousedown',function () { $(this).css("cursor", "grabbing"); })
+        .on('mouseup', function () { $(this).css("cursor", "grab"); }
+        );
 }
 
 /**
@@ -314,18 +186,24 @@ export function renameCategory(preset, category, newName) {
     printCategoriesList(preset);
 }
 
-/**
- * Updates the names of the preset items in a dropdown menu by iterating through each dropdown item,
- * fetching the associated preset using its index, and setting its name as the item's text content.
- *
- * @return {void} This function does not return a value.
- */
-export function updateDropdownPresetNames() {
-    $('#preset-submenu .dropdown-ui-item').each(function () {
-        const presetIndex = $(this).data('preset');
-        const newName = getPreset(presetIndex).name;
-        if (newName) {
-            $(this).text(newName);
-        }
-    });
+export function toggleTagButton(button, selectedCat) {
+    if (button.hasClass('addCatTag')) {
+        button
+            .removeClass('addCatTag')
+            .addClass('cancelCatTag')
+            .removeClass('fa-plus')
+            .addClass('fa-minus');
+        $(`#input_cat_tag_${selectedCat}`).show();
+    } else {
+        button
+            .addClass('addCatTag')
+            .removeClass('cancelCatTag')
+            .addClass('fa-plus')
+            .removeClass('fa-minus');
+        $(`#input_cat_tag_${selectedCat}`).hide();
+    }
+}
+
+export function displayPresetName(newPreset) {
+    $('#preset_name').html(getPreset(newPreset).name);
 }
