@@ -1,32 +1,36 @@
 import {
-    getCharacters, getPastCharacterChats, reloadCurrentChat, setCharacterId, system_message_types,
-} from '../../../../../script.js';
-import { ensureImageFormatSupported } from '../../../../utils.js';
-import { renameGroupMember } from '../../../../group-chats.js';
-import { renameTagKey } from './acm_tags.js';
-import { debounce, delay } from './acm_tools.js';
-
-export { editCharDebounced, replaceAvatar, dupeChar, renameChar, exportChar, checkApiAvailability };
-
-const getContext = SillyTavern.getContext;
-const event_types = getContext().eventTypes;
-const eventSource = getContext().eventSource;
-const getRequestHeaders = getContext().getRequestHeaders;
-const characters = getContext().characters;
-const callPopup = getContext().callGenericPopup;
-const POPUP_TYPE = getContext().POPUP_TYPE;
-const selectCharacterById = getContext().selectCharacterById;
-const this_chid = getContext().characterId;
-const getThumbnailUrl = getContext().getThumbnailUrl;
-const editCharDebounced = debounce( (data) => { editChar(data); }, 1000);
-
+    getPastCharacterChats,
+    setCharacterId,
+    system_message_types
+} from '../../../../../../script.js';
+import { ensureImageFormatSupported, getCharaFilename } from '../../../../../utils.js';
+import { renameGroupMember } from '../../../../../group-chats.js';
+import { world_info } from '../../../../../world-info.js';
+import {
+    event_types,
+    eventSource,
+    getRequestHeaders,
+    characters,
+    callPopup,
+    POPUP_TYPE,
+    characterId,
+    getThumbnailUrl,
+    saveSettingsDebounced,
+    extensionSettings,
+    getCharacters,
+    getTokenCountAsync,
+    substituteParams
+} from "../constants/context.js";
+import { debounce, delay } from '../utils.js';
+import { renameTagKey } from './tags-service.js';
+import {selectedChar, setSelectedChar} from "../constants/settings.js";
 
 /**
  * Checks the availability of the AvatarEdit API by making a POST request to the probe endpoint.
  *
  * @return {Promise<boolean>} A promise that resolves to true if the API is available (returns a status of 204), or false otherwise.
  */
-async function checkApiAvailability() {
+export async function checkApiAvailability() {
     try {
         const response = await fetch('/api/plugins/avataredit/probe', {method: 'POST', headers: getRequestHeaders()});
         return response.status === 204;
@@ -55,11 +59,14 @@ async function editChar(update) {
 
     if (response.ok) {
         await getCharacters();
-        await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: this_chid, character: characters[this_chid] } });
+        await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: characterId, character: characters[characterId] } });
     } else {
         console.log('Error!');
     }
 }
+
+// Create a debounced version of editChar
+export const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
 
 /**
  * Replaces a character's avatar with a new one, with optional cropping.
@@ -69,7 +76,7 @@ async function editChar(update) {
  * @param {Object} [crop_data] - Optional cropping data for the avatar, if applicable.
  * @return {Promise<void>} A promise that resolves when the avatar has been successfully replaced or rejects if an error occurs.
  */
-async function replaceAvatar(newAvatar, id, crop_data = undefined) {
+export async function replaceAvatar(newAvatar, id, crop_data = undefined) {
     let url = '/api/plugins/avataredit/edit-avatar';
 
     if (crop_data !== undefined) {
@@ -114,28 +121,6 @@ async function replaceAvatar(newAvatar, id, crop_data = undefined) {
     });
 }
 
-// Function not used at this moment, leaving it here just in case
-// async function delChar(avatar, delChats = true) {
-//
-//     const toDel = {
-//         avatar_url: avatar,
-//         delete_chats: delChats,
-//     };
-//
-//     const response = await fetch('/api/characters/delete', {
-//         method: 'POST',
-//         headers: getRequestHeaders(),
-//         body: JSON.stringify(toDel),
-//         cache: 'no-cache',
-//     });
-//
-//     if (response.ok) {
-//         // TO DO ?
-//     } else {
-//         console.log('Error!');
-//     }
-// }
-
 /**
  * Sends a request to duplicate a character based on the provided avatar URL.
  * Upon success, notifies via a success message, emits an event containing
@@ -144,7 +129,7 @@ async function replaceAvatar(newAvatar, id, crop_data = undefined) {
  * @param {string} avatar - The URL of the avatar to be duplicated.
  * @return {Promise<void>} Resolves when the operation is complete.
  */
-async function dupeChar(avatar) {
+export async function dupeChar(avatar) {
     const body = { avatar_url: avatar };
     const response = await fetch('/api/characters/duplicate', {
         method: 'POST',
@@ -171,8 +156,7 @@ async function dupeChar(avatar) {
  * @return {Promise<void>} Resolves when the character has been successfully renamed,
  *         associated data updated, and UI changes applied. Rejects if any operation fails during the process.
  */
-async function renameChar(oldAvatar, charID, newName) {
-
+export async function renameChar(oldAvatar, charID, newName) {
     if (newName && newName !== characters[charID].name) {
         const body = JSON.stringify({ avatar_url: oldAvatar, new_name: newName });
         const response = await fetch('/api/characters/rename', {
@@ -185,10 +169,29 @@ async function renameChar(oldAvatar, charID, newName) {
             if (response.ok) {
                 const data = await response.json();
                 const newAvatar = data.avatar;
+                const oldName = getCharaFilename(null, { manualAvatarKey: oldAvatar });
 
                 // Replace tags list
                 renameTagKey(oldAvatar, newAvatar);
 
+                // Addtional lore books
+                const charLore = world_info.charLore?.find(x => x.name == oldName);
+                if (charLore) {
+                    charLore.name = newName;
+                    saveSettingsDebounced();
+                }
+
+                // Char-bound Author's Notes
+                const charNote = extensionSettings.note.chara?.find(x => x.name == oldName);
+                if (charNote) {
+                    charNote.name = newName;
+                    saveSettingsDebounced();
+                }
+
+                await eventSource.emit(event_types.CHARACTER_RENAMED, oldAvatar, newAvatar);
+
+                // Unload current character
+                setCharacterId(undefined);
                 // Reload characters list
                 await getCharacters();
 
@@ -197,14 +200,14 @@ async function renameChar(oldAvatar, charID, newName) {
 
                 if (newChId !== -1) {
                     // Select the character after the renaming
-                    setCharacterId(-1);
-                    await selectCharacterById(String(newChId));
+                    setCharacterId(newChId);
+                    setSelectedChar(newAvatar);
 
                     // Async delay to update UI
                     await delay(1);
                     await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: newChId, character: characters[newChId] } });
 
-                    if (getContext().characterId === -1) {
+                    if (characterId === -1) {
                         throw new Error('New character not selected');
                     }
 
@@ -216,7 +219,6 @@ async function renameChar(oldAvatar, charID, newName) {
 
                     if (renamePastChatsConfirm) {
                         await renamePastChats(newAvatar, newName);
-                        await reloadCurrentChat();
                         toastr.success('Character renamed and past chats updated!');
                     }
                 }
@@ -303,7 +305,7 @@ async function renamePastChats(newAvatar, newValue) {
  * @param {string} avatar - The URL of the avatar image to be exported.
  * @return {Promise<void>} A promise that resolves when the export operation completes.
  */
-async function exportChar (format, avatar) {
+export async function exportChar(format, avatar) {
     const body = { format, avatar_url: avatar };
 
     const response = await fetch('/api/characters/export', {
@@ -323,4 +325,48 @@ async function exportChar (format, avatar) {
         document.body.removeChild(a);
     }
     $('#acm_export_format_popup').hide();
+}
+
+/**
+ * Collects the values of all textareas with the class 'altGreeting_zone'
+ * and returns them as an array of strings.
+ *
+ * @return {string[]} An array containing the values of the textareas with the class 'altGreeting_zone'.
+ */
+function generateGreetingArray() {
+    const textareas = document.querySelectorAll('.altGreeting_zone');
+    const greetingArray = [];
+
+    textareas.forEach(textarea => {
+        greetingArray.push(textarea.value);
+    });
+    return greetingArray;
+}
+
+/**
+ * Saves alternate greetings for the selected character and updates the relevant UI elements.
+ *
+ * @param {Event|null} event - The event object triggered by a user action, used to update token count.
+ *                             Pass null if no event is available.
+ * @return {void} This function does not return a value.
+ */
+export async function saveAltGreetings(event = null){
+    const greetings = generateGreetingArray();
+    const update = {
+        avatar: selectedChar,
+        data: {
+            alternate_greetings: greetings,
+        },
+    };
+    editCharDebounced(update);
+
+    // Update token count if necessary
+    if (event) {
+        const textarea = event.target;
+        const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
+        tokensSpan.textContent = `Tokens: ${await getTokenCountAsync(substituteParams(textarea.value))}`;
+    }
+
+    // Edit the Alt Greetings number on the main drawer
+    $('#altGreetings_number').html(`Numbers: ${greetings.length}`);
 }

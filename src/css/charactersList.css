@@ -1,0 +1,121 @@
+/* ===== CHARACTER LIST COMPONENTS ===== */
+.list-character-wrapper {
+    display: flex;
+    height: 100%;
+}
+
+#character-list,
+.character-list {
+    display: flex;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    justify-content: space-around;
+    align-content: flex-start;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 10px;
+    gap: 5px;
+    flex-direction: row;
+    height: 100%;
+}
+
+.character_item {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    width: min-content;
+    height: min-content;
+    padding: 2px;
+    border-radius: 5px;
+    align-items: flex-start;
+    overflow: hidden;
+    flex-direction: row;
+}
+
+.char_select:hover {
+    background-color: var(--white30a);
+}
+
+.char_name {
+    width: 100%;
+    max-width: unset !important;
+    justify-content: center;
+    position: relative;
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.char_name_block {
+    width: 100%;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 0;
+    display: flex;
+    align-items: baseline;
+}
+
+.char_name_block > span {
+    width: 100%;
+    max-width: 100px;
+    text-align: center;
+    font-size: calc(var(--mainFontSize) * .8);
+    flex: 1 1 auto;
+    white-space: normal;
+    overflow: hidden;
+    text-wrap: wrap;
+    text-overflow: ellipsis;
+    display: block;
+    font-weight: bolder;
+}
+
+.char_selected {
+    background-color: rgb(0, 0, 0);
+}
+
+/* ===== SEARCH AND FILTER COMPONENTS ===== */
+.sortAndFilter {
+    display: flex;
+    justify-content: space-between;
+}
+
+.form_sort_filter {
+    display: flex;
+    margin: 5px;
+    column-gap: 5px;
+}
+
+#acm_tags_view.tags_view,
+#acm_character_import_button,
+#acm_external_import_button {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 2px;
+}
+
+.sortText {
+    flex-shrink: 0;
+    margin: 8px 0 8px 8px;
+}
+
+#char_sort_order,
+#char_search_bar {
+    margin: 5px 0;
+    flex: 1;
+    height: auto;
+}
+
+.acm_checkbox {
+    display: flex;
+    flex-direction: row;
+    column-gap: 5px;
+    align-items: center;
+    white-space: nowrap;
+    margin: 5px;
+}
+
+#charNumber {
+    padding: 7px 2px;
+    min-width: fit-content;
+    margin: 7px;
+}
