@@ -137,11 +137,17 @@ export class TagManager {
             case 'category': {
                 const selectedPreset = $('#preset_selector option:selected').data('preset');
                 const selectedCat = $(listSelector).find('label').closest('[data-catid]').data('catid');
+                
+                // Determine tag type from the parent section
+                const tagSection = $(listSelector).closest('[data-tagtype]');
+                const tagType = tagSection.length > 0 ? tagSection.data('tagtype') : 'mandatory';
+                
                 $(listSelector).find('label').before(this.displayTag(tag.id, 'category'));
                 this.eventManager.emit('tag:addTagToCat', {
                     presetId: selectedPreset,
                     categoryId: selectedCat,
                     tagId: tag.id,
+                    tagType: tagType
                 });
                 break;
             }

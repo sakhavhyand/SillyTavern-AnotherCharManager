@@ -9,6 +9,11 @@ export const defaultSettings = Object.freeze({
     favOnly: false,
     dropdownUI: false,
     dropdownMode: 'allTags',
+    dropdownOpenSections: {
+        allTags: [],
+        custom: [],
+        creators: []
+    },
     presetId: 0,
     dropdownPresets: [
         { name: 'Preset 1', categories: [] },

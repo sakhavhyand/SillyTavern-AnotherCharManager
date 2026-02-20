@@ -81,12 +81,18 @@ export class PresetManager {
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const selectedCat = $element.closest('[data-catid]').data('catid');
             const selectedTag = $element.closest('[data-tagid]').data('tagid');
-            this.removeTagFromCategory(selectedPreset, selectedCat, selectedTag);
+            
+            // Determine tag type from the parent section
+            const tagSection = $element.closest('[data-tagtype]');
+            const tagType = tagSection.length > 0 ? tagSection.data('tagtype') : 'mandatory';
+            
+            this.removeTagFromCategory(selectedPreset, selectedCat, selectedTag, tagType);
             $element.closest('[data-tagid]').remove();
         });
 
         this.eventManager.on('tag:addTagToCat',  (data) => {
-            this.addTagToCategory(data.presetId, data.categoryId, data.tagId)
+            const tagType = data.tagType || 'mandatory';
+            this.addTagToCategory(data.presetId, data.categoryId, data.tagId, tagType);
         });
 
         this.eventManager.on('modal:openPresetManager', () => {
@@ -232,14 +238,35 @@ export class PresetManager {
      * @param {number} presetIndex - The index of the preset
      * @param {number} categoryIndex - The index of the category
      * @param {number} tagId - The ID of the tag to add
+     * @param {string} tagType - The type of tag ('mandatory', 'facultative', 'excluded')
      */
-    addTagToCategory(presetIndex, categoryIndex, tagId) {
+    addTagToCategory(presetIndex, categoryIndex, tagId, tagType = 'mandatory') {
         const category = this.getCategory(presetIndex, categoryIndex);
-        if (category.tags.includes(tagId)) {
+        const fieldMap = {
+            'mandatory': 'mandatoryTags',
+            'facultative': 'facultativeTags',
+            'excluded': 'excludedTags'
+        };
+        const fieldName = fieldMap[tagType] || 'mandatoryTags';
+        
+        // Ensure the field exists
+        if (!category[fieldName]) {
+            category[fieldName] = [];
+        }
+        
+        if (category[fieldName].includes(tagId)) {
             return; // Tag already exists in the category
         }
+        
         const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex].categories[categoryIndex].tags.push(tagId);
+        updatedPresets[presetIndex].categories[categoryIndex][fieldName].push(tagId);
+        
+        // Maintain backwards compatibility: keep 'tags' pointing to mandatoryTags
+        if (fieldName === 'mandatoryTags') {
+            updatedPresets[presetIndex].categories[categoryIndex].tags = 
+                updatedPresets[presetIndex].categories[categoryIndex].mandatoryTags;
+        }
+        
         this.settings.updateSetting('dropdownPresets', updatedPresets);
     }
 
@@ -248,13 +275,54 @@ export class PresetManager {
      * @param {number} presetIndex - The index of the preset
      * @param {number} categoryIndex - The index of the category
      * @param {number} tagId - The ID of the tag to remove
+     * @param {string} tagType - The type of tag ('mandatory', 'facultative', 'excluded')
      */
-    removeTagFromCategory(presetIndex, categoryIndex, tagId) {
+    removeTagFromCategory(presetIndex, categoryIndex, tagId, tagType = 'mandatory') {
+        const fieldMap = {
+            'mandatory': 'mandatoryTags',
+            'facultative': 'facultativeTags',
+            'excluded': 'excludedTags'
+        };
+        const fieldName = fieldMap[tagType] || 'mandatoryTags';
+        
         const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex].categories[categoryIndex].tags =
-            updatedPresets[presetIndex].categories[categoryIndex].tags
-                .filter(id => id !== tagId);
+        const category = updatedPresets[presetIndex].categories[categoryIndex];
+        
+        if (category[fieldName]) {
+            category[fieldName] = category[fieldName].filter(id => id !== tagId);
+        }
+        
+        // Maintain backwards compatibility: keep 'tags' pointing to mandatoryTags
+        if (fieldName === 'mandatoryTags') {
+            category.tags = category.mandatoryTags;
+        }
+        
         this.settings.updateSetting('dropdownPresets', updatedPresets);
+    }
+
+    /**
+     * Normalizes a category structure for backwards compatibility.
+     * Ensures that mandatoryTags, facultativeTags, and excludedTags exist.
+     * Migrates old 'tags' array to 'mandatoryTags' if needed.
+     *
+     * @param {Object} category - The category object to normalize
+     * @return {Object} The normalized category
+     */
+    normalizeCategory(category) {
+        // If category doesn't have the new structure but has old 'tags', migrate it
+        if (!category.mandatoryTags && category.tags) {
+            category.mandatoryTags = [...category.tags];
+        }
+        
+        // Ensure all tag type arrays exist
+        if (!category.mandatoryTags) category.mandatoryTags = [];
+        if (!category.facultativeTags) category.facultativeTags = [];
+        if (!category.excludedTags) category.excludedTags = [];
+        
+        // Maintain backwards compatibility: keep 'tags' as reference to mandatoryTags
+        category.tags = category.mandatoryTags;
+        
+        return category;
     }
 
     /**
@@ -333,6 +401,9 @@ export class PresetManager {
         }
         else {
             preset.categories.forEach((cat,index) => {
+                // Normalize category for backwards compatibility
+                cat = this.normalizeCategory(cat);
+                
                 const catHTML = `
                         <div data-catid="${index}">
                             <div class="acm_catList">
@@ -343,22 +414,66 @@ export class PresetManager {
                                     <div class="menu_button fa-solid fa-trash cat_delete" title="Delete category"></div>
                                 </div>
                             </div>
-                            <div id="acm_catTagList_${index}" class="acm_catTagList"></div>
+                            <div class="acm_catTagSections">
+                                <div class="acm_catTagSection" data-tagtype="mandatory">
+                                    <h5>Mandatory Tags:</h5>
+                                    <div id="acm_catTagList_${index}_mandatory" class="acm_catTagList"></div>
+                                </div>
+                                <div class="acm_catTagSection" data-tagtype="facultative">
+                                    <h5>At Least One Tags:</h5>
+                                    <div id="acm_catTagList_${index}_facultative" class="acm_catTagList"></div>
+                                </div>
+                                <div class="acm_catTagSection" data-tagtype="excluded">
+                                    <h5>Excluded Tags:</h5>
+                                    <div id="acm_catTagList_${index}_excluded" class="acm_catTagList"></div>
+                                </div>
+                            </div>
                         </div>`;
                 const catElement = $(catHTML);
-                const catTagList = catElement.find(`#acm_catTagList_${index}`);
-                if (cat.tags) {
-                    cat.tags.forEach(tag => {
-                        catTagList.append(this.tagManager.displayTag(tag, 'category'));
+                
+                // Render mandatory tags
+                const mandatoryList = catElement.find(`#acm_catTagList_${index}_mandatory`);
+                if (cat.mandatoryTags && cat.mandatoryTags.length > 0) {
+                    cat.mandatoryTags.forEach(tag => {
+                        mandatoryList.append(this.tagManager.displayTag(tag, 'category'));
                     });
                 }
-                catTagList.append(`<label for="input_cat_tag_${index}" title="Search or create a tag.">
-                                    <input id="input_cat_tag_${index}" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" placeholder="Search tags" maxlength="50" autocomplete="off" style="display: none">
+                mandatoryList.append(`<label for="input_cat_tag_${index}_mandatory" title="Search or create a tag.">
+                                    <input id="input_cat_tag_${index}_mandatory" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" placeholder="Search tags" maxlength="50" autocomplete="off" style="display: none">
                                 </label>`);
-                catTagList.append('<i class="fa-solid fa-plus tag addCatTag"></i>');
+                mandatoryList.append('<i class="fa-solid fa-plus tag addCatTag"></i>');
+                
+                // Render facultative tags
+                const facultativeList = catElement.find(`#acm_catTagList_${index}_facultative`);
+                if (cat.facultativeTags && cat.facultativeTags.length > 0) {
+                    cat.facultativeTags.forEach(tag => {
+                        facultativeList.append(this.tagManager.displayTag(tag, 'category'));
+                    });
+                }
+                facultativeList.append(`<label for="input_cat_tag_${index}_facultative" title="Search or create a tag.">
+                                    <input id="input_cat_tag_${index}_facultative" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" placeholder="Search tags" maxlength="50" autocomplete="off" style="display: none">
+                                </label>`);
+                facultativeList.append('<i class="fa-solid fa-plus tag addCatTag"></i>');
+                
+                // Render excluded tags
+                const excludedList = catElement.find(`#acm_catTagList_${index}_excluded`);
+                if (cat.excludedTags && cat.excludedTags.length > 0) {
+                    cat.excludedTags.forEach(tag => {
+                        excludedList.append(this.tagManager.displayTag(tag, 'category'));
+                    });
+                }
+                excludedList.append(`<label for="input_cat_tag_${index}_excluded" title="Search or create a tag.">
+                                    <input id="input_cat_tag_${index}_excluded" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" placeholder="Search tags" maxlength="50" autocomplete="off" style="display: none">
+                                </label>`);
+                excludedList.append('<i class="fa-solid fa-plus tag addCatTag"></i>');
+                
                 catContainer.append(catElement);
                 $('#acm_custom_categories').append(catContainer);
-                this.tagManager.acmCreateTagInput(`#input_cat_tag_${index}`, `#acm_catTagList_${index}`, { tagOptions: { removable: true } }, 'category');
+                
+                // Initialize tag inputs for all three types
+                this.tagManager.acmCreateTagInput(`#input_cat_tag_${index}_mandatory`, `#acm_catTagList_${index}_mandatory`, { tagOptions: { removable: true } }, 'category');
+                this.tagManager.acmCreateTagInput(`#input_cat_tag_${index}_facultative`, `#acm_catTagList_${index}_facultative`, { tagOptions: { removable: true } }, 'category');
+                this.tagManager.acmCreateTagInput(`#input_cat_tag_${index}_excluded`, `#acm_catTagList_${index}_excluded`, { tagOptions: { removable: true } }, 'category');
             });
             this.makeCategoryDraggable('#catContainer');
         }
@@ -404,20 +519,24 @@ export class PresetManager {
      * @return {string} The identifier of the toggled category.
      */
     toggleTagButton(button, selectedCat) {
+        // Find the input within the same tag section
+        const tagSection = button.closest('.acm_catTagList');
+        const input = tagSection.find('input.tag_input');
+        
         if (button.hasClass('addCatTag')) {
             button
                 .removeClass('addCatTag')
                 .addClass('cancelCatTag')
                 .removeClass('fa-plus')
                 .addClass('fa-minus');
-            $(`#input_cat_tag_${selectedCat}`).show();
+            input.show();
         } else {
             button
                 .addClass('addCatTag')
                 .removeClass('cancelCatTag')
                 .addClass('fa-plus')
                 .removeClass('fa-minus');
-            $(`#input_cat_tag_${selectedCat}`).hide();
+            input.hide();
         }
     }
 }

@@ -16,6 +16,20 @@
     border: 1px solid var(--SmartThemeBorderColor);
 }
 
+.acm_catTagSections {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 5px;
+}
+
+.acm_catTagSection h5 {
+    margin: 5px 0;
+    font-size: 0.9em;
+    color: var(--SmartThemeBodyColor);
+    opacity: 0.8;
+}
+
 .acm_catTagList {
     display: flex;
     margin: 0 5px 5px 5px;

@@ -266,7 +266,10 @@ export class CharacterManager {
         $('#acm_firstMess').val(char.first_mes);
         $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
         $('#acm_creatornotes').val(char.data?.creator_notes || char.creatorcomment);
-        $('#tag_List').html(`${this.st.tagMap[char.avatar].map((tag) => this.tagManager.displayTag(tag, 'details')).join('')}`);
+        
+        const charTags = this.st.tagMap[char.avatar] || [];
+        $('#tag_List').html(`${charTags.map((tag) => this.tagManager.displayTag(tag, 'details')).join('')}`);
+        
         this.displayAltGreetings(char.data.alternate_greetings).then(html => {
             $('#altGreetings_content').html(html);
         });

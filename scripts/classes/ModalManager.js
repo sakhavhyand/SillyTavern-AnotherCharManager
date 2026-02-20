@@ -145,7 +145,10 @@ export class ModalManager {
 
             option.selected = field === this.settings.getSetting('sortingField') && order === this.settings.getSetting('sortingOrder');
         });
-        document.getElementById('favOnly_checkbox').checked = this.settings.getSetting('favOnly');
+        
+        const favOnly = this.settings.getSetting('favOnly');
+        this.charListManager.updateFavFilterButtonState(favOnly);
+        
         this.eventManager.emit('modal:opened');
     }
 
@@ -171,8 +174,10 @@ export class ModalManager {
      * @return {void} This function does not return a value.
      */
     closeModal() {
-        this.closeDetails();
-        setCharacterId(getIdByAvatar(this.settings.mem_avatar));
+        this.closeDetails(false);
+        if (this.settings.mem_avatar !== undefined) {
+            setCharacterId(getIdByAvatar(this.settings.mem_avatar));
+        }
         setMenuType(this.settings.mem_menu);
         this.settings.setMem_avatar(undefined);
 
