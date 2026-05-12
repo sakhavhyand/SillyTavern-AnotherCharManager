@@ -162,6 +162,10 @@ export class CharacterManager {
 
         $('#acm_character_cross').on('click', this.closeCharacterPopup);
 
+        $(document).on('input', '.altGreeting_zone', (event) => {
+            this.saveAltGreetings(event);
+        });
+
         // Add a new alternative greetings
         $(document).on('click', '.fa-circle-plus', async  (event) => {
             event.stopPropagation();
@@ -186,18 +190,6 @@ export class CharacterManager {
         if (tagListElement) {
             tagListObserver.observe(tagListElement, { childList: true });
         }
-    }
-
-    /**
-     * Attaches an event listener to all elements with the class 'altGreeting_zone'.
-     * The event listener triggers the saveAltGreetings function whenever an 'input' event occurs on the element.
-     *
-     * @return {void} This function does not return anything.
-     */
-    addAltGreetingsTrigger(){
-        document.querySelectorAll('.altGreeting_zone').forEach(textarea => {
-            textarea.addEventListener('input', (event) => {this.saveAltGreetings(event);});
-        });
     }
 
     /**
@@ -266,15 +258,14 @@ export class CharacterManager {
         $('#acm_firstMess').val(char.first_mes);
         $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
         $('#acm_creatornotes').val(char.data?.creator_notes || char.creatorcomment);
-        
+
         const charTags = this.st.tagMap[char.avatar] || [];
         $('#tag_List').html(`${charTags.map((tag) => this.tagManager.displayTag(tag, 'details')).join('')}`);
-        
+
         this.displayAltGreetings(char.data.alternate_greetings).then(html => {
             $('#altGreetings_content').html(html);
         });
         $('#acm_favorite_button').toggleClass('fav_on', char.fav || char.data.extensions.fav).toggleClass('fav_off', !(char.fav || char.data.extensions.fav));
-        this.addAltGreetingsTrigger();
     }
 
     /**

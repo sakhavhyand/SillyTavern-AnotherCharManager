@@ -146,7 +146,7 @@ export class CharListManager {
     updateFavFilterButtonState(isEnabled) {
         const button = document.getElementById('acm_fav_filter_button');
         if (!button) return;
-        
+
         button.classList.toggle('fav_on', isEnabled);
         button.classList.toggle('fav_off', !isEnabled);
         button.setAttribute('aria-pressed', isEnabled ? 'true' : 'false');
@@ -164,7 +164,7 @@ export class CharListManager {
         const total = this.st.characters.length;
         const dropdownUI = this.settings.getSetting('dropdownUI');
         const hasFilters = this.hasActiveFilters();
-        
+
         let displayText;
         if (dropdownUI) {
             displayText = `Characters: ${total}/${total}`;
@@ -172,7 +172,7 @@ export class CharListManager {
             const count = hasFilters ? visibleCount : total;
             displayText = `Characters: ${count}/${total}`;
         }
-        
+
         $('#charNumber').empty().append(displayText);
     }
 
@@ -187,7 +187,7 @@ export class CharListManager {
         const hasMandatoryTags = $('#acm_mandatoryTags > span[data-tagid]').length > 0;
         const hasFacultativeTags = $('#acm_facultativeTags > span[data-tagid]').length > 0;
         const hasExcludedTags = $('#acm_excludedTags > span[data-tagid]').length > 0;
-        
+
         return hasSearchValue || hasFavFilter || hasMandatoryTags || hasFacultativeTags || hasExcludedTags;
     }
 
@@ -201,33 +201,33 @@ export class CharListManager {
      */
     matchesCategoryFilters(item, category) {
         const characterTags = this.st.tagMap[item.avatar] || [];
-        
+
         // Normalize category for backwards compatibility
         const normalizedCategory = this.presetManager.normalizeCategory(category);
         const { mandatoryTags = [], facultativeTags = [], excludedTags = [] } = normalizedCategory;
-        
+
         // First: Exclude characters with any excluded tags
         if (excludedTags.length > 0) {
             const hasExcludedTag = characterTags.some(tagId => excludedTags.includes(String(tagId)));
             if (hasExcludedTag) return false;
         }
-        
+
         // Second: Check if character has ALL mandatory tags
         if (mandatoryTags.length > 0) {
-            const hasAllMandatoryTags = mandatoryTags.every(tagId => 
+            const hasAllMandatoryTags = mandatoryTags.every(tagId =>
                 characterTags.includes(String(tagId))
             );
             if (!hasAllMandatoryTags) return false;
         }
-        
+
         // Third: Check if character has at least ONE facultative tag (if any are defined)
         if (facultativeTags.length > 0) {
-            const hasAtLeastOneFacultativeTag = facultativeTags.some(tagId => 
+            const hasAtLeastOneFacultativeTag = facultativeTags.some(tagId =>
                 characterTags.includes(String(tagId))
             );
             if (!hasAtLeastOneFacultativeTag) return false;
         }
-        
+
         return true;
     }
 
@@ -265,7 +265,7 @@ export class CharListManager {
 
         const randomIndex = Math.floor(Math.random() * selectableCharacters.length);
         const randomAvatar = selectableCharacters[randomIndex];
-        
+
         this.selectAndDisplay(randomAvatar, true);
     }
 
@@ -527,7 +527,7 @@ export class CharListManager {
         await this.charManager.fillDetails(avatar);
         await this.charManager.fillAdvancedDefinitions(avatar);
         window.acmIsUpdatingDetails = false;
-        
+
         if(scrollTo && this.virtualScroller) {
             // Use VirtualScroller in classic view
             this.virtualScroller.scrollToAvatar(avatar);
@@ -544,7 +544,7 @@ export class CharListManager {
         if (avatarElement) {
             avatarElement.classList.replace('char_select','char_selected');
         }
-        
+
         document.getElementById('char-sep').style.display = 'block';
         document.getElementById('char-details').classList.add('open');
     }
@@ -567,7 +567,7 @@ export class CharListManager {
             const dropdownUI = this.settings.getSetting('dropdownUI');
             const dropdownMode = this.settings.getSetting('dropdownMode');
             const sortedList = this.sortCharAR(filteredChars);
-            
+
             // Store the current filtered and sorted list for random selection
             this.currentFilteredList = sortedList;
 
@@ -578,18 +578,18 @@ export class CharListManager {
                     const title = container.querySelector('.dropdown-title');
                     const content = container.querySelector('.dropdown-content');
                     const data = container.dataset;
-                    
+
                     // Restore content for sections that were previously open
                     if (container.classList.contains('open')) {
                         content.appendChild(this.generateDropdownContent(sortedList, data.type, data.content));
                     }
-                    
+
                     title.addEventListener('click', () => {
                         const isOpen = container.classList.toggle('open');
-                        
+
                         // Save the open/closed state
                         this.updateDropdownSectionState(data.type, data.content, isOpen);
-                        
+
                         if (isOpen) {
                             content.appendChild(this.generateDropdownContent(sortedList, data.type, data.content));
                         } else {
@@ -645,7 +645,7 @@ export class CharListManager {
                 return categories.map((category, categoryIndex) => {
                     // Normalize category for backwards compatibility
                     category = this.presetManager.normalizeCategory(category);
-                    
+
                     const charactersForCat = sortedList
                         .filter(item => this.matchesCategoryFilters(item, category))
                         .map(item => item.avatar);
@@ -700,7 +700,7 @@ export class CharListManager {
     createDropdownContainer(title, count, type, content) {
         const isOpen = this.isDropdownSectionOpen(type, content);
         const openClass = isOpen ? ' open' : '';
-        
+
         return `<div class="dropdown-container${openClass}" data-type="${type}" data-content="${content}">
         <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">
             ${title} (${count})
@@ -737,17 +737,17 @@ export class CharListManager {
             custom: [],
             creators: []
         };
-        
+
         const sectionsForType = openSections[type] || [];
         const contentStr = String(content);
         const index = sectionsForType.indexOf(contentStr);
-        
+
         if (isOpen && index === -1) {
             sectionsForType.push(contentStr);
         } else if (!isOpen && index !== -1) {
             sectionsForType.splice(index, 1);
         }
-        
+
         openSections[type] = sectionsForType;
         this.settings.updateSetting('dropdownOpenSections', openSections);
     }
@@ -783,18 +783,18 @@ export class CharListManager {
                 // Parse preset and category index from content (format: "presetId-categoryIndex")
                 const [presetId, categoryIndex] = content.split('-').map(Number);
                 const category = this.presetManager.getPreset(presetId).categories[categoryIndex];
-                
+
                 if (!category) {
                     return document.createDocumentFragment();
                 }
-                
+
                 // Normalize category for backwards compatibility
                 const normalizedCategory = this.presetManager.normalizeCategory(category);
-                
-                const filteredCharacters = sortedList.filter(item => 
+
+                const filteredCharacters = sortedList.filter(item =>
                     this.matchesCategoryFilters(item, normalizedCategory)
                 );
-                
+
                 const container = document.createDocumentFragment();
                 filteredCharacters.forEach(character => {
                     const block = this.createCharacterBlock(character.avatar);
