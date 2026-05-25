@@ -105,6 +105,12 @@ export class PresetManager {
             }
             this.printCategoriesList(selectedPreset, true);
         });
+
+        // Toggle category collapse
+        $(document).on('click', '.acm_catList', (event) => {
+            if ($(event.target).closest('.drag-handle, .menu_button').length) return;
+            $(event.currentTarget).siblings('.acm_catTagSections').stop().slideToggle();
+        });
     }
 
     /**
@@ -416,7 +422,7 @@ export class PresetManager {
                                     <div class="menu_button fa-solid fa-trash cat_delete" title="Delete category"></div>
                                 </div>
                             </div>
-                            <div class="acm_catTagSections">
+                            <div class="acm_catTagSections" style="display: none;">
                                 <div class="acm_catTagSection" data-tagtype="mandatory">
                                     <h5>Mandatory Tags:</h5>
                                     <div id="acm_catTagList_${index}_mandatory" class="acm_catTagList"></div>
