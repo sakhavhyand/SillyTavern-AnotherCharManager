@@ -13,6 +13,7 @@ export class CharListManager {
         this.st = st;
         this.presetManager = presetManager;
         this.virtualScroller = null;
+        this.dropdownScrollers = new Map();
         this.modalOpen = false;
         this.charManager = new CharacterManager(this.eventManager, this.settings, this.st, this.presetManager.tagManager);
     }
@@ -72,6 +73,7 @@ export class CharListManager {
 
         this.eventManager.on('modal:closed', () => {
             this.modalOpen = false;
+            this.destroyDropdownScrollers();
         });
 
         this.st.eventSource.on(this.st.event_types.CHARACTER_PAGE_LOADED, () => {
@@ -582,6 +584,7 @@ export class CharListManager {
 
             if (dropdownUI && ['allTags', 'custom', 'creators'].includes(dropdownMode)) {
                 this.destroyVirtualScroller();
+                this.destroyDropdownScrollers();
                 $('#character-list').html(this.generateDropdown(sortedList, dropdownMode));
                 const list = document.querySelector('#character-list');
                 list.querySelectorAll('.dropdown-container').forEach(container => {
@@ -591,7 +594,8 @@ export class CharListManager {
 
                     // Restore content for sections that were previously open
                     if (container.classList.contains('open')) {
-                        content.appendChild(this.generateDropdownContent(sortedList, data.type, data.content));
+                        const items = this.getDropdownItems(sortedList, data.type, data.content);
+                        this.createDropdownScroller(content, items);
                     }
 
                     title.addEventListener('click', () => {
@@ -601,9 +605,11 @@ export class CharListManager {
                         this.updateDropdownSectionState(data.type, data.content, isOpen);
 
                         if (isOpen) {
-                            content.appendChild(this.generateDropdownContent(sortedList, data.type, data.content));
+                            const items = this.getDropdownItems(sortedList, data.type, data.content);
+                            this.createDropdownScroller(content, items);
                         } else {
-                            content.innerText = '';
+                            this.destroyDropdownScrollerForContent(content);
+                            content.innerHTML = '';
                         }
                     });
                 });
@@ -763,66 +769,72 @@ export class CharListManager {
     }
 
     /**
-     * Generates and returns the content for a dropdown based on the specified type and content parameters.
-     * Filters and processes items from the provided sorted list and builds the dropdown's content dynamically.
-     *
-     * @param {Array<Object>} sortedList - A list of items to sort and filter. Each item contains character data.
-     * @param {string} type - Specifies the type of dropdown content to generate. Possible values include 'allTags', 'custom', or 'creator'.
-     * @param {string} content - The filtering criteria, such as a tag string, custom tags, or creator name.
-     * @return {DocumentFragment|string} The generated dropdown content in the form of a DocumentFragment or an empty string if the type is invalid or not matched.
+     * Returns the filtered character items for a dropdown section.
+     * @param {Array<Object>} sortedList
+     * @param {string} type - 'allTags', 'custom', or 'creator'
+     * @param {string} content - The section identifier
+     * @return {Array<Object>} The filtered character items
      */
-    generateDropdownContent(sortedList, type, content){
-        const dropdownContent = {
-            allTags: () => {
-                const filteredCharacters = sortedList
-                    .filter(item => {
-                        if (content === 'no-tags') {
-                            return !this.st.tagMap[item.avatar] || this.st.tagMap[item.avatar].length === 0;
-                        }
-                        return this.st.tagMap[item.avatar]?.includes(content);
-
-                    });
-                const container = document.createDocumentFragment();
-                filteredCharacters.forEach(character => {
-                    const block = this.createCharacterBlock(character.avatar);
-                    container.appendChild(block);
-                });
-                return container;
-            },
+    getDropdownItems(sortedList, type, content){
+        const filters = {
+            allTags: () => sortedList.filter(item => {
+                if (content === 'no-tags') {
+                    return !this.st.tagMap[item.avatar] || this.st.tagMap[item.avatar].length === 0;
+                }
+                return this.st.tagMap[item.avatar]?.includes(content);
+            }),
             custom: () => {
-                // Parse preset and category index from content (format: "presetId-categoryIndex")
                 const [presetId, categoryIndex] = content.split('-').map(Number);
                 const category = this.presetManager.getPreset(presetId).categories[categoryIndex];
-
-                if (!category) {
-                    return document.createDocumentFragment();
-                }
-
-                // Normalize category for backwards compatibility
-                const normalizedCategory = this.presetManager.normalizeCategory(category);
-
-                const filteredCharacters = sortedList.filter(item =>
-                    this.matchesCategoryFilters(item, normalizedCategory)
+                if (!category) return [];
+                return sortedList.filter(item =>
+                    this.matchesCategoryFilters(item, this.presetManager.normalizeCategory(category))
                 );
-
-                const container = document.createDocumentFragment();
-                filteredCharacters.forEach(character => {
-                    const block = this.createCharacterBlock(character.avatar);
-                    container.appendChild(block);
-                });
-                return container;
             },
-            creator: () => {
-                const filteredCharacters = sortedList.filter(item => item.data.creator === content);
-                const container = document.createDocumentFragment();
-                filteredCharacters.forEach(character => {
-                    const block = this.createCharacterBlock(character.avatar);
-                    container.appendChild(block);
-                });
-                return container;
-            },
+            creator: () => sortedList.filter(item => {
+                if (content === 'No Creator') return !item.data.creator;
+                return item.data.creator === content;
+            }),
         };
-        return dropdownContent[type]?.() || '';
+        return filters[type]?.() || [];
+    }
+
+    createDropdownScroller(contentDiv, items) {
+        if (items.length === 0) return;
+        const containerWidth = contentDiv.clientWidth;
+        const itemWidth = 120;
+        const itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
+        const scroller = new VirtualScroller({
+            container: contentDiv,
+            items: items,
+            renderItem: (item) => this.createCharacterBlock(item.avatar),
+            itemHeight: 180,
+            itemsPerRow: itemsPerRow,
+            buffer: 2,
+        });
+        const key = this.dropdownScrollerKey(contentDiv);
+        this.dropdownScrollers.set(key, scroller);
+    }
+
+    dropdownScrollerKey(contentDiv) {
+        const container = contentDiv.closest('.dropdown-container');
+        return `${container.dataset.type}-${container.dataset.content}`;
+    }
+
+    destroyDropdownScrollerForContent(contentDiv) {
+        const key = this.dropdownScrollerKey(contentDiv);
+        const scroller = this.dropdownScrollers.get(key);
+        if (scroller) {
+            scroller.destroy();
+            this.dropdownScrollers.delete(key);
+        }
+    }
+
+    destroyDropdownScrollers() {
+        for (const scroller of this.dropdownScrollers.values()) {
+            scroller.destroy();
+        }
+        this.dropdownScrollers.clear();
     }
 
 

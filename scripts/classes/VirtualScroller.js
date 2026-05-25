@@ -23,7 +23,8 @@ export class VirtualScroller {
         // Clear container
         this.container.innerHTML = '';
         // Listen to scroll on the container itself
-        this.container.addEventListener('scroll', () => this.onScroll(), { passive: true });
+        this._onScroll = () => this.onScroll();
+        this.container.addEventListener('scroll', this._onScroll, { passive: true });
         // Initial render
         this.render();
     }
@@ -165,7 +166,10 @@ export class VirtualScroller {
      * Cleans up resources
      */
     destroy() {
-        this.container.removeEventListener('scroll', this.onScroll);
+        if (this._onScroll) {
+            this.container.removeEventListener('scroll', this._onScroll);
+            this._onScroll = null;
+        }
         this.container.innerHTML = '';
     }
 }

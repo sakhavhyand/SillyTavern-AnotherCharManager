@@ -187,11 +187,15 @@
 }
 
 .dropdown-container.open .dropdown-content {
-    max-height: fit-content;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-content: flex-start;
+    gap: 5px;
+    max-height: 400px;
+    overflow-y: auto;
     padding-top: 10px;
     padding-bottom: 10px;
-    height: 100%;
-    overflow-y: auto;
 }
 
 .dropdown-separator {
