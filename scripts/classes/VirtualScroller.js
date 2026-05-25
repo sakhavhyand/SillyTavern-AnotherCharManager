@@ -10,7 +10,6 @@ export class VirtualScroller {
         this.itemHeight = options.itemHeight || 150;
         this.itemsPerRow = options.itemsPerRow || 5;
         this.buffer = options.buffer || 2;
-        this.visibleRange = { start: 0, end: 0 };
         this.init();
     }
 
@@ -23,13 +22,9 @@ export class VirtualScroller {
         // Clear container
         this.container.innerHTML = '';
         // Listen to scroll on the container itself
-        this._onScroll = () => this.onScroll();
+        this._onScroll = () => this.render();
         this.container.addEventListener('scroll', this._onScroll, { passive: true });
         // Initial render
-        this.render();
-    }
-
-    onScroll() {
         this.render();
     }
 
@@ -64,7 +59,6 @@ export class VirtualScroller {
     */
     render(preserveScroll = false) {
         const newRange = this.calculateVisibleRange();
-        this.visibleRange = newRange;
         // Save the scroll position if we want to preserve it
         const scrollTop = preserveScroll ? this.container.scrollTop : null;
         // Create visible elements with spacers to maintain the scroll position

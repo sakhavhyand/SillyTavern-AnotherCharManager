@@ -422,8 +422,7 @@ export class CharListManager {
         const id = getIdByAvatar(avatar);
         const avatarThumb = this.st.getThumbnailUrl('avatar', avatar);
 
-        const parsedThis_avatar = this.settings.selectedChar !== undefined ? this.settings.selectedChar : undefined;
-        const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
+        const charClass = (this.settings.selectedChar !== undefined && this.settings.selectedChar === avatar) ? 'char_selected' : 'char_select';
         const isFav = (this.st.characters[id].fav || this.st.characters[id].data.extensions.fav) ? 'fav' : '';
 
         const div = document.createElement('div');
@@ -719,7 +718,7 @@ export class CharListManager {
 
         return `<div class="dropdown-container${openClass}" data-type="${type}" data-content="${content}">
         <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">
-            ${title} (${count})
+            ${escapeHtml(title)} (${count})
         </div>
         <div class="dropdown-content character-list">
         </div>

@@ -134,7 +134,7 @@ export class CharacterManager {
         });
 
         // Duplicate character
-        $('#acm_dupe_button').on('click', this.duplicateCharacter);
+        $('#acm_dupe_button').on('click', () => this.duplicateCharacter());
 
         // Delete character
         $('#acm_delete_button').on('click', function () {
@@ -158,9 +158,9 @@ export class CharacterManager {
         $('#acm_open_chat').on('click', () => this.openCharacterChat());
 
         // Display Advanced Definitions popup
-        $('#acm_advanced_div').on('click', this.toggleAdvancedDefinitionsPopup);
+        $('#acm_advanced_div').on('click', () => this.toggleAdvancedDefinitionsPopup());
 
-        $('#acm_character_cross').on('click', this.closeCharacterPopup);
+        $('#acm_character_cross').on('click', () => this.closeCharacterPopup());
 
         $(document).on('input', '.altGreeting_zone', (event) => {
             this.saveAltGreetings(event);
@@ -639,7 +639,6 @@ export class CharacterManager {
             await this.st.getCharacters();
             await this.st.eventSource.emit(this.st.event_types.CHARACTER_EDITED, { detail: { id: this.st.characterId, character: this.st.characters[this.st.characterId] } });
         } else {
-            console.log('Error!');
             toastr.error('Failed to save character changes.');
         }
     }
