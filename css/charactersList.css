@@ -46,7 +46,8 @@
     border-radius: 8px;
     background-color: var(--SmartThemeBlurTintColor);
     backdrop-filter: blur(20px);
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border 0.2s ease;
+    contain: layout style paint;
     margin: 5px;
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow:

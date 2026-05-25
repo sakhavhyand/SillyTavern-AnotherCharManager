@@ -19,13 +19,10 @@ export class VirtualScroller {
             return;
         }
 
-        // Clear container
         this.container.innerHTML = '';
-        // Listen to scroll on the container itself
         this._onScroll = () => this.render();
         this.container.addEventListener('scroll', this._onScroll, { passive: true });
-        // Initial render
-        this.render();
+        this._doRender();
     }
 
     calculateVisibleRange() {
@@ -51,54 +48,58 @@ export class VirtualScroller {
     }
 
     /**
-    * Renders the visible range of items within the container, while optionally preserving the scroll position.
-    * Generates spacers to maintain the correct layout and ensures only visible items are rendered for performance optimization.
-    *
-    * @param {boolean} preserveScroll - Indicates whether to preserve the current scroll position (default is true).
-    * @return {void} This method does not return a value.
-    */
+     * Schedules a render on the next animation frame. If a render is already
+     * scheduled, this call is a no-op, effectively throttling to ~60 fps.
+     *
+     * @param {boolean} preserveScroll
+     * @return {void}
+     */
     render(preserveScroll = false) {
+        if (this._renderScheduled) return;
+        this._renderScheduled = true;
+        this._pendingPreserveScroll = preserveScroll;
+        requestAnimationFrame(() => {
+            this._renderScheduled = false;
+            this._doRender(this._pendingPreserveScroll);
+        });
+    }
+
+    /**
+     * Internal render — rebuilds spacers and visible items.
+     */
+    _doRender(preserveScroll = false) {
         const newRange = this.calculateVisibleRange();
-        // Save the scroll position if we want to preserve it
         const scrollTop = preserveScroll ? this.container.scrollTop : null;
-        // Create visible elements with spacers to maintain the scroll position
         const fragment = document.createDocumentFragment();
 
-        // Add top spacer
+        // Top spacer
         if (newRange.start > 0) {
             const topSpacer = document.createElement('div');
-            const topRows = Math.floor(newRange.start / this.itemsPerRow);
-            topSpacer.style.height = `${topRows * this.itemHeight}px`;
-            topSpacer.style.width = '100%'; // Full width to force line break in flex
-            topSpacer.style.flexShrink = '0';
+            topSpacer.style.cssText =
+                `height:${Math.floor(newRange.start / this.itemsPerRow) * this.itemHeight}px;width:100%;flex-shrink:0`;
             fragment.appendChild(topSpacer);
         }
 
-        // Add visible items
+        // Visible items
         for (let i = newRange.start; i < newRange.end; i++) {
             if (this.items[i]) {
-                const element = this.renderItem(this.items[i]);
-                fragment.appendChild(element);
+                fragment.appendChild(this.renderItem(this.items[i]));
             }
         }
 
-        // Add bottom spacer
+        // Bottom spacer
         const remainingItems = this.items.length - newRange.end;
         if (remainingItems > 0) {
             const bottomSpacer = document.createElement('div');
-            const bottomRows = Math.ceil(remainingItems / this.itemsPerRow);
-            bottomSpacer.style.height = `${bottomRows * this.itemHeight}px`;
-            bottomSpacer.style.width = '100%'; // Full width to force line break in flex
-            bottomSpacer.style.flexShrink = '0';
+            bottomSpacer.style.cssText =
+                `height:${Math.ceil(remainingItems / this.itemsPerRow) * this.itemHeight}px;width:100%;flex-shrink:0`;
             fragment.appendChild(bottomSpacer);
         }
 
         // Cancel in-flight image loads before replacing content
         this.container.querySelectorAll('img').forEach(img => { img.src = ''; });
-        this.container.innerHTML = '';
-        this.container.appendChild(fragment);
+        this.container.replaceChildren(fragment);
 
-        // Restore the scroll position if needed
         if (preserveScroll && scrollTop !== null) {
             this.container.scrollTop = scrollTop;
         }

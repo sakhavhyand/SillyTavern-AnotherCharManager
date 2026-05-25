@@ -420,30 +420,41 @@ export class CharListManager {
      */
     createCharacterBlock(avatar) {
         const id = getIdByAvatar(avatar);
-        const avatarThumb = this.st.getThumbnailUrl('avatar', avatar);
+        const char = this.st.characters[id];
+        const tagCount = this.st.tagMap[avatar]?.length ?? 0;
 
         const charClass = (this.settings.selectedChar !== undefined && this.settings.selectedChar === avatar) ? 'char_selected' : 'char_select';
-        const isFav = (this.st.characters[id].fav || this.st.characters[id].data.extensions.fav) ? 'fav' : '';
+        const isFav = (char.fav || char.data.extensions.fav) ? 'fav' : '';
 
         const div = document.createElement('div');
         div.className = `card ${charClass} ${isFav}`;
-        div.title = `[${escapeHtml(this.st.characters[id].name)} - Tags: ${this.st.tagMap[avatar]?.length ?? 0}]`;
+        div.title = `[${escapeHtml(char.name)} - Tags: ${tagCount}]`;
         div.setAttribute('data-avatar', avatar);
 
-        div.innerHTML = `
-        <!-- Media -->
-        <div class="card__media">
-            <img id="img_${avatar}"
-             src="${avatarThumb}"
-             alt="${this.st.characters[id].avatar}"
-             draggable="false">
-        </div>
-        <!-- Header -->
-        <div class="card__header">
-            <h3 class="card__header-title">${escapeHtml(this.st.characters[id].name)}</h3>
-            <p class="card__header-meta">Tags: ${this.st.tagMap[avatar]?.length ?? 0}</p>
-        </div>
-    `;
+        // Media
+        const media = document.createElement('div');
+        media.className = 'card__media';
+        const img = document.createElement('img');
+        img.id = `img_${avatar}`;
+        img.src = this.st.getThumbnailUrl('avatar', avatar);
+        img.alt = char.avatar;
+        img.draggable = false;
+        media.appendChild(img);
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'card__header';
+        const title = document.createElement('h3');
+        title.className = 'card__header-title';
+        title.textContent = char.name;
+        const meta = document.createElement('p');
+        meta.className = 'card__header-meta';
+        meta.textContent = `Tags: ${tagCount}`;
+        header.appendChild(title);
+        header.appendChild(meta);
+
+        div.appendChild(media);
+        div.appendChild(header);
 
         return div;
     }
