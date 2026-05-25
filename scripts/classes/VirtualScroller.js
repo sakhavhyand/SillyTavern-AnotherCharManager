@@ -65,14 +65,36 @@ export class VirtualScroller {
     }
 
     /**
-     * Internal render — rebuilds spacers and visible items.
+     * Internal render — recycles DOM elements that are still visible, creates
+     * new ones for items that just scrolled in, and removes elements that
+     * scrolled out (cancelling their in-flight image loads first).
      */
     _doRender(preserveScroll = false) {
         const newRange = this.calculateVisibleRange();
         const scrollTop = preserveScroll ? this.container.scrollTop : null;
+
+        // Build set of avatars that should be visible
+        const neededAvatars = new Set();
+        for (let i = newRange.start; i < newRange.end; i++) {
+            if (this.items[i]) neededAvatars.add(this.items[i].avatar);
+        }
+
+        // Separate existing elements: keep vs remove
+        const keptElements = new Map();
+        this.container.querySelectorAll('[data-avatar]').forEach(el => {
+            const avatar = el.dataset.avatar;
+            if (neededAvatars.has(avatar)) {
+                keptElements.set(avatar, el);
+            } else {
+                const img = el.querySelector('img');
+                if (img) img.src = '';
+                el.remove();
+            }
+        });
+
+        // Build fragment: spacers + recycled items + new items
         const fragment = document.createDocumentFragment();
 
-        // Top spacer
         if (newRange.start > 0) {
             const topSpacer = document.createElement('div');
             topSpacer.style.cssText =
@@ -80,14 +102,16 @@ export class VirtualScroller {
             fragment.appendChild(topSpacer);
         }
 
-        // Visible items
         for (let i = newRange.start; i < newRange.end; i++) {
-            if (this.items[i]) {
-                fragment.appendChild(this.renderItem(this.items[i]));
+            const item = this.items[i];
+            if (!item) continue;
+            if (keptElements.has(item.avatar)) {
+                fragment.appendChild(keptElements.get(item.avatar));
+            } else {
+                fragment.appendChild(this.renderItem(item));
             }
         }
 
-        // Bottom spacer
         const remainingItems = this.items.length - newRange.end;
         if (remainingItems > 0) {
             const bottomSpacer = document.createElement('div');
@@ -96,7 +120,7 @@ export class VirtualScroller {
             fragment.appendChild(bottomSpacer);
         }
 
-        // Cancel in-flight image loads before replacing content
+        // Cancel any straggler images then swap content
         this.container.querySelectorAll('img').forEach(img => { img.src = ''; });
         this.container.replaceChildren(fragment);
 
