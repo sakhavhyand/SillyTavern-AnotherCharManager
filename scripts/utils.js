@@ -1,6 +1,20 @@
 import { acm } from '../index.js';
 
 /**
+ * Escapes HTML special characters in a string to prevent XSS and DOM breakage.
+ * @param {string} str - The string to escape.
+ * @returns {string} The escaped string.
+ */
+export function escapeHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
  * Creates a debounced version of the provided function that delays its execution
  * until after a specified timeout period has elapsed since the last time it was invoked.
  *

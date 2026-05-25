@@ -1,6 +1,6 @@
 import { setCharacterId, setMenuType } from '/script.js';
 import { timestampToMoment, sortMoments } from '/scripts/utils.js';
-import { debounce, getIdByAvatar } from '../utils.js';
+import { debounce, escapeHtml, getIdByAvatar } from '../utils.js';
 import { VirtualScroller } from './VirtualScroller.js';
 import { CharacterManager } from "./CharacterManager.js";
 
@@ -13,6 +13,7 @@ export class CharListManager {
         this.st = st;
         this.presetManager = presetManager;
         this.virtualScroller = null;
+        this.modalOpen = false;
         this.charManager = new CharacterManager(this.eventManager, this.settings, this.st, this.presetManager.tagManager);
     }
 
@@ -425,7 +426,7 @@ export class CharListManager {
 
         const div = document.createElement('div');
         div.className = `card ${charClass} ${isFav}`;
-        div.title = `[${this.st.characters[id].name} - Tags: ${this.st.tagMap[avatar]?.length ?? 0}]`;
+        div.title = `[${escapeHtml(this.st.characters[id].name)} - Tags: ${this.st.tagMap[avatar]?.length ?? 0}]`;
         div.setAttribute('data-avatar', avatar);
 
         div.innerHTML = `
@@ -438,7 +439,7 @@ export class CharListManager {
         </div>
         <!-- Header -->
         <div class="card__header">
-            <h3 class="card__header-title">${this.st.characters[id].name}</h3>
+            <h3 class="card__header-title">${escapeHtml(this.st.characters[id].name)}</h3>
             <p class="card__header-meta">Tags: ${this.st.tagMap[avatar]?.length ?? 0}</p>
         </div>
     `;
@@ -507,6 +508,13 @@ export class CharListManager {
         }
     }
 
+    destroyVirtualScroller() {
+        if (this.virtualScroller) {
+            this.virtualScroller.destroy();
+            this.virtualScroller = null;
+        }
+    }
+
     /**
      * Selects a character avatar, updates character details, and adjusts the display accordingly.
      *
@@ -561,6 +569,7 @@ export class CharListManager {
 
         if(filteredChars.length === 0){
             this.currentFilteredList = [];
+            this.destroyVirtualScroller();
             $('#character-list').html('<span>Hmm, it seems like the character you\'re looking for is hiding out in a secret lair. Try searching for someone else instead.</span>');
         }
         else {
@@ -572,6 +581,7 @@ export class CharListManager {
             this.currentFilteredList = sortedList;
 
             if (dropdownUI && ['allTags', 'custom', 'creators'].includes(dropdownMode)) {
+                this.destroyVirtualScroller();
                 $('#character-list').html(this.generateDropdown(sortedList, dropdownMode));
                 const list = document.querySelector('#character-list');
                 list.querySelectorAll('.dropdown-container').forEach(container => {

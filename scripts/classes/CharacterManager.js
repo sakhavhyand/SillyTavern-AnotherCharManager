@@ -118,7 +118,7 @@ export class CharacterManager {
         });
 
         // Trigger when the favorites button is clicked
-        $('#acm_favorite_button').on('click', this.toggleFavoriteStatus);
+        $('#acm_favorite_button').on('click', () => this.toggleFavoriteStatus());
 
         // Export character
         $('#acm_export_button').on('click', function () {
@@ -640,6 +640,7 @@ export class CharacterManager {
             await this.st.eventSource.emit(this.st.event_types.CHARACTER_EDITED, { detail: { id: this.st.characterId, character: this.st.characters[this.st.characterId] } });
         } else {
             console.log('Error!');
+            toastr.error('Failed to save character changes.');
         }
     }
 

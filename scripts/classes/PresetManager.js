@@ -1,3 +1,5 @@
+import { escapeHtml } from '../utils.js';
+
 export class PresetManager {
     constructor(eventManager, settings, st, tagManager) {
         this.eventManager = eventManager;
@@ -352,7 +354,7 @@ export class PresetManager {
         html.attr('id', 'acm_custom_categories');
         const selectElement = $(`<select id="preset_selector" title="Preset Selector"></select>`);
         this.settings.getSetting('dropdownPresets').forEach((preset, index) => {
-            selectElement.append(`<option data-preset="${index}">${preset.name}</option>`);
+            selectElement.append(`<option data-preset="${index}">${escapeHtml(preset.name)}</option>`);
         });
         html.append(`
             <div class="title_restorable alignItemsBaseline">
@@ -363,7 +365,7 @@ export class PresetManager {
             </div>
              <div>
                 <div style="display:flex;">
-                     <h4 id="preset_name">${this.getPreset(0).name}</h4>
+                     <h4 id="preset_name">${escapeHtml(this.getPreset(0).name)}</h4>
                      <i class="menu_button fa-solid fa-edit preset_rename" title="Rename preset"></i>
                 </div>
                 <div class="acm_catCreate">
@@ -408,7 +410,7 @@ export class PresetManager {
                         <div data-catid="${index}">
                             <div class="acm_catList">
                                 <div class="drag-handle ui-sortable-handle" data-i18n="[title]Drag to reorder categories">☰</div>
-                                <h4>- ${cat.name} -</h4>
+                                <h4>- ${escapeHtml(cat.name)} -</h4>
                                 <div style="display:flex;">
                                     <div class="menu_button fa-solid fa-edit cat_rename" title="Rename category"></div>
                                     <div class="menu_button fa-solid fa-trash cat_delete" title="Delete category"></div>

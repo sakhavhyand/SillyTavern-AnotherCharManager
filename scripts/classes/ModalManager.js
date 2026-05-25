@@ -145,10 +145,10 @@ export class ModalManager {
 
             option.selected = field === this.settings.getSetting('sortingField') && order === this.settings.getSetting('sortingOrder');
         });
-        
+
         const favOnly = this.settings.getSetting('favOnly');
         this.charListManager.updateFavFilterButtonState(favOnly);
-        
+
         this.eventManager.emit('modal:opened');
     }
 
@@ -212,7 +212,7 @@ export class ModalManager {
             updatePoppers = true,
         } = options;
 
-        // Éléments de menu
+        // Menu elements
         const menus = {
             main: {
                 element: '#dropdown-ui-menu',
@@ -233,16 +233,16 @@ export class ModalManager {
         };
 
         if (closeAll) {
-            // Ferme tous les menus
+            // Close all menus
             Object.values(menus).forEach(menu => {
                 $(menu.element).toggle(false);
             });
         } else if (menuToToggle && menus[menuToToggle]) {
-            // Toggle un menu spécifique
+            // Toggle specific menu
             $(menus[menuToToggle].element).toggle();
         }
 
-        // Mise à jour des poppers si nécessaire
+        // Update poppers if necessary
         if (updatePoppers && window.acmPoppers) {
             Object.values(menus).forEach(menu => {
                 if (window.acmPoppers[menu.popper]) {

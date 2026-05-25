@@ -1,4 +1,4 @@
-import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from '../utils.js';
+import { equalsIgnoreCaseAndAccents, escapeHtml, includesIgnoreCaseAndAccents } from '../utils.js';
 import { createTagInput } from '/scripts/tags.js';
 
 export class TagManager {
@@ -64,7 +64,7 @@ export class TagManager {
         const tag = this.st.tagList.find(t => t.id === tagId);
         if (tag) {
             return `<span class="tag" style="background-color: ${tag.color}; color: ${tag.color2};" ${identityAttr}>
-                    <span class="tag_name">${tag.name}</span>
+                    <span class="tag_name">${escapeHtml(tag.name)}</span>
                     <i class="${tagClass}"></i>
                 </span>`;
         }
