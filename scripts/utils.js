@@ -1,4 +1,18 @@
-import { characters, getTokenCountAsync, substituteParams } from "./constants/context.js";
+import { acm } from '../index.js';
+
+/**
+ * Escapes HTML special characters in a string to prevent XSS and DOM breakage.
+ * @param {string} str - The string to escape.
+ * @returns {string} The escaped string.
+ */
+export function escapeHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 /**
  * Creates a debounced version of the provided function that delays its execution
@@ -104,7 +118,7 @@ function compareIgnoreCaseAndAccents(a, b, comparisonFunction) {
  * @return {string|undefined} The ID of the character as a string if found, otherwise undefined.
  */
 export function getIdByAvatar(avatar){
-    const index = characters.findIndex(character => character.avatar === avatar);
+    const index = acm.st.characters.findIndex(character => character.avatar === avatar);
     return index !== -1 ? String(index) : undefined;
 }
 
@@ -118,6 +132,31 @@ export async function updateTokenCount(fieldId) {
     const inputElement = $(fieldId);
     const tokenCountElement = $(`${fieldId}_tokens`);
     const inputValue = String(inputElement.val());
-    const tokenCount = await getTokenCountAsync(substituteParams(inputValue));
+    const tokenCount = await acm.st.getTokenCountAsync(acm.st.substituteParams(inputValue));
     tokenCountElement.html(`Tokens: ${tokenCount}`);
+}
+
+/**
+ * Converts a given date-like string to the "YYYY-MM-DD" format. Supports various input formats
+ * such as ISO 8601 and custom formats containing a "@" character.
+ *
+ * @param {string | Date} createDate - The input date to be converted. Can be a string or a Date object.
+ * @return {string} A formatted date string in "YYYY-MM-DD" format. Returns ' - ' if the input is invalid or cannot be parsed.
+ */
+export function toYYYYMMDD(createDate) {
+    if (!createDate) return ' - ';
+
+    const raw = String(createDate).trim();
+
+    // New format: ISO 8601 → "2026-01-23T13:45:29.659Z"
+    // Old format (yours): "YYYY-MM-DD@..." → take before "@"
+    const datePart =
+        raw.includes('T') ? raw.slice(0, 10) :          // ISO: YYYY-MM-DD...
+            raw.split(/\s*@\s*/)[0].trim();
+
+    const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(datePart);
+    if (!m) return ' - ';
+
+    const [, y, mo, d] = m;
+    return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
 }

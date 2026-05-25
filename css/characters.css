@@ -1,5 +1,6 @@
 /* ===== CHARACTER DETAILS COMPONENTS ===== */
 #char-sep {
+    flex: 0 0 auto;
     padding: 3px;
 }
 
@@ -10,9 +11,10 @@
 
 #char-details {
     display: flex;
+    flex-direction: row;
     gap: 5px;
     overflow: hidden;
-    max-height: 0;
+    height: 0;
     opacity: 0;
     transform: translateY(10px);
     transition:
@@ -20,11 +22,13 @@
         opacity 0.4s ease,
         transform 0.4s ease;
     pointer-events: none;
+    min-height: 0;
+    flex: 0 0 auto;
 }
 
+
 #char-details.open {
-    min-height: 50%;
-    max-height: 1000px;
+    height: min(40svh, 50%);
     opacity: 1;
     transform: translateY(0);
     transition:
@@ -34,9 +38,13 @@
     pointer-events: auto;
 }
 
-#char-details-block {
-    flex: 1;
-    width: 50%;
+
+#char-details-block,
+#char-details-desc {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 50%;
+    min-height: 0;
 }
 
 .char-details-summary {
@@ -148,7 +156,6 @@
 
 #acm_details_buttons_block {
     display: flex;
-    flex: 1;
     gap: 5px;
     align-items: center;
     justify-content: start;
@@ -162,6 +169,8 @@
 .char-details-tags {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
     gap: 5px;
 }
 
@@ -191,14 +200,7 @@
 }
 
 #char-details-desc {
-    flex: 1;
     overflow-y: auto;
-}
-
-.desc_container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
 }
 
 .altGreetings_buttons {

@@ -65,3 +65,8 @@
     color: var(--SmartThemeBodyColor);
     border: 1px solid var(--SmartThemeBorderColor);
 }
+
+#tag_List {
+    min-height: 0;
+    overflow-y: auto;
+}

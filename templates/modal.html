@@ -1,213 +1,204 @@
-<div id="acm_shadow_popup">
-    <div id="acm_popup">
-        <div id="acm_popup_holder">
-            <div id="acm_popup_text">
-                <div class="list-character-wrapper flexFlowColumn">
-                    <div class="sortAndFilter">
-                        <form class="form_sort_filter" action="javascript:voidnull;">
-                            <div id="acm_character_create_button" class="menu_button fa-solid fa-plus faSmallFontSquareFix" title="Create Character"></div>
-                            <div id="acm_character_import_button" class="menu_button fa-solid fa-file-import faSmallFontSquareFix" title="Import Character from File"></div>
-                            <div id="acm_external_import_button" class="menu_button fa-solid fa-cloud-arrow-down faSmallFontSquareFix" title="Import content from external URL"></div>
-                            <div id="acm_tags_view" class="menu_button tags_view fa-solid fa-gear faSmallFontSquareFix" title="Manage tags"></div>
-                            <div id="acm_tags_filter" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Show Tag List"></div>
-                            <div class="sortText">Sorted by :</div>
-                            <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
-                                <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
-                                <option data-field="name" data-order="desc" data-i18n="Z-A">Z-A</option>
-                                <option data-field="tags" data-order="asc">Least Tags</option>
-                                <option data-field="tags" data-order="desc">Most Tags</option>
-                                <option data-field="date_last_chat" data-order="asc">Recent</option>
-                                <option data-field="date_added" data-order="asc">Newest</option>
-                                <option data-field="date_added" data-order="desc">Oldest</option>
-                                <option data-field="data_size" data-order="asc">Least Tokens</option>
-                                <option data-field="data_size" data-order="desc">Most Tokens</option>
-                            </select>
-                            <label for="char_search_bar" title="Search for specific tags or characters.">
-                                <div class="search-with-dropdown">
-                                    <select id="search_filter_dropdown" class="search-dropdown-select">
-                                        <option value="name">Name</option>
-                                        <option value="creator">Creator</option>
-                                        <option value="creator_notes">Creator's Notes</option>
-                                        <option value="tags">Tags</option>
-                                    </select>
-                                    <input id="char_search_bar" class="text_pole width100p search-with-dropdown-input" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
-                                </div>
-                            </label>
-                            <label class="acm_checkbox">
-                                <span>Favs</span>
-                                <input id="favOnly_checkbox" type="checkbox">
-                            </label>
-                        </form>
-                        <span id="charNumber"></span>
+<div id="acm_lock"></div>
+<div id="acm_popup">
+    <div class="list-character-wrapper">
+        <div class="sortAndFilter">
+            <form class="form_sort_filter" action="javascript:voidnull;">
+                <div id="acm_character_create_button" class="menu_button fa-solid fa-plus faSmallFontSquareFix" title="Create Character"></div>
+                <div id="acm_character_import_button" class="menu_button fa-solid fa-file-import faSmallFontSquareFix" title="Import Character from File"></div>
+                <div id="acm_external_import_button" class="menu_button fa-solid fa-cloud-arrow-down faSmallFontSquareFix" title="Import content from external URL"></div>
+                <div id="acm_tags_view" class="menu_button tags_view fa-solid fa-gear faSmallFontSquareFix" title="Manage tags"></div>
+                <div id="acm_tags_filter" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Show Tag List"></div>
+                <div class="sortText">Sorted by :</div>
+                <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
+                    <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
+                    <option data-field="name" data-order="desc" data-i18n="Z-A">Z-A</option>
+                    <option data-field="tags" data-order="asc">Least Tags</option>
+                    <option data-field="tags" data-order="desc">Most Tags</option>
+                    <option data-field="date_last_chat" data-order="asc">Recent</option>
+                    <option data-field="create_date" data-order="desc">Newest</option>
+                    <option data-field="create_date" data-order="asc">Oldest</option>
+                    <option data-field="data_size" data-order="asc">Least Tokens</option>
+                    <option data-field="data_size" data-order="desc">Most Tokens</option>
+                </select>
+                <label for="char_search_bar" title="Search for specific tags or characters.">
+                    <div class="search-with-dropdown">
+                        <select id="search_filter_dropdown" class="search-dropdown-select">
+                            <option value="name">Name</option>
+                            <option value="creator">Creator</option>
+                            <option value="creator_notes">Creator's Notes</option>
+                            <option value="tags">Tags</option>
+                        </select>
+                        <input id="char_search_bar" class="text_pole width100p search-with-dropdown-input" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
                     </div>
-                    <div id="acm_tagQuery" class="acm_tagQuery_container">
-                        <div class="acm_tagQuery_row">
-                            <span class="acm_tagQuery_label">Mandatory tags:</span>
-                            <label for="acm_mandatoryInput" title="Mandatory Tags">
-                                <input id="acm_mandatoryInput" class="text_pole acm_tagQuery_input margin0 padding0">
-                            </label>
-                            <div id="acm_mandatoryTags" class="tags"></div>
-                        </div>
-                        <div class="acm_tagQuery_row">
-                            <span class="acm_tagQuery_label">At least one tag:</span>
-                            <label for="acm_facultativeInput" title="Facultative Tags">
-                                <input id="acm_facultativeInput" class="text_pole acm_tagQuery_input margin0 padding0">
-                            </label>
-                            <div id="acm_facultativeTags" class="tags"></div>
-                        </div>
-                        <div class="acm_tagQuery_row">
-                            <span class="acm_tagQuery_label">Excluded tags:</span>
-                            <label for="acm_excludedInput" title="Excluded Tags">
-                                <input id="acm_excludedInput" class="text_pole acm_tagQuery_input margin0 padding0">
-                            </label>
-                            <div id="acm_excludedTags" class="tags"></div>
-                        </div>
-                    </div>
-                    <hr>
-                    <div id="character-list"> </div>
-                    <hr id="char-sep" style="display:none">
-                    <div id="char-details">
-                        <div id="char-details-block">
-                            <div class="char-details-summary">
-                                <div class="acm_avatar" id="avatar_title">
-                                    <img id="avatar_img" class="char-details-img" src="" alt="Character Avatar" draggable="false">
-                                    <label for="edit_avatar_button" title="Click to select a new avatar for this character" data-i18n="[title]Click to select a new avatar for this character">
-                                        <span id="edit_icon">
-                                            <i class="fas fa-edit"></i>
-                                            <input id="edit_avatar_button" hidden="" type="file" name="avatar" accept="image/*">
-                                        </span>
-                                    </label>
-                                </div>
-                                <div class="char-details-summary-desc">
-                                    <span id="ch_name_details"></span>
-                                    <hr>
-                                    <span id="ch_infos_creator" class="ch_infos_item"></span>
-                                    <div class="ch_infos_container">
-                                        <div class="ch_infos_column">
-                                            <span id="ch_infos_version" class="ch_infos_item"></span>
-                                            <span id="ch_infos_date" class="ch_infos_item"></span>
-                                            <span id="ch_infos_tok" class="ch_infos_item"></span>
-                                            <span id="ch_infos_lastchat" class="ch_infos_item"></span>
-                                        </div>
-                                        <div class="ch_infos_column">
-                                            <span id="ch_infos_link"  class="ch_infos_item"></span>
-                                            <span id="ch_infos_adddate" class="ch_infos_item"></span>
-                                            <span id="ch_infos_permtok" class="ch_infos_item"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="acm_details_buttons_block">
-                                <div id="acm_favorite_button" class="menu_button fa-solid fa-star fav_off faSmallFontSquareFix" title="Add to Favorites" data-i18n="[title]Add to Favorites" tabindex="0"></div>
-                                <div id="acm_open_chat" class="menu_button fa-solid fa-comments faSmallFontSquareFix" title="Open chat" data-i18n="[title]Open chat"></div>
-                                <div id="acm_rename_button" class="menu_button fa-solid fa-user-pen faSmallFontSquareFix" title="Rename Character" data-i18n="[title]Rename"></div>
-                                <div id="acm_advanced_div" class="menu_button fa-solid fa-book faSmallFontSquareFix" title="Advanced Definitions" data-i18n="[title]Advanced Definition"></div>
-                                <div id="acm_export_button" class="menu_button fa-solid fa-file-export faSmallFontSquareFix" title="Export and Download" data-i18n="[title]Export and Download"></div>
-                                <div id="acm_dupe_button" class="menu_button fa-solid fa-clone faSmallFontSquareFix" title="Duplicate Character" data-i18n="[title]Duplicate Character"></div>
-                                <div id="acm_delete_button" class="menu_button fa-solid fa-skull faSmallFontSquareFix" title="Delete Character" data-i18n="[title]Delete Character"></div>
-                            </div>
-                            <div class="char-details-tags">
-                                <div class="tag-searchbar">
-                                    <label for="input_tag" title="Search or create a tag.">
-                                        <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
-                                    </label>
-                                </div>
-                                <div id="tag_List" class="tags"></div>
-                            </div>
-                        </div>
-                        <div id="char-details-desc">
-                            <div class="desc_container">
-                                <div class="inline-drawer">
-                                    <div id="desc_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <div style="display: flex;flex-grow: 1;">
-                                             <span class="drawer-header-item">
-                                                <b>Description</b>
-                                                <i class="editor_maximize fa-solid fa-maximize" data-for="acm_description" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
-                                                <a href="https://docs.sillytavern.app/usage/core-concepts/characterdesign/#character-description" class="notes-link" target="_blank">
-                                                    <span class="fa-solid fa-circle-question note-link-span"></span>
-                                                </a>
-                                            </span>
-                                            <span id="acm_description_tokens" class="drawer-header-item"></span>
-                                        </div>
-                                        <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
-                                    </div>
-                                    <div class="inline-drawer-content">
-                                        <label for="acm_description" title="Description">
-                                            <textarea id="acm_description" class="autoSetHeight"></textarea>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="inline-drawer">
-                                    <div id="firstMes_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <div style="display: flex;flex-grow: 1;">
-                                            <span class="drawer-header-item">
-                                                <b>Greeting</b>
-                                                <i class="editor_maximize fa-solid fa-maximize" data-for="acm_firstMess" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
-                                                <a href="https://docs.sillytavern.app/usage/core-concepts/characterdesign/#first-message" class="notes-link" target="_blank">
-                                                    <span class="fa-solid fa-circle-question note-link-span"></span>
-                                                </a>
-                                            </span>
-                                            <span id="acm_firstMess_tokens" class="drawer-header-item"></span>
-                                        </div>
-                                        <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
-                                    </div>
-                                    <div class="inline-drawer-content">
-                                        <label for="acm_firstMess" title="First message">
-                                            <textarea id="acm_firstMess" class="autoSetHeight"></textarea>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div id="altGreetings_drawer" class="inline-drawer">
-                                    <div id="altGreetings_header" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <div style="display: flex;flex-grow: 1;">
-                                            <span class="drawer-header-item"><b>Alt. Greetings</b></span>
-                                            <span id="altGreetings_number" class="drawer-header-item"></span>
-                                        </div>
-                                        <div class="altGreetings_buttons">
-                                            <i class="inline-drawer-icon fa-solid fa-circle-plus"></i>
-                                            <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
-                                        </div>
-                                    </div>
-                                    <div id="altGreetings_content" class="inline-drawer-content">
-                                    </div>
-                                </div>
-                                <div class="inline-drawer">
-                                    <div class="inline-drawer-toggle inline-drawer-header inline-drawer-design"
-                                         id="CN_header">
-                                        <div style="display: flex;flex-grow: 1;">
-                                             <span class="drawer-header-item">
-                                                <b>Creator's Notes</b>
-                                                <i class="editor_maximize fa-solid fa-maximize"
-                                                   data-for="acm_creatornotes" data-i18n="[title]Expand the editor"
-                                                   title="Expand the editor"></i>
-                                            </span>
-                                        </div>
-                                        <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
-                                    </div>
-                                    <div class="inline-drawer-content">
-                                        <label for="acm_creatornotes" title="Description">
-                                            <textarea class="autoSetHeight" id="acm_creatornotes"></textarea>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <hr>
-                </div>
+                </label>
+                <div id="acm_fav_filter_button" class="menu_button fa-solid fa-star fav_off faSmallFontSquareFix acm_toolbar_button" title="Show favourites only" data-i18n="[title]Show favourites only" aria-pressed="false"></div>
+                <div id="acm_random_button" class="menu_button fa-solid fa-dice faSmallFontSquareFix acm_toolbar_button" title="Random character" data-i18n="[title]Random character"></div>
+            </form>
+            <span id="charNumber"></span>
+        </div>
+        <div id="acm_tagQuery" class="acm_tagQuery_container">
+            <div class="acm_tagQuery_row">
+                <span class="acm_tagQuery_label">Mandatory tags:</span>
+                <label for="acm_mandatoryInput" title="Mandatory Tags">
+                    <input id="acm_mandatoryInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                </label>
+                <div id="acm_mandatoryTags" class="tags"></div>
             </div>
-            <div class="popup-controls acm-popup-controls">
-                <div id="acm_switch_ui" class="menu_button">Switch UI</div>
-                <div id="acm_popup_close" class="menu_button popup-button-ok">Close</div>
-                <div id="acm_popup_width">
-                    <label for="acm_widthSlider">Width: </label>
-                    <input id="acm_widthSlider" max="90" min="50" type="range" value="50">
-                </div>
+            <div class="acm_tagQuery_row">
+                <span class="acm_tagQuery_label">At least one tag:</span>
+                <label for="acm_facultativeInput" title="Facultative Tags">
+                    <input id="acm_facultativeInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                </label>
+                <div id="acm_facultativeTags" class="tags"></div>
+            </div>
+            <div class="acm_tagQuery_row">
+                <span class="acm_tagQuery_label">Excluded tags:</span>
+                <label for="acm_excludedInput" title="Excluded Tags">
+                    <input id="acm_excludedInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                </label>
+                <div id="acm_excludedTags" class="tags"></div>
             </div>
         </div>
+        <hr>
+        <div id="character-list"> </div>
+        <hr id="char-sep" style="display:none">
+        <div id="char-details">
+            <div id="char-details-block">
+                <div class="char-details-summary">
+                    <div class="acm_avatar" id="avatar_title">
+                        <img id="avatar_img" class="char-details-img" src="" alt="Character Avatar" draggable="false">
+                        <label for="edit_avatar_button" title="Click to select a new avatar for this character" data-i18n="[title]Click to select a new avatar for this character">
+                            <span id="edit_icon">
+                                <i class="fas fa-edit"></i>
+                                <input id="edit_avatar_button" hidden="" type="file" name="avatar" accept="image/*">
+                            </span>
+                        </label>
+                    </div>
+                    <div class="char-details-summary-desc">
+                        <span id="ch_name_details"></span>
+                        <hr>
+                        <span id="ch_infos_creator" class="ch_infos_item"></span>
+                        <div class="ch_infos_container">
+                            <div class="ch_infos_column">
+                                <span id="ch_infos_version" class="ch_infos_item"></span>
+                                <span id="ch_infos_date" class="ch_infos_item"></span>
+                                <span id="ch_infos_tok" class="ch_infos_item"></span>
+                                <span id="ch_infos_lastchat" class="ch_infos_item"></span>
+                            </div>
+                            <div class="ch_infos_column">
+                                <span id="ch_infos_link"  class="ch_infos_item"></span>
+                                <span id="ch_infos_adddate" class="ch_infos_item"></span>
+                                <span id="ch_infos_permtok" class="ch_infos_item"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="acm_details_buttons_block">
+                    <div id="acm_favorite_button" class="menu_button fa-solid fa-star fav_off faSmallFontSquareFix" title="Add to Favorites" data-i18n="[title]Add to Favorites" tabindex="0"></div>
+                    <div id="acm_open_chat" class="menu_button fa-solid fa-comments faSmallFontSquareFix" title="Open chat" data-i18n="[title]Open chat"></div>
+                    <div id="acm_rename_button" class="menu_button fa-solid fa-user-pen faSmallFontSquareFix" title="Rename Character" data-i18n="[title]Rename"></div>
+                    <div id="acm_advanced_div" class="menu_button fa-solid fa-book faSmallFontSquareFix" title="Advanced Definitions" data-i18n="[title]Advanced Definition"></div>
+                    <div id="acm_export_button" class="menu_button fa-solid fa-file-export faSmallFontSquareFix" title="Export and Download" data-i18n="[title]Export and Download"></div>
+                    <div id="acm_dupe_button" class="menu_button fa-solid fa-clone faSmallFontSquareFix" title="Duplicate Character" data-i18n="[title]Duplicate Character"></div>
+                    <div id="acm_delete_button" class="menu_button fa-solid fa-skull faSmallFontSquareFix" title="Delete Character" data-i18n="[title]Delete Character"></div>
+                </div>
+                <div class="char-details-tags">
+                    <div class="tag-searchbar">
+                        <label for="input_tag" title="Search or create a tag.">
+                            <input id="input_tag" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" data-i18n="[placeholder]Search / Create Tags" placeholder="Search / Create tags" maxlength="50" autocomplete="off">
+                        </label>
+                    </div>
+                    <div id="tag_List" class="tags"></div>
+                </div>
+            </div>
+            <div id="char-details-desc">
+                    <div class="inline-drawer">
+                        <div id="desc_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
+                            <div style="display: flex;flex-grow: 1;">
+                                 <span class="drawer-header-item">
+                                    <b>Description</b>
+                                    <i class="editor_maximize fa-solid fa-maximize" data-for="acm_description" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
+                                    <a href="https://docs.sillytavern.app/usage/core-concepts/characterdesign/#character-description" class="notes-link" target="_blank">
+                                        <span class="fa-solid fa-circle-question note-link-span"></span>
+                                    </a>
+                                </span>
+                                <span id="acm_description_tokens" class="drawer-header-item"></span>
+                            </div>
+                            <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
+                        </div>
+                        <div class="inline-drawer-content">
+                            <label for="acm_description" title="Description">
+                                <textarea id="acm_description" class="autoSetHeight"></textarea>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="inline-drawer">
+                        <div id="firstMes_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
+                            <div style="display: flex;flex-grow: 1;">
+                                <span class="drawer-header-item">
+                                    <b>Greeting</b>
+                                    <i class="editor_maximize fa-solid fa-maximize" data-for="acm_firstMess" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
+                                    <a href="https://docs.sillytavern.app/usage/core-concepts/characterdesign/#first-message" class="notes-link" target="_blank">
+                                        <span class="fa-solid fa-circle-question note-link-span"></span>
+                                    </a>
+                                </span>
+                                <span id="acm_firstMess_tokens" class="drawer-header-item"></span>
+                            </div>
+                            <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
+                        </div>
+                        <div class="inline-drawer-content">
+                            <label for="acm_firstMess" title="First message">
+                                <textarea id="acm_firstMess" class="autoSetHeight"></textarea>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="altGreetings_drawer" class="inline-drawer">
+                        <div id="altGreetings_header" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
+                            <div style="display: flex;flex-grow: 1;">
+                                <span class="drawer-header-item"><b>Alt. Greetings</b></span>
+                                <span id="altGreetings_number" class="drawer-header-item"></span>
+                            </div>
+                            <div class="altGreetings_buttons">
+                                <i class="inline-drawer-icon fa-solid fa-circle-plus"></i>
+                                <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
+                            </div>
+                        </div>
+                        <div id="altGreetings_content" class="inline-drawer-content">
+                        </div>
+                    </div>
+                    <div class="inline-drawer">
+                        <div class="inline-drawer-toggle inline-drawer-header inline-drawer-design"
+                             id="CN_header">
+                            <div style="display: flex;flex-grow: 1;">
+                                 <span class="drawer-header-item">
+                                    <b>Creator's Notes</b>
+                                    <i class="editor_maximize fa-solid fa-maximize"
+                                       data-for="acm_creatornotes" data-i18n="[title]Expand the editor"
+                                       title="Expand the editor"></i>
+                                </span>
+                            </div>
+                            <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
+                        </div>
+                        <div class="inline-drawer-content">
+                            <label for="acm_creatornotes" title="Description">
+                                <textarea class="autoSetHeight" id="acm_creatornotes"></textarea>
+                            </label>
+                        </div>
+                    </div>
+            </div>
+        </div>
+        <hr>
     </div>
-    <div id="acm_popup_preview" style="display:none"></div>
+    <div class="acm-popup-controls">
+        <div id="acm_switch_ui" class="menu_button">Switch UI</div>
+        <div id="acm_popup_close" class="menu_button popup-button-ok">Close</div>
+        <div id="acm_popup_width">
+            <label for="acm_widthSlider">Width: </label>
+            <input id="acm_widthSlider" max="90" min="50" type="range" value="50">
+        </div>
+    </div>
 </div>
+<div id="acm_popup_preview" style="display:none"></div>
 <div id="acm_export_format_popup" class="list-group" style="position: absolute; inset: 0 0 auto auto; margin: 0; transform: translate(-1920px);" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="left">
     <div class="acm_export_format list-group-item" data-format="png">PNG</div>
     <div class="acm_export_format list-group-item" data-format="json">JSON</div>
@@ -233,7 +224,7 @@
 <div id="acm_character_popup" class="flex-container flexFlowColumn flexNoGap">
     <div id="acm_character_popup_text">
         <h3 id="acm_character_popup-button-h3" class="margin0"></h3>
-        <span data-i18n="Advanced Defininitions">- Advanced Definitions</span>
+        <span data-i18n="Advanced Definitions">— Advanced Definitions</span>
     </div>
     <hr class="margin-bot-10px">
     <div id="acm_character_cross" class="fa-solid fa-circle-xmark"></div>
@@ -483,7 +474,7 @@
                 <span id="separator-label">Advanced Definitions</span>
                 <span class="arrow arrow-up">&#x2193;</span>
             </div>
-            <div id="acm_right_panel" class="panel-transition">
+            <div id="acm_right_panel" class="panel-transition panel-hidden">
                 <div>
                     <h3 class="margin0"><span data-i18n="Advanced Defininitions">Advanced Definitions</span></h3>
                 </div>
@@ -663,7 +654,7 @@
         </form>
     </div>
     <hr>
-    <div class="popup-controls">
+    <div class="acm-popup-controls">
         <div id="acm_create_popup_create" class="menu_button">Create</div>
         <div id="acm_create_popup_close" class="menu_button popup-button-ok">Cancel</div>
     </div>

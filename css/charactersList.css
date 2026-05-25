@@ -2,13 +2,17 @@
 .list-character-wrapper {
     display: flex;
     height: 100%;
+    min-height: 0;
+    flex-grow: 1;
+    flex-direction: column;
+    overflow-y: hidden;
+    padding: 0 10px;
+    position: relative;
 }
 
-#character-list,
-.character-list {
+#character-list {
     display: flex;
     flex-wrap: wrap;
-    flex-grow: 1;
     justify-content: space-around;
     align-content: flex-start;
     overflow-y: auto;
@@ -16,7 +20,9 @@
     padding-right: 10px;
     gap: 5px;
     flex-direction: row;
-    height: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
     padding-top: 5px;
 }
 
@@ -40,7 +46,8 @@
     border-radius: 8px;
     background-color: var(--SmartThemeBlurTintColor);
     backdrop-filter: blur(20px);
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border 0.2s ease;
+    contain: layout style paint;
     margin: 5px;
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow:
@@ -203,6 +210,19 @@
     margin: 5px;
 }
 
+.acm_toolbar_button {
+    margin: 5px 0;
+}
+
+.fav_on {
+    color: var(--golden) !important;
+}
+
+.fav_off {
+    color: var(--SmartThemeBodyColor);
+    opacity: 0.6;
+}
+
 #charNumber {
     padding: 7px 2px;
     min-width: fit-content;
@@ -213,6 +233,7 @@
     position: relative;
     display: flex;
     align-items: stretch;
+    column-gap: 5px;
 }
 
 .search-dropdown-select {

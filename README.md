@@ -51,6 +51,10 @@ You can also rename, export, duplicate, delete the selected character among othe
 
 <img width="971" height="345" alt="ST2" src="https://github.com/user-attachments/assets/fd6859ae-b3f1-4337-81ae-28761cf76c83" />
 
+## Slash command
+
+You can also invok the windows using the `/another-char-manager` slash command.
+
 ## Unique Features
 
 A secondary UI is available, allowing you to display your characters groups by custom categories.
