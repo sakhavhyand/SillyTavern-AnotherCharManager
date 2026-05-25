@@ -3,6 +3,7 @@
  * for large data sets by only rendering visible elements and placeholders.
  */
 export class VirtualScroller {
+    static EMPTY_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     constructor(options = {}) {
         this.container = options.container; // This should be #character-list
         this.items = options.items || [];
@@ -87,7 +88,7 @@ export class VirtualScroller {
                 keptElements.set(avatar, el);
             } else {
                 const img = el.querySelector('img');
-                if (img) img.src = '';
+                if (img) img.src = VirtualScroller.EMPTY_IMG;
                 el.remove();
             }
         });
@@ -121,7 +122,7 @@ export class VirtualScroller {
         }
 
         // Cancel any straggler images then swap content
-        this.container.querySelectorAll('img').forEach(img => { img.src = ''; });
+        this.container.querySelectorAll('img').forEach(img => { img.src = VirtualScroller.EMPTY_IMG; });
         this.container.replaceChildren(fragment);
 
         if (preserveScroll && scrollTop !== null) {
@@ -190,7 +191,7 @@ export class VirtualScroller {
             this.container.removeEventListener('scroll', this._onScroll);
             this._onScroll = null;
         }
-        this.container.querySelectorAll('img').forEach(img => { img.src = ''; });
+        this.container.querySelectorAll('img').forEach(img => { img.src = VirtualScroller.EMPTY_IMG; });
         this.container.innerHTML = '';
     }
 }
