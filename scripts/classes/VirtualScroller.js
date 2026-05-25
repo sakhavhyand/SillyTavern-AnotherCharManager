@@ -93,7 +93,8 @@ export class VirtualScroller {
             fragment.appendChild(bottomSpacer);
         }
 
-        // Replace content
+        // Cancel in-flight image loads before replacing content
+        this.container.querySelectorAll('img').forEach(img => { img.src = ''; });
         this.container.innerHTML = '';
         this.container.appendChild(fragment);
 
@@ -164,6 +165,7 @@ export class VirtualScroller {
             this.container.removeEventListener('scroll', this._onScroll);
             this._onScroll = null;
         }
+        this.container.querySelectorAll('img').forEach(img => { img.src = ''; });
         this.container.innerHTML = '';
     }
 }
