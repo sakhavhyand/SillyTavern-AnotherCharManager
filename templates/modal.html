@@ -112,7 +112,25 @@
                 </div>
             </div>
             <div id="char-details-desc">
-                    <div class="inline-drawer">
+                    <div id="acm-desc-header-bar" class="acm-desc-header-bar">
+                        <div id="acm-desc-tab-bar" class="acm-tab-bar">
+                            <div class="acm-tab-buttons">
+                                <div class="acm-tab-button active" data-acm-tab="desc">
+                                    <b>Description</b>
+                                </div>
+                                <div class="acm-tab-button" data-acm-tab="greeting">
+                                    <b>Greeting</b>
+                                </div>
+                                <div class="acm-tab-button" data-acm-tab="altgreetings">
+                                    <b>Alt. Greetings</b>
+                                </div>
+                                <div class="acm-tab-button" data-acm-tab="creatorsnotes">
+                                    <b>Creator's Notes</b>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inline-drawer" data-acm-section="desc">
                         <div id="desc_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
                             <div style="display: flex;flex-grow: 1;">
                                  <span class="drawer-header-item">
@@ -132,7 +150,7 @@
                             </label>
                         </div>
                     </div>
-                    <div class="inline-drawer">
+                    <div class="inline-drawer" data-acm-section="greeting">
                         <div id="firstMes_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
                             <div style="display: flex;flex-grow: 1;">
                                 <span class="drawer-header-item">
@@ -152,7 +170,7 @@
                             </label>
                         </div>
                     </div>
-                    <div id="altGreetings_drawer" class="inline-drawer">
+                    <div id="altGreetings_drawer" class="inline-drawer" data-acm-section="altgreetings">
                         <div id="altGreetings_header" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
                             <div style="display: flex;flex-grow: 1;">
                                 <span class="drawer-header-item"><b>Alt. Greetings</b></span>
@@ -166,7 +184,7 @@
                         <div id="altGreetings_content" class="inline-drawer-content">
                         </div>
                     </div>
-                    <div class="inline-drawer">
+                    <div class="inline-drawer" data-acm-section="creatorsnotes">
                         <div class="inline-drawer-toggle inline-drawer-header inline-drawer-design"
                              id="CN_header">
                             <div style="display: flex;flex-grow: 1;">
@@ -192,9 +210,8 @@
     <div class="acm-popup-controls">
         <div id="acm_switch_ui" class="menu_button">Switch UI</div>
         <div id="acm_popup_close" class="menu_button popup-button-ok">Close</div>
-        <div id="acm_popup_width">
-            <label for="acm_widthSlider">Width: </label>
-            <input id="acm_widthSlider" max="90" min="50" type="range" value="50">
+        <div id="acm_settings_button" class="menu_button" title="Settings" data-i18n="[title]Settings">
+            <i class="fa-solid fa-gear"></i> Settings
         </div>
     </div>
 </div>
@@ -220,6 +237,23 @@
     <div class="dropdown-ui-item" data-ui="preset" data-preset="2">Preset 3</div>
     <div class="dropdown-ui-item" data-ui="preset" data-preset="3">Preset 4</div>
     <div class="dropdown-ui-item" data-ui="preset" data-preset="4">Preset 5</div>
+</div>
+<div id="acm-settings-popup" class="dropdown-ui-menu list-group">
+    <div class="acm-settings-row">
+        <label for="acm_widthSlider">Width</label>
+        <input id="acm_widthSlider" max="90" min="50" type="range" value="50">
+        <span id="acm_widthValue">50%</span>
+    </div>
+    <hr class="dropdown-separator">
+    <div class="acm-settings-row">
+        <div id="acm-desc-view-toggle" class="acm-toggle-switch" title="Toggle tab mode" data-i18n="[title]Toggle tab mode">
+            <span class="acm-settings-label">Dropdown mode</span>
+            <div class="acm-toggle-track">
+                <div class="acm-toggle-thumb"></div>
+            </div>
+        <span class="acm-settings-label">Tab mode</span>
+        </div>
+    </div>
 </div>
 <div id="acm_character_popup" class="flex-container flexFlowColumn flexNoGap">
     <div id="acm_character_popup_text">

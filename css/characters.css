@@ -245,3 +245,107 @@
     height: 100%;
     margin-left: 0;
 }
+
+/* ===== TAB BAR COMPONENTS (desc area tab/dropdown toggle) ===== */
+
+/* Outer header bar - always visible in tab mode */
+.acm-desc-header-bar {
+    display: none;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    margin-bottom: 4px;
+    padding: 2px 4px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: var(--acm-border-radius-md);
+    background-image: linear-gradient(348deg, var(--white30a) 2%, var(--grey30a) 10%, var(--black70a) 95%, var(--SmartThemeQuoteColor) 100%);
+}
+
+/* Tab buttons container - hidden by default, shown in tab mode */
+.acm-tab-bar {
+    display: none;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Row of tab buttons */
+.acm-tab-buttons {
+    display: flex;
+    flex: 1 1 auto;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* Individual tab button */
+.acm-tab-button {
+    flex: 1 1 0;
+    text-align: center;
+    padding: 4px 6px;
+    cursor: pointer;
+    border-radius: calc(var(--acm-border-radius-md) - 2px);
+    border: 1px solid transparent;
+    font-size: 0.85em;
+    transition: background-color 200ms, border-color 200ms;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    user-select: none;
+}
+
+.acm-tab-button:hover {
+    background-color: var(--white30a);
+}
+
+.acm-tab-button.active {
+    background-color: var(--white50a);
+    border-color: var(--SmartThemeBorderColor);
+}
+
+
+/* ===== TAB MODE RULES ===== */
+
+/* Show the header bar and tab buttons */
+#char-details-desc.acm-tab-mode .acm-desc-header-bar {
+    display: flex;
+}
+
+#char-details-desc.acm-tab-mode .acm-tab-bar {
+    display: flex;
+}
+
+/* Hide all section-level inline-drawer children */
+#char-details-desc.acm-tab-mode > .inline-drawer {
+    display: none;
+}
+
+/* Show only the active section */
+#char-details-desc.acm-tab-mode > .inline-drawer.acm-section-active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Force active section's content visible (overrides core ST display:none) */
+#char-details-desc.acm-tab-mode > .inline-drawer.acm-section-active > .inline-drawer-content {
+    display: block !important;
+}
+
+/* Hide section-level drawer icons only (not nested alt greeting icons) */
+#char-details-desc.acm-tab-mode > .inline-drawer > .inline-drawer-header > .inline-drawer-icon {
+    display: none !important;
+}
+
+#char-details-desc.acm-tab-mode > .inline-drawer > .inline-drawer-header > .altGreetings_buttons > .inline-drawer-icon {
+    display: none !important;
+}
+
+/* Block core ST's global .inline-drawer-toggle click handler in tab mode */
+#char-details-desc.acm-tab-mode > .inline-drawer .inline-drawer-toggle > div:first-of-type {
+    pointer-events: none;
+}
+
+/* Restore pointer-events for interactive elements inside headers */
+#char-details-desc.acm-tab-mode .editor_maximize,
+#char-details-desc.acm-tab-mode .notes-link,
+#char-details-desc.acm-tab-mode .notes-link * {
+    pointer-events: auto;
+}

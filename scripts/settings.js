@@ -9,6 +9,7 @@ export const defaultSettings = Object.freeze({
     favOnly: false,
     dropdownUI: false,
     dropdownMode: 'allTags',
+    detailsTabMode: false,
     dropdownOpenSections: {
         allTags: [],
         custom: [],
