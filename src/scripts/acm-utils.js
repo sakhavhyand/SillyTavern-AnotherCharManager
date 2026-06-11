@@ -1,4 +1,4 @@
-import { acm } from '../index.js';
+import { acm } from '../index.ts';
 
 /**
  * Escapes HTML special characters in a string to prevent XSS and DOM breakage.

@@ -1,6 +1,6 @@
 import { setCharacterId, setMenuType } from '/script.js';
 import { timestampToMoment, sortMoments } from '/scripts/utils.js';
-import { debounce, escapeHtml, getIdByAvatar } from '../utils.js';
+import { debounce, escapeHtml, getIdByAvatar } from '../acm-utils.js';
 import { VirtualScroller } from './VirtualScroller.js';
 import { CharacterManager } from "./CharacterManager.js";
 

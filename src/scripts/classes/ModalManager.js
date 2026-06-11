@@ -1,4 +1,4 @@
-import { getIdByAvatar, resetScrollHeight } from '../utils.js';
+import { getIdByAvatar, resetScrollHeight } from '../acm-utils.js';
 import { setCharacterId, setMenuType } from '/script.js';
 import { CharCreationManager } from './CharCreationManager.js';
 import { PresetManager } from './PresetManager.js';
