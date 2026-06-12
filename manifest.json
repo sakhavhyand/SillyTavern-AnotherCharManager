@@ -4,7 +4,7 @@
     "requires": [],
     "optional": [],
     "js": "dist/index.js",
-    "css": "",
+    "css": "src/style.css",
     "author": "Rendal",
     "version": "2.5",
     "homePage": "https://github.com/sakhavhyand/SillyTavern-AnotherCharManager",

@@ -4,10 +4,8 @@ import { ModalManager } from './scripts/classes/ModalManager.js';
 
 export const acm: AppContext = new AppContext();
 const modalManager: ModalManager = new ModalManager(acm.eventManager, acm.settings, acm.st);
-console.log("BeforeListener");
 
 acm.st.eventSource.on('app_ready', async (): Promise<void> => {
-    console.log("InsideListener");
     try {
         await acm.settings.init();
         acm.settings.migrateDropdownPresets();
