@@ -7,6 +7,4 @@ import '../../../../global';
 
 declare global {
     // Add global type declarations here
-    const jQuery: JQueryStatic;
-    const $: JQueryStatic;
 }

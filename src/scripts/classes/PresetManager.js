@@ -1,4 +1,4 @@
-import { escapeHtml } from '../acm-utils.js';
+import { escapeHtml } from '../acm-utils.ts';
 
 export class PresetManager {
     constructor(eventManager, settings, st, tagManager) {

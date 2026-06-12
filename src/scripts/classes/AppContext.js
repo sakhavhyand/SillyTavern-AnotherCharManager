@@ -1,4 +1,4 @@
-import { SettingsManager } from './SettingsManager.js';
+import { SettingsManager } from './SettingsManager.ts';
 import { EventManager } from './EventManager.js';
 import { SillyTavernContext } from './SillyTavernContext.js';
 

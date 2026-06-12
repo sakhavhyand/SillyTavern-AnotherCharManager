@@ -3,9 +3,27 @@ import {
     OLD_EXTENSION_NAME,
     defaultSettings,
     create_data,
-} from '../settings.js';
+    ExtensionSettings,
+} from '../settings';
+
+interface SettingsManagerParams {
+    extensionSettings: ExtensionSettings;
+    saveSettingsDebounced: () => void;
+}
 
 export class SettingsManager {
+    extensionSettings: ExtensionSettings;
+    saveSettingsDebounced: () => void;
+    default: Readonly<ExtensionSettings>;
+    create_data: CreateData;
+    extensionName: string;
+    oldExtensionName: string;
+    selectedChar: string | undefined;
+    searchValue: string;
+    mem_menu: unknown;
+    mem_avatar: unknown;
+    acm_crop_data: unknown;
+
     constructor({ extensionSettings, saveSettingsDebounced }) {
         this.extensionSettings = extensionSettings;
         this.saveSettingsDebounced = saveSettingsDebounced;

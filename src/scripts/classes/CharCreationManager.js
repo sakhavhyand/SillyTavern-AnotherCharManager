@@ -1,6 +1,6 @@
 import { createTagMapFromList } from "/scripts/tags.js";
 import { ensureImageFormatSupported } from "/scripts/utils.js";
-import { delay, getBase64Async, updateTokenCount } from '../acm-utils.js';
+import { delay, getBase64Async, updateTokenCount } from '../acm-utils.ts';
 
 export class CharCreationManager {
     constructor(eventManager, settings, st) {

@@ -16,7 +16,7 @@ import {
     debounce,
     delay,
     toYYYYMMDD,
-} from '../acm-utils.js';
+} from '../acm-utils.ts';
 
 
 export class CharacterManager {

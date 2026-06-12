@@ -1,4 +1,4 @@
-import { equalsIgnoreCaseAndAccents, escapeHtml, includesIgnoreCaseAndAccents } from '../acm-utils.js';
+import { equalsIgnoreCaseAndAccents, escapeHtml, includesIgnoreCaseAndAccents } from '../acm-utils.ts';
 import { createTagInput } from '/scripts/tags.js';
 
 export class TagManager {
