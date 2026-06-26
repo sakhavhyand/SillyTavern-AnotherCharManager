@@ -1,20 +1,56 @@
+interface VirtualScrollerOptions {
+    container: HTMLElement;
+    items?: any[];
+    renderItem?: (item: any) => HTMLElement;
+    itemHeight?: number;
+    itemsPerRow?: number;
+    buffer?: number;
+}
+
+const DEFAULT_VIRTUAL_SCROLLER_OPTIONS: Partial<VirtualScrollerOptions> = {
+    items: [],
+    itemHeight: 150,
+    itemsPerRow: 5,
+    buffer: 2,
+};
+
+interface VisibleRange {
+    start: number;
+    end: number;
+}
+
 /**
  * A class for rendering a virtualized scrolling container, improving performance
  * for large data sets by only rendering visible elements and placeholders.
  */
 export class VirtualScroller {
     static EMPTY_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-    constructor(options = {}) {
-        this.container = options.container; // This should be #character-list
-        this.items = options.items || [];
-        this.renderItem = options.renderItem;
-        this.itemHeight = options.itemHeight || 150;
-        this.itemsPerRow = options.itemsPerRow || 5;
-        this.buffer = options.buffer || 2;
+
+    container: HTMLElement;
+    items: any[];
+    renderItem: (item: any) => HTMLElement;
+    itemHeight: number;
+    itemsPerRow: number;
+    buffer: number;
+
+    private _onScroll: (() => void) | null;
+    private _renderScheduled: boolean;
+    private _pendingPreserveScroll: boolean;
+
+    constructor(options: VirtualScrollerOptions) {
+        this.container = options.container;
+        this.items = options.items ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.items!;
+        this.renderItem = options.renderItem ?? (() => document.createElement('div'));
+        this.itemHeight = options.itemHeight ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.itemHeight!;
+        this.itemsPerRow = options.itemsPerRow ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.itemsPerRow!;
+        this.buffer = options.buffer ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.buffer!;
+        this._onScroll = null;
+        this._renderScheduled = false;
+        this._pendingPreserveScroll = false;
         this.init();
     }
 
-    init() {
+    init(): void {
         if (!this.container) {
             console.error('VirtualScroller: container is required');
             return;
@@ -26,7 +62,7 @@ export class VirtualScroller {
         this._doRender();
     }
 
-    calculateVisibleRange() {
+    calculateVisibleRange(): VisibleRange {
         const scrollTop = this.container.scrollTop;
         const containerHeight = this.container.clientHeight;
 
@@ -51,11 +87,8 @@ export class VirtualScroller {
     /**
      * Schedules a render on the next animation frame. If a render is already
      * scheduled, this call is a no-op, effectively throttling to ~60 fps.
-     *
-     * @param {boolean} preserveScroll
-     * @return {void}
      */
-    render(preserveScroll = false) {
+    render(preserveScroll: boolean = false): void {
         if (this._renderScheduled) return;
         this._renderScheduled = true;
         this._pendingPreserveScroll = preserveScroll;
@@ -70,21 +103,21 @@ export class VirtualScroller {
      * new ones for items that just scrolled in, and removes elements that
      * scrolled out (cancelling their in-flight image loads first).
      */
-    _doRender(preserveScroll = false) {
+    private _doRender(preserveScroll: boolean = false): void {
         const newRange = this.calculateVisibleRange();
         const scrollTop = preserveScroll ? this.container.scrollTop : null;
 
         // Build set of avatars that should be visible
-        const neededAvatars = new Set();
+        const neededAvatars = new Set<string>();
         for (let i = newRange.start; i < newRange.end; i++) {
             if (this.items[i]) neededAvatars.add(this.items[i].avatar);
         }
 
         // Separate existing elements: keep vs remove
-        const keptElements = new Map();
+        const keptElements = new Map<string, Element>();
         this.container.querySelectorAll('[data-avatar]').forEach(el => {
-            const avatar = el.dataset.avatar;
-            if (neededAvatars.has(avatar)) {
+            const avatar = el.getAttribute('data-avatar');
+            if (avatar && neededAvatars.has(avatar)) {
                 keptElements.set(avatar, el);
             } else {
                 const img = el.querySelector('img');
@@ -107,7 +140,7 @@ export class VirtualScroller {
             const item = this.items[i];
             if (!item) continue;
             if (keptElements.has(item.avatar)) {
-                fragment.appendChild(keptElements.get(item.avatar));
+                fragment.appendChild(keptElements.get(item.avatar)!);
             } else {
                 fragment.appendChild(this.renderItem(item));
             }
@@ -132,12 +165,8 @@ export class VirtualScroller {
 
     /**
      * Updates the list of items and triggers re-rendering.
-     *
-     * @param {Array} items - The new array of items to be set.
-     * @param {boolean} [preserveScroll=false] - A flag indicating whether to preserve the current scroll position during rendering.
-     * @return {void}
      */
-    setItems(items, preserveScroll = false) {
+    setItems(items: any[], preserveScroll: boolean = false): void {
         this.items = items;
         this.render(preserveScroll);
     }
@@ -145,25 +174,21 @@ export class VirtualScroller {
     /**
      * Refreshes the display (useful after resize)
      */
-    refresh() {
+    refresh(): void {
         this.render(true);
     }
 
     /**
      * Gets the index of an item by its avatar
-     * @param {string} avatar - The unique avatar identifier
-     * @returns {number} The index of the item, or -1 if not found
      */
-    getIndexByAvatar(avatar) {
+    getIndexByAvatar(avatar: string): number {
         return this.items.findIndex(item => item.avatar === avatar);
     }
 
     /**
      * Scrolls to a specific item by its avatar string
-     * @param {string} avatar - The unique avatar identifier of the item
-     * @param {string} behavior - Scroll behavior: 'auto' or 'smooth' (default: 'auto')
      */
-    scrollToAvatar(avatar, behavior = 'auto') {
+    scrollToAvatar(avatar: string, behavior: ScrollBehavior = 'auto'): void {
         // Find the index of the item with this avatar
         const index = this.getIndexByAvatar(avatar);
 
@@ -186,7 +211,7 @@ export class VirtualScroller {
     /**
      * Cleans up resources
      */
-    destroy() {
+    destroy(): void {
         if (this._onScroll) {
             this.container.removeEventListener('scroll', this._onScroll);
             this._onScroll = null;

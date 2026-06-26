@@ -23,6 +23,7 @@ export interface ExtensionSettings {
     dropdownOpenSections: DropdownOpenSections;
     presetId: number;
     dropdownPresets: DropdownPreset[];
+    acm?: any;
 }
 
 export interface CreateData {

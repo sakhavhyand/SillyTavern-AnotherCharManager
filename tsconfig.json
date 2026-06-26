@@ -13,8 +13,7 @@
     },
     "include": [
         "src/**/*.ts",
-        "src/**/*.tsx",
-        "globals.d.ts"
+        "src/**/*.tsx"
     ],
     "exclude": [
         "node_modules",

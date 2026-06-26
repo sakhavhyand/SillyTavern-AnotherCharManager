@@ -21,7 +21,8 @@ export default {
         ({ request }, callback) => {
             if (request.startsWith('/scripts/') ||
                 request.startsWith('/lib') ||
-                request.startsWith('/script.js')) {
+                request.startsWith('/script.js') ||
+                request === '/script.js') {
                 return callback(null, request);
             }
             callback();
