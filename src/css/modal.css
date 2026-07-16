@@ -203,3 +203,77 @@
     border-top: 1px solid #ccc;
     margin: 8px 0;
 }
+
+/* ===== SETTINGS POPUP ===== */
+
+.acm-settings-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    white-space: nowrap;
+}
+
+.acm-settings-row label {
+    font-size: 0.9em;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.acm-settings-row input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 60px;
+}
+
+#acm_widthValue {
+    font-size: 0.85em;
+    flex-shrink: 0;
+    min-width: 36px;
+    text-align: right;
+}
+
+.acm-settings-label {
+    font-size: 0.9em;
+    flex: 1 1 auto;
+}
+
+/* ===== TOGGLE SWITCH ===== */
+
+.acm-toggle-switch {
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.acm-toggle-track {
+    width: 44px;
+    height: 22px;
+    border-radius: 11px;
+    background-color: var(--black50a);
+    border: 1px solid var(--SmartThemeBorderColor);
+    position: relative;
+    transition: background-color 200ms;
+}
+
+.acm-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: var(--white70a);
+    transition: transform 200ms;
+    box-shadow: 0 1px 3px var(--black50a);
+}
+
+/* Active state: track turns accent, thumb slides right */
+.acm-toggle-switch.active .acm-toggle-track {
+    background-color: var(--SmartThemeQuoteColor);
+}
+
+.acm-toggle-switch.active .acm-toggle-thumb {
+    transform: translateX(22px);
+}

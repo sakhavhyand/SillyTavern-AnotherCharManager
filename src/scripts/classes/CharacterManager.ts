@@ -1,13 +1,10 @@
-import {
-    depth_prompt_depth_default,
-    depth_prompt_role_default,
-    setCharacterId,
-    talkativeness_default,
-    getPastCharacterChats,
-    system_message_types,
-} from '/script.js';
+// @ts-ignore - External SillyTavern module, resolved by webpack externals
+import { depth_prompt_depth_default, depth_prompt_role_default, setCharacterId, talkativeness_default, getPastCharacterChats, system_message_types } from '/script.js';
+// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { ensureImageFormatSupported, getCharaFilename } from '/scripts/utils.js';
+// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { renameGroupMember } from '/scripts/group-chats.js';
+// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { world_info } from '/scripts/world-info.js';
 import {
     getBase64Async,
@@ -16,39 +13,38 @@ import {
     debounce,
     delay,
     toYYYYMMDD,
-} from '../utils.js';
+} from '../acm-utils';
 
 
 export class CharacterManager {
-    constructor(eventManager, settings, st, tagManager) {
+    eventManager: any;
+    settings: any;
+    st: any;
+    tagManager: any;
+
+    constructor(eventManager: any, settings: any, st: any, tagManager: any) {
         this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
         this.tagManager = tagManager;
     }
 
-    init() {
+    init(): void {
         this.initializeCharactersEvents();
         this.initializeFieldUpdaters();
     }
 
     // Create a debounced version of editChar
-    editCharDebounced = debounce((data) => { this.editChar(data); }, 1000);
+    editCharDebounced = debounce((data: any) => { this.editChar(data); }, 1000);
 
     /**
-     * Initializes a set of field updaters for designated DOM elements, enabling dynamic updates
-     * whenever the user interacts with specific input fields. Each field is tied to its respective
-     * handler to apply changes to associated data structures or perform side effects such as
-     * token count updates and debounced edits.
-     *
-     * @return {void} This function does not return a value, but sets up event listeners for
-     * specified DOM elements to automatically trigger update behaviors upon user input.
+     * Initializes a set of field updaters for designated DOM elements.
      */
-    initializeFieldUpdaters() {
-        const elementsToInitialize = {
-            '#acm_description': async () => {const descZone = $('#acm_description');const update = { avatar:this.settings.selectedChar,description:String(descZone.val()),data:{ description:String(descZone.val()) } };this.editCharDebounced(update);await updateTokenCount('#acm_description');},
-            '#acm_firstMess': async () => {const firstMesZone = $('#acm_firstMess');const update = { avatar:this.settings.selectedChar,first_mes:String(firstMesZone.val()),data:{ first_mes:String(firstMesZone.val()) } };this.editCharDebounced(update);await updateTokenCount('#acm_firstMess');},
-            '#acm_creatornotes': ()=> {
+    initializeFieldUpdaters(): void {
+        const elementsToInitialize: Record<string, () => Promise<void> | void> = {
+            '#acm_description': async () => { const descZone = $('#acm_description'); const update = { avatar: this.settings.selectedChar, description: String(descZone.val()), data: { description: String(descZone.val()) } }; this.editCharDebounced(update); await updateTokenCount('#acm_description'); },
+            '#acm_firstMess': async () => { const firstMesZone = $('#acm_firstMess'); const update = { avatar: this.settings.selectedChar, first_mes: String(firstMesZone.val()), data: { first_mes: String(firstMesZone.val()) } }; this.editCharDebounced(update); await updateTokenCount('#acm_firstMess'); },
+            '#acm_creatornotes': () => {
                 const creatorNotes = $('#acm_creatornotes');
                 $('#acm_creator_notes_textarea').val(String(creatorNotes.val()));
                 const update = {
@@ -58,7 +54,7 @@ export class CharacterManager {
                 };
                 this.editCharDebounced(update);
             },
-            '#acm_creator_notes_textarea': ()=> {
+            '#acm_creator_notes_textarea': () => {
                 const creatorNotes = $('#acm_creator_notes_textarea');
                 $('#acm_creatornotes').val(String(creatorNotes.val()));
                 const update = {
@@ -68,18 +64,18 @@ export class CharacterManager {
                 };
                 this.editCharDebounced(update);
             },
-            '#acm_character_version_textarea': () => { const update = { avatar:this.settings.selectedChar,data:{ character_version:String($('#acm_character_version_textarea').val()) } };this.editCharDebounced(update);},
-            '#acm_system_prompt': async  () =>  {const sysPrompt = $('#acm_system_prompt');const update = { avatar:this.settings.selectedChar,data:{ system_prompt:String(sysPrompt.val()) } };this.editCharDebounced(update);await updateTokenCount('#acm_system_prompt');},
-            '#acm_post_history_prompt': async () =>  {const postHistory = $('#acm_post_history_prompt');const update = { avatar:this.settings.selectedChar,data:{ post_history_instructions:String(postHistory.val()) } };this.editCharDebounced(update);await updateTokenCount('#acm_post_history_prompt');},
-            '#acm_creator_textarea': () =>  {const update = { avatar:this.settings.selectedChar,data:{ creator:String($('#acm_creator_textarea').val()) } };this.editCharDebounced(update);},
-            '#acm_personality': async () =>  {const personality = $('#acm_personality');const update = { avatar:this.settings.selectedChar,personality:String(personality.val()),data:{ personality:String(personality.val()) } };this.editCharDebounced(update);await updateTokenCount('#acm_personality');},
-            '#acm_scenario': async () =>  {const scenario = $('#acm_scenario');const update = { avatar:this.settings.selectedChar,scenario: String(scenario.val()),data:{ scenario:String(scenario.val()) } };this.editCharDebounced(update);await updateTokenCount('#acm_scenario');},
-            '#acm_character_notes': async () =>  {const depthPrompt = $('#acm_character_notes');const update = { avatar:this.settings.selectedChar,data:{ extensions:{ depth_prompt:{ prompt:String(depthPrompt.val()) } } } };this.editCharDebounced(update);await updateTokenCount('#acm_character_notes');},
-            '#acm_character_notes_depth': () =>  {const update = { avatar:this.settings.selectedChar,data:{ extensions:{ depth_prompt:{ depth:$('#acm_character_notes_depth').val() } } } };this.editCharDebounced(update);},
-            '#acm_character_notes_role': () =>  {const update = { avatar:this.settings.selectedChar,data:{ extensions:{ depth_prompt:{ role:String($('#acm_character_notes_role').val()) } } } };this.editCharDebounced(update);},
-            '#acm_talkativeness_slider': () =>  {const talkativeness = $('#acm_talkativeness_slider');const update = { avatar:this.settings.selectedChar,talkativeness:String(talkativeness.val()),data:{ extensions:{ talkativeness:String(talkativeness.val()) } } };this.editCharDebounced(update);},
-            '#acm_mes_examples': async () =>  {const example = $('#acm_mes_examples');const update = { avatar:this.settings.selectedChar,mes_example:String(example.val()),data:{ mes_example:String(example.val()) } };this.editCharDebounced(update);await updateTokenCount('#acm_mes_examples');},
-            '#acm_tags_textarea': () =>  {const tagZone = $('#acm_tags_textarea');const update = { avatar:this.settings.selectedChar,tags:tagZone.val().split(', '),data:{ tags:tagZone.val().split(', ') } };this.editCharDebounced(update);},
+            '#acm_character_version_textarea': () => { const update = { avatar: this.settings.selectedChar, data: { character_version: String($('#acm_character_version_textarea').val()) } }; this.editCharDebounced(update); },
+            '#acm_system_prompt': async () => { const sysPrompt = $('#acm_system_prompt'); const update = { avatar: this.settings.selectedChar, data: { system_prompt: String(sysPrompt.val()) } }; this.editCharDebounced(update); await updateTokenCount('#acm_system_prompt'); },
+            '#acm_post_history_prompt': async () => { const postHistory = $('#acm_post_history_prompt'); const update = { avatar: this.settings.selectedChar, data: { post_history_instructions: String(postHistory.val()) } }; this.editCharDebounced(update); await updateTokenCount('#acm_post_history_prompt'); },
+            '#acm_creator_textarea': () => { const update = { avatar: this.settings.selectedChar, data: { creator: String($('#acm_creator_textarea').val()) } }; this.editCharDebounced(update); },
+            '#acm_personality': async () => { const personality = $('#acm_personality'); const update = { avatar: this.settings.selectedChar, personality: String(personality.val()), data: { personality: String(personality.val()) } }; this.editCharDebounced(update); await updateTokenCount('#acm_personality'); },
+            '#acm_scenario': async () => { const scenario = $('#acm_scenario'); const update = { avatar: this.settings.selectedChar, scenario: String(scenario.val()), data: { scenario: String(scenario.val()) } }; this.editCharDebounced(update); await updateTokenCount('#acm_scenario'); },
+            '#acm_character_notes': async () => { const depthPrompt = $('#acm_character_notes'); const update = { avatar: this.settings.selectedChar, data: { extensions: { depth_prompt: { prompt: String(depthPrompt.val()) } } } }; this.editCharDebounced(update); await updateTokenCount('#acm_character_notes'); },
+            '#acm_character_notes_depth': () => { const update = { avatar: this.settings.selectedChar, data: { extensions: { depth_prompt: { depth: $('#acm_character_notes_depth').val() } } } }; this.editCharDebounced(update); },
+            '#acm_character_notes_role': () => { const update = { avatar: this.settings.selectedChar, data: { extensions: { depth_prompt: { role: String($('#acm_character_notes_role').val()) } } } }; this.editCharDebounced(update); },
+            '#acm_talkativeness_slider': () => { const talkativeness = $('#acm_talkativeness_slider'); const update = { avatar: this.settings.selectedChar, talkativeness: String(talkativeness.val()), data: { extensions: { talkativeness: String(talkativeness.val()) } } }; this.editCharDebounced(update); },
+            '#acm_mes_examples': async () => { const example = $('#acm_mes_examples'); const update = { avatar: this.settings.selectedChar, mes_example: String(example.val()), data: { mes_example: String(example.val()) } }; this.editCharDebounced(update); await updateTokenCount('#acm_mes_examples'); },
+            '#acm_tags_textarea': () => { const tagZone = $('#acm_tags_textarea'); const val = String(tagZone.val()); const update = { avatar: this.settings.selectedChar, tags: val.split(', '), data: { tags: val.split(', ') } }; this.editCharDebounced(update); },
         };
 
         Object.keys(elementsToInitialize).forEach(function (id) {
@@ -88,14 +84,11 @@ export class CharacterManager {
     }
 
     /**
-     * Initializes event listeners and functionality related to character operations, such as editing, deleting, duplicating, exporting, and updating UI elements associated with characters.
-     * This method sets up all necessary triggers and handlers to ensure the character module operates as expected.
-     *
-     * @return {void} This function does not return a value.
+     * Initializes event listeners and functionality related to character operations.
      */
-    initializeCharactersEvents() {
+    initializeCharactersEvents(): void {
         // Add listener to refresh the display on characters edit
-        this.st.eventSource.on(this.st.event_types.CHARACTER_EDITED,  (data) => {
+        this.st.eventSource.on(this.st.event_types.CHARACTER_EDITED, (data: any) => {
             if (data.detail && data.detail.avatarReplaced) {
                 this.eventManager.emit('charList:refresh', true);
             }
@@ -107,7 +100,7 @@ export class CharacterManager {
         // Add listener to refresh the display on characters delete
         this.st.eventSource.on(this.st.event_types.CHARACTER_DELETED, () => {
             let charDetailsState = document.getElementById('char-details');
-            if (charDetailsState.style.display !== 'none') {
+            if (charDetailsState && charDetailsState.style.display !== 'none') {
                 this.eventManager.emit('modal:closeDetails');
             }
             this.eventManager.emit('charList:refresh', true);
@@ -126,7 +119,7 @@ export class CharacterManager {
             window.acmPoppers.Export.update();
         });
 
-        $(document).on('click', '.acm_export_format', (event) => {
+        $(document).on('click', '.acm_export_format', (event: JQuery.TriggeredEvent) => {
             const format = $(event.currentTarget).data('format');
             if (format) {
                 this.exportCharacter(format);
@@ -142,10 +135,10 @@ export class CharacterManager {
         });
 
         // Edit a character avatar
-        $('#edit_avatar_button').on('change', async (event) => {
+        $('#edit_avatar_button').on('change', async (event: JQuery.TriggeredEvent) => {
             const isAvailable = await this.checkApiAvailability();
             if (isAvailable) {
-                await this.update_avatar(event.currentTarget);
+                await this.update_avatar(event.currentTarget as HTMLInputElement);
             } else {
                 toastr.warning('Please check if the needed plugin is installed! Link in the README.');
             }
@@ -162,23 +155,23 @@ export class CharacterManager {
 
         $('#acm_character_cross').on('click', () => this.closeCharacterPopup());
 
-        $(document).on('input', '.altGreeting_zone', (event) => {
+        $(document).on('input', '.altGreeting_zone', (event: JQuery.TriggeredEvent) => {
             this.saveAltGreetings(event);
         });
 
         // Add a new alternative greetings
-        $(document).on('click', '.fa-circle-plus', async  (event) => {
+        $(document).on('click', '.fa-circle-plus', async (event: JQuery.TriggeredEvent) => {
             event.stopPropagation();
             this.addAltGreeting();
         });
 
         // Delete an alternative greetings
-        $(document).on('click', '.fa-circle-minus',  (event) => {
+        $(document).on('click', '.fa-circle-minus', (event: JQuery.TriggeredEvent) => {
             event.stopPropagation();
             const element = event.currentTarget;
-            const inlineDrawer = element.closest('.inline-drawer');
-            const greetingIndex = parseInt(element.closest('.altgreetings-drawer-toggle').querySelector('.greeting_index').textContent);
-            this.delAltGreeting(greetingIndex, inlineDrawer);
+            const inlineDrawer = (element as HTMLElement).closest('.inline-drawer');
+            const greetingIndex = parseInt(((element as HTMLElement).closest('.altgreetings-drawer-toggle') as HTMLElement).querySelector('.greeting_index')!.textContent!);
+            this.delAltGreeting(greetingIndex, inlineDrawer as HTMLElement);
         });
 
         const tagListObserver = new MutationObserver(() => {
@@ -193,11 +186,9 @@ export class CharacterManager {
     }
 
     /**
-     * Checks the availability of the AvatarEdit API by making a POST request to the probe endpoint.
-     *
-     * @return {Promise<boolean>} A promise that resolves to true if the API is available (returns a status of 204), or false otherwise.
+     * Checks the availability of the AvatarEdit API.
      */
-    async checkApiAvailability() {
+    async checkApiAvailability(): Promise<boolean> {
         try {
             const response = await fetch('/api/plugins/avataredit/probe', { method: 'POST', headers: this.st.getRequestHeaders() });
             return response.status === 204;
@@ -209,11 +200,8 @@ export class CharacterManager {
 
     /**
      * Fills the character details in the user interface based on the provided avatar.
-     *
-     * @param {string} avatar - The avatar identifier of the character for which details are to be filled.
-     * @return {Promise<void>} A promise that resolves when all character details have been successfully populated and updates are complete.
      */
-    async fillDetails(avatar) {
+    async fillDetails(avatar: string): Promise<void> {
         if (typeof this.st.characters[getIdByAvatar(avatar)].data.alternate_greetings === 'undefined') {
             await this.st.unshallowCharacter(getIdByAvatar(avatar));
         }
@@ -260,7 +248,7 @@ export class CharacterManager {
         $('#acm_creatornotes').val(char.data?.creator_notes || char.creatorcomment);
 
         const charTags = this.st.tagMap[char.avatar] || [];
-        $('#tag_List').html(`${charTags.map((tag) => this.tagManager.displayTag(tag, 'details')).join('')}`);
+        $('#tag_List').html(`${charTags.map((tag: string) => this.tagManager.displayTag(tag, 'details')).join('')}`);
 
         this.displayAltGreetings(char.data.alternate_greetings).then(html => {
             $('#altGreetings_content').html(html);
@@ -269,15 +257,9 @@ export class CharacterManager {
     }
 
     /**
-     * Populates various advanced character definition fields in the user interface with data associated
-     * with the given avatar. The method performs asynchronous operations to fetch token counts for certain
-     * data fields and updates the UI accordingly.
-     *
-     * @param {Object} avatar - The avatar object used to retrieve character information for populating the fields.
-     * @return {Promise<void>} A promise that resolves once all advanced definition fields are populated with
-     *                         character data and token counts.
+     * Populates various advanced character definition fields in the user interface.
      */
-    async fillAdvancedDefinitions(avatar) {
+    async fillAdvancedDefinitions(avatar: string): Promise<void> {
         const char = this.st.characters[getIdByAvatar(avatar)];
         $('#acm_character_popup-button-h3').text(char.name);
         $('#acm_creator_notes_textarea').val(char.data?.creator_notes || char.creatorcomment);
@@ -303,12 +285,8 @@ export class CharacterManager {
 
     /**
      * Toggles the favorite status of the currently selected character.
-     * This function updates the favorite status of the character in the data model
-     * and reflects the change in the user interface by toggling the favorite button's class.
-     *
-     * @return {void} This function does not return a value.
      */
-    toggleFavoriteStatus() {
+    toggleFavoriteStatus(): void {
         // Retrieve the ID of the currently selected character
         const id = getIdByAvatar(this.settings.selectedChar);
         // Determine the current favorite status of the character
@@ -337,12 +315,8 @@ export class CharacterManager {
 
     /**
      * Toggles the visibility of the advanced definitions popup.
-     * This function checks the current display state of the popup and either shows or hides it.
-     * When showing the popup, it applies a fade-in transition effect; when hiding, it removes the 'open' class.
-     *
-     * @return {void} This function does not return a value.
      */
-    toggleAdvancedDefinitionsPopup() {
+    toggleAdvancedDefinitionsPopup(): void {
         const $popup = $('#acm_character_popup');
         if ($popup.css('display') === 'none') {
             $popup.css({ 'display': 'flex', 'opacity': 0.0 })
@@ -359,12 +333,8 @@ export class CharacterManager {
 
     /**
      * Closes the character popup in the user interface.
-     * This function applies a fade-out transition effect to the popup and hides it
-     * after the transition is complete.
-     *
-     * @return {void} This function does not return a value.
      */
-    closeCharacterPopup() {
+    closeCharacterPopup(): void {
         $('#character_popup').transition({
             opacity: 0,
             duration: 125,
@@ -377,12 +347,8 @@ export class CharacterManager {
 
     /**
      * Exports the currently selected character in the specified format.
-     * This function utilizes the `exportChar` service to handle the export process.
-     *
-     * @param {string} format - The format in which the character should be exported (e.g., JSON, XML).
-     * @return {void} This function does not return a value.
      */
-    async exportCharacter(format) {
+    async exportCharacter(format: string): Promise<void> {
         const avatar = this.settings.selectedChar;
         const body = { format, avatar_url: avatar };
 
@@ -407,14 +373,8 @@ export class CharacterManager {
 
     /**
      * Renames the currently selected character.
-     * This function retrieves the character ID based on the selected avatar,
-     * displays a rename dialog to the user, and updates the character's name
-     * with the new name provided by the user.
-     *
-     * @async
-     * @return {Promise<void>} A promise that resolves once the character's name has been successfully updated.
      */
-    async renameCharacter() {
+    async renameCharacter(): Promise<void> {
         const oldAvatar = this.settings.selectedChar;
         const charID = getIdByAvatar(this.settings.selectedChar);
         const newName = await this.st.callGenericPopup('<h3>New name:</h3>', this.st.POPUP_TYPE.INPUT, this.st.characters[charID].name);
@@ -435,15 +395,15 @@ export class CharacterManager {
                     // Replace tags list
                     this.tagManager.renameTagKey(oldAvatar, newAvatar);
 
-                    // Addtional lore books
-                    const charLore = world_info.charLore?.find(x => x.name == oldName);
+                    // Additional lore books
+                    const charLore = world_info.charLore?.find((x: any) => x.name == oldName);
                     if (charLore) {
                         charLore.name = newName;
                         this.st.saveSettingsDebounced();
                     }
 
                     // Char-bound Author's Notes
-                    const charNote = this.st.extensionSettings.note.chara?.find(x => x.name == oldName);
+                    const charNote = this.st.extensionSettings.note.chara?.find((x: any) => x.name == oldName);
                     if (charNote) {
                         charNote.name = newName;
                         this.st.saveSettingsDebounced();
@@ -457,7 +417,7 @@ export class CharacterManager {
                     await this.st.getCharacters();
 
                     // Find newly renamed character
-                    const newChId = this.st.characters.findIndex(c => c.avatar == data.avatar);
+                    const newChId = this.st.characters.findIndex((c: any) => c.avatar == data.avatar);
 
                     if (newChId !== -1) {
                         // Select the character after the renaming
@@ -500,13 +460,8 @@ export class CharacterManager {
 
     /**
      * Opens the character chat interface for the currently selected character.
-     * This function resets the character ID and avatar memory, selects the character
-     * by its ID, and closes the details view. It also transitions the shadow popup
-     * to fade out and hides the popup after a short delay.
-     *
-     * @return {void} This function does not return a value.
      */
-    openCharacterChat() {
+    openCharacterChat(): void {
         setCharacterId(undefined);
         this.settings.setMem_avatar(undefined);
         this.st.selectCharacterById(getIdByAvatar(this.settings.selectedChar));
@@ -516,17 +471,10 @@ export class CharacterManager {
 
     /**
      * Updates the avatar of the currently selected character.
-     * This function allows the user to upload a new avatar image, optionally crop it,
-     * and then update the avatar in the application. The updated avatar is displayed
-     * in the user interface and saved in the data model.
-     *
-     * @async
-     * @param {HTMLInputElement} input - The file input element containing the uploaded image file.
-     * @return {Promise<void>} A promise that resolves when the avatar update process is complete.
      */
-    async update_avatar(input){
+    async update_avatar(input: HTMLInputElement): Promise<void> {
         if (input.files && input.files[0]) {
-            let crop_data = undefined;
+            let crop_data: any = undefined;
             const file = input.files[0];
             const fileData = await getBase64Async(file);
 
@@ -567,13 +515,8 @@ export class CharacterManager {
 
     /**
      * Replaces a character's avatar with a new one, with optional cropping.
-     *
-     * @param {File|string} newAvatar - The new avatar to replace the current one. Can be a File object or a URL string.
-     * @param {string} id - The unique identifier of the character whose avatar is being replaced.
-     * @param {Object} [crop_data] - Optional cropping data for the avatar, if applicable.
-     * @return {Promise<void>} A promise that resolves when the avatar has been successfully replaced or rejects if an error occurs.
      */
-    async replaceAvatar(newAvatar, id, crop_data = undefined) {
+    async replaceAvatar(newAvatar: File | string, id: string, crop_data: any = undefined): Promise<void> {
         let url = '/api/plugins/avataredit/edit-avatar';
 
         if (crop_data !== undefined) {
@@ -596,9 +539,9 @@ export class CharacterManager {
                 cache: false,
                 contentType: false,
                 processData: false,
-                success: async ()=> {
+                success: async () => {
                     toastr.success('Avatar replaced successfully.');
-                    await fetch(this.st.getThumbnailUrl('avatar', formData.get('avatar_url')), {
+                    await fetch(this.st.getThumbnailUrl('avatar', formData.get('avatar_url') as string), {
                         method: 'GET',
                         cache: 'no-cache',
                         headers: {
@@ -610,7 +553,7 @@ export class CharacterManager {
                     await this.st.eventSource.emit(this.st.event_types.CHARACTER_EDITED, { detail: { id: id, avatarReplaced: true, character: this.st.characters[id] } });
                     resolve();
                 },
-                error: function (jqXHR, exception) {
+                error: function (jqXHR: any, exception: any) {
                     toastr.error('Something went wrong while saving the character, or the image file provided was in an invalid format. Double check that the image is not a webp.');
                     reject();
                 },
@@ -620,12 +563,8 @@ export class CharacterManager {
 
     /**
      * Updates the attributes of a character by sending a POST request with the given data.
-     * Emits an event upon successful update.
-     *
-     * @param {Object} update - The object containing the character attributes to update.
-     * @return {Promise<void>} A promise that resolves when the character is successfully updated or logs an error if the request fails.
      */
-    async editChar(update) {
+    async editChar(update: any): Promise<void> {
         let url = '/api/characters/merge-attributes';
 
         const response = await fetch(url, {
@@ -645,13 +584,8 @@ export class CharacterManager {
 
     /**
      * Duplicates the currently selected character.
-     * This function checks if a character is selected, prompts the user for confirmation,
-     * and duplicates the character if the user confirms the action.
-     *
-     * @async
-     * @return {Promise<void>} A promise that resolves once the character duplication process is complete.
      */
-    async duplicateCharacter() {
+    async duplicateCharacter(): Promise<void> {
         if (!this.settings.selectedChar) {
             // Display a warning if no character is selected
             toastr.warning('You must first select a character to duplicate!');
@@ -684,15 +618,9 @@ export class CharacterManager {
     }
 
     /**
-     * Renames past chats and updates their associated avatar and chat name in a persistent storage.
-     * Iterates through all past chat files, modifies the chat data to reflect the new avatar and chat name,
-     * and then saves the updated chats back to storage.
-     *
-     * @param {string} newAvatar - The new avatar URL to associate with the past chats.
-     * @param {string} newValue - The new name to assign to the past chats.
-     * @return {Promise<void>} A promise that resolves when all past chats have been processed and saved.
+     * Renames past chats and updates their associated avatar and chat name.
      */
-    async renamePastChats(newAvatar, newValue) {
+    async renamePastChats(newAvatar: string, newValue: string): Promise<void> {
         const pastChats = await getPastCharacterChats();
 
         for (const { file_name } of pastChats) {
@@ -744,12 +672,9 @@ export class CharacterManager {
     }
 
     /**
-     * Generates and returns HTML content for alternative greetings based on the provided items.
-     *
-     * @param {string[]} item - An array of strings where each string represents a greeting.
-     * @return {string} The generated HTML as a string. If the `item` array is empty, a placeholder HTML string is returned.
+     * Generates and returns HTML content for alternative greetings.
      */
-    async displayAltGreetings(item) {
+    async displayAltGreetings(item: string[]): Promise<string> {
         let altGreetingsHTML = '';
         if (!item || item.length === 0) {
             return '<span id="chicken">Nothing here but chickens!!</span>';
@@ -780,13 +705,11 @@ export class CharacterManager {
     }
 
     /**
-     * Adds a new alternate greeting section to the DOM within the 'altGreetings_content' container.
-     * Each new section is dynamically created and appended to the container, including appropriate event listeners.
-     *
-     * @return {void} Does not return anything.
+     * Adds a new alternate greeting section to the DOM.
      */
-    addAltGreeting(){
+    addAltGreeting(): void {
         const drawerContainer = document.getElementById('altGreetings_content');
+        if (!drawerContainer) return;
         // Determine the new greeting index
         const greetingIndex = drawerContainer.getElementsByClassName('inline-drawer').length + 1;
         // Create the new inline-drawer block
@@ -813,22 +736,20 @@ export class CharacterManager {
         $('#chicken').empty();
         drawerContainer.appendChild(altGreetingDiv);
         // Add the event on the textarea
-        altGreetingDiv.querySelector('.altGreeting_zone').addEventListener('input', (event) => {
-            this.saveAltGreetings(event);
-        });
+        const textarea = altGreetingDiv.querySelector('.altGreeting_zone');
+        if (textarea) {
+            textarea.addEventListener('input', (event) => {
+                this.saveAltGreetings(event as any);
+            });
+        }
         // Save it
         this.saveAltGreetings();
     }
 
     /**
-     * Deletes an alternative greeting block, updates the indices of remaining blocks,
-     * and ensures a proper UI display for the alternative greetings section.
-     *
-     * @param {number} index The index of the alternative greeting block to be deleted.
-     * @param {Object} inlineDrawer The DOM element representing the alternative greeting block to remove.
-     * @return {void} The function does not return a value.
+     * Deletes an alternative greeting block.
      */
-    delAltGreeting(index, inlineDrawer){
+    delAltGreeting(index: number, inlineDrawer: HTMLElement): void {
         // Delete the AltGreeting block
         inlineDrawer.remove();
         // Update the others AltGreeting blocks
@@ -837,8 +758,8 @@ export class CharacterManager {
             $('#altGreetings_content').html('<span id="chicken">Nothing here but chickens!!</span>');
         }
         else {
-            $altGreetingsToggle.each(function() {
-                const currentIndex = parseInt($(this).find('.greeting_index').text());
+            $altGreetingsToggle.each(function (this: HTMLElement) {
+                const currentIndex = parseInt($(this).find('.greeting_index').text()!);
                 if (currentIndex > index) {
                     $(this).find('.greeting_index').text(currentIndex - 1);
                     $(this).attr('id', `altGreetDrawer${currentIndex - 1}`);
@@ -850,14 +771,11 @@ export class CharacterManager {
     }
 
     /**
-     * Collects the values of all textareas with the class 'altGreeting_zone'
-     * and returns them as an array of strings.
-     *
-     * @return {string[]} An array containing the values of the textareas with the class 'altGreeting_zone'.
+     * Collects the values of all textareas with the class 'altGreeting_zone'.
      */
-    generateGreetingArray() {
-        const textareas = document.querySelectorAll('.altGreeting_zone');
-        const greetingArray = [];
+    generateGreetingArray(): string[] {
+        const textareas = document.querySelectorAll<HTMLTextAreaElement>('.altGreeting_zone');
+        const greetingArray: string[] = [];
 
         textareas.forEach(textarea => {
             greetingArray.push(textarea.value);
@@ -866,13 +784,9 @@ export class CharacterManager {
     }
 
     /**
-     * Saves alternate greetings for the selected character and updates the relevant UI elements.
-     *
-     * @param {Event|null} event - The event object triggered by a user action, used to update token count.
-     *                             Pass null if no event is available.
-     * @return {void} This function does not return a value.
+     * Saves alternate greetings for the selected character.
      */
-    async saveAltGreetings(event = null){
+    async saveAltGreetings(event: JQuery.TriggeredEvent | null = null): Promise<void> {
         const greetings = this.generateGreetingArray();
         const update = {
             avatar: this.settings.selectedChar,
@@ -884,9 +798,11 @@ export class CharacterManager {
 
         // Update token count if necessary
         if (event) {
-            const textarea = event.target;
-            const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
-            tokensSpan.textContent = `Tokens: ${await this.st.getTokenCountAsync(this.st.substituteParams(textarea.value))}`;
+            const textarea = event.target as HTMLTextAreaElement;
+            const tokensSpan = textarea.closest('.inline-drawer-content')!.previousElementSibling!.querySelector('.tokens_count');
+            if (tokensSpan) {
+                tokensSpan.textContent = `Tokens: ${await this.st.getTokenCountAsync(this.st.substituteParams(textarea.value))}`;
+            }
         }
 
         // Edit the Alt Greetings number on the main drawer

@@ -1,20 +1,38 @@
-import { escapeHtml } from '../utils.js';
+import { escapeHtml } from '../acm-utils';
+
+interface Category {
+    name: string;
+    tags?: string[];
+    mandatoryTags?: string[];
+    facultativeTags?: string[];
+    excludedTags?: string[];
+}
+
+interface Preset {
+    name: string;
+    categories: Category[];
+}
 
 export class PresetManager {
-    constructor(eventManager, settings, st, tagManager) {
+    eventManager: any;
+    settings: any;
+    st: any;
+    tagManager: any;
+
+    constructor(eventManager: any, settings: any, st: any, tagManager: any) {
         this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
         this.tagManager = tagManager;
     }
 
-    init(){
+    init(): void {
         this.registerListeners();
         this.updateDropdownPresetNames();
     }
 
-    registerListeners(){
-        $(document).on('change', '#preset_selector',  (event) => {
+    registerListeners(): void {
+        $(document).on('change', '#preset_selector', (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
             const newPreset = $element.find(':selected').data('preset');
             $('#preset_name').html(this.getPreset(newPreset).name);
@@ -28,7 +46,7 @@ export class PresetManager {
             if (newPresetName && newPresetName.trim() !== '') {
                 this.updatePresetName(selectedPreset, newPresetName);
                 $('#preset_name').html(newPresetName);
-                $('#preset_selector option').filter((_, element) => $(element).data('preset') === selectedPreset).text(newPresetName);
+                $('#preset_selector option').filter((_: number, element: HTMLElement) => $(element).data('preset') === selectedPreset).text(newPresetName);
                 this.updateDropdownPresetNames();
             }
         });
@@ -44,7 +62,7 @@ export class PresetManager {
         });
 
         // Trigger on a click on the delete category button
-        $(document).on('click', '.cat_delete',  (event) => {
+        $(document).on('click', '.cat_delete', (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const selectedCat = $element.closest('[data-catid]').data('catid');
@@ -53,7 +71,7 @@ export class PresetManager {
         });
 
         // Trigger on a click on the rename category button
-        $(document).on('click', '.cat_rename', async (event) => {
+        $(document).on('click', '.cat_rename', async (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const selectedCat = $element.closest('[data-catid]').data('catid');
@@ -65,20 +83,20 @@ export class PresetManager {
         });
 
         // Trigger on a click on the add tag button in a category
-        $(document).on('click', '.addCatTag',  (event) => {
+        $(document).on('click', '.addCatTag', (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
             const selectedCat = $element.closest('[data-catid]').data('catid');
             this.toggleTagButton($element);
         });
 
         // Trigger on a click on the minus tag button in a category
-        $(document).on('click', '.cancelCatTag',  (event) => {
+        $(document).on('click', '.cancelCatTag', (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
             const selectedCat = $element.closest('[data-catid]').data('catid');
             this.toggleTagButton($element);
         });
 
-        $(document).on('click', '.tag_cat_remove',  (event) => {
+        $(document).on('click', '.tag_cat_remove', (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const selectedCat = $element.closest('[data-catid]').data('catid');
@@ -92,7 +110,7 @@ export class PresetManager {
             $element.closest('[data-tagid]').remove();
         });
 
-        this.eventManager.on('tag:addTagToCat',  (data) => {
+        this.eventManager.on('tag:addTagToCat', (data: any) => {
             const tagType = data.tagType || 'mandatory';
             this.addTagToCategory(data.presetId, data.categoryId, data.tagId, tagType);
         });
@@ -107,7 +125,7 @@ export class PresetManager {
         });
 
         // Toggle category collapse
-        $(document).on('click', '.acm_catList', (event) => {
+        $(document).on('click', '.acm_catList', (event: JQuery.TriggeredEvent) => {
             if ($(event.target).closest('.drag-handle, .menu_button').length) return;
             $(event.currentTarget).siblings('.acm_catTagSections').stop().slideToggle();
         });
@@ -115,10 +133,8 @@ export class PresetManager {
 
     /**
      * Gets a specific preset by index
-     * @param {number} presetIndex - The index of the preset
-     * @returns {Object} - The preset object
      */
-    getPreset(presetIndex) {
+    getPreset(presetIndex: number): Preset {
         if (presetIndex < 0 || presetIndex >= this.settings.getSetting('dropdownPresets').length) {
             throw new Error('Invalid preset index');
         }
@@ -127,11 +143,8 @@ export class PresetManager {
 
     /**
      * Gets a specific category from a preset
-     * @param {number} presetIndex - The index of the preset
-     * @param {number} categoryIndex - The index of the category
-     * @returns {Object} - The category object
      */
-    getCategory(presetIndex, categoryIndex) {
+    getCategory(presetIndex: number, categoryIndex: number): Category {
         const preset = this.getPreset(presetIndex);
         if (categoryIndex < 0 || categoryIndex >= preset.categories.length) {
             throw new Error('Invalid category index');
@@ -141,10 +154,8 @@ export class PresetManager {
 
     /**
      * Updates a specific preset name
-     * @param {number} presetIndex - The index of the preset to update
-     * @param {string} name - The new name for the preset
      */
-    updatePresetName(presetIndex, name) {
+    updatePresetName(presetIndex: number, name: string): void {
         if (presetIndex < 0 || presetIndex >= this.settings.getSetting('dropdownPresets').length) {
             throw new Error('Invalid preset index');
         }
@@ -161,10 +172,8 @@ export class PresetManager {
 
     /**
      * Updates all categories of a specific preset
-     * @param {number} presetIndex - The index of the preset
-     * @param {Array} categories - The new array of categories
      */
-    updatePresetCategories(presetIndex, categories) {
+    updatePresetCategories(presetIndex: number, categories: Category[]): void {
         if (presetIndex < 0 || presetIndex >= this.settings.getSetting('dropdownPresets').length) {
             throw new Error('Invalid preset index');
         }
@@ -188,10 +197,8 @@ export class PresetManager {
 
     /**
      * Adds a new category to a preset
-     * @param {number} presetIndex - The index of the preset
-     * @param {string} name - The name of the new category
      */
-    addPresetCategory(presetIndex, name) {
+    addPresetCategory(presetIndex: number, name: string): void {
         if (typeof name !== 'string' || name.trim() === '') {
             throw new Error('Category name must be a non-empty string');
         }
@@ -205,11 +212,8 @@ export class PresetManager {
 
     /**
      * Updates a specific category in a preset
-     * @param {number} presetIndex - The index of the preset
-     * @param {number} categoryIndex - The index of the category
-     * @param {string} name - The new name for the category
      */
-    updateCategoryName(presetIndex, categoryIndex, name) {
+    updateCategoryName(presetIndex: number, categoryIndex: number, name: string): void {
         const preset = this.getPreset(presetIndex);
         if (categoryIndex < 0 || categoryIndex >= preset.categories.length) {
             throw new Error('Invalid category index');
@@ -227,33 +231,27 @@ export class PresetManager {
 
     /**
      * Removes a category from a preset
-     * @param {number} presetIndex - The index of the preset
-     * @param {number} categoryIndex - The index of the category to remove
      */
-    removePresetCategory(presetIndex, categoryIndex) {
+    removePresetCategory(presetIndex: number, categoryIndex: number): void {
         const preset = this.getPreset(presetIndex);
         if (categoryIndex < 0 || categoryIndex >= preset.categories.length) {
             throw new Error('Invalid category index');
         }
         const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
         updatedPresets[presetIndex].categories = updatedPresets[presetIndex].categories
-            .filter((_, index) => index !== categoryIndex);
+            .filter((_: Category, index: number) => index !== categoryIndex);
         this.settings.updateSetting('dropdownPresets', updatedPresets);
     }
 
     /**
      * Adds a tag to a category
-     * @param {number} presetIndex - The index of the preset
-     * @param {number} categoryIndex - The index of the category
-     * @param {number} tagId - The ID of the tag to add
-     * @param {string} tagType - The type of tag ('mandatory', 'facultative', 'excluded')
      */
-    addTagToCategory(presetIndex, categoryIndex, tagId, tagType = 'mandatory') {
+    addTagToCategory(presetIndex: number, categoryIndex: number, tagId: string, tagType: string = 'mandatory'): void {
         const category = this.getCategory(presetIndex, categoryIndex);
-        const fieldMap = {
+        const fieldMap: Record<string, string> = {
             'mandatory': 'mandatoryTags',
             'facultative': 'facultativeTags',
-            'excluded': 'excludedTags'
+            'excluded': 'excludedTags',
         };
         const fieldName = fieldMap[tagType] || 'mandatoryTags';
 
@@ -280,16 +278,12 @@ export class PresetManager {
 
     /**
      * Removes a tag from a category
-     * @param {number} presetIndex - The index of the preset
-     * @param {number} categoryIndex - The index of the category
-     * @param {number} tagId - The ID of the tag to remove
-     * @param {string} tagType - The type of tag ('mandatory', 'facultative', 'excluded')
      */
-    removeTagFromCategory(presetIndex, categoryIndex, tagId, tagType = 'mandatory') {
-        const fieldMap = {
+    removeTagFromCategory(presetIndex: number, categoryIndex: number, tagId: string, tagType: string = 'mandatory'): void {
+        const fieldMap: Record<string, string> = {
             'mandatory': 'mandatoryTags',
             'facultative': 'facultativeTags',
-            'excluded': 'excludedTags'
+            'excluded': 'excludedTags',
         };
         const fieldName = fieldMap[tagType] || 'mandatoryTags';
 
@@ -297,7 +291,7 @@ export class PresetManager {
         const category = updatedPresets[presetIndex].categories[categoryIndex];
 
         if (category[fieldName]) {
-            category[fieldName] = category[fieldName].filter(id => id !== tagId);
+            category[fieldName] = category[fieldName].filter((id: string) => id !== tagId);
         }
 
         // Maintain backwards compatibility: keep 'tags' pointing to mandatoryTags
@@ -310,13 +304,8 @@ export class PresetManager {
 
     /**
      * Normalizes a category structure for backwards compatibility.
-     * Ensures that mandatoryTags, facultativeTags, and excludedTags exist.
-     * Migrates old 'tags' array to 'mandatoryTags' if needed.
-     *
-     * @param {Object} category - The category object to normalize
-     * @return {Object} The normalized category
      */
-    normalizeCategory(category) {
+    normalizeCategory(category: Category): Category {
         // If category doesn't have the new structure but has old 'tags', migrate it
         if (!category.mandatoryTags && category.tags) {
             category.mandatoryTags = [...category.tags];
@@ -334,13 +323,10 @@ export class PresetManager {
     }
 
     /**
-     * Updates the names of the preset items in a dropdown menu by iterating through each dropdown item,
-     * fetching the associated preset using its index, and setting its name as the item's text content.
-     *
-     * @return {void} This function does not return a value.
+     * Updates the names of the preset items in a dropdown menu.
      */
-    updateDropdownPresetNames() {
-        $('#preset-submenu .dropdown-ui-item').each((index, element) => {
+    updateDropdownPresetNames(): void {
+        $('#preset-submenu .dropdown-ui-item').each((index: number, element: HTMLElement) => {
             const $element = $(element);
             const presetIndex = $element.data('preset');
             const newName = this.getPreset(presetIndex).name;
@@ -350,16 +336,12 @@ export class PresetManager {
 
     /**
      * Manages the custom categories interface in the application.
-     * This method creates and displays a popup allowing users to view, select, rename, or create custom categories.
-     * It initializes a dropdown for preset categories, renders category controls,
-     * and provides drag-and-drop reordering functionality.
-     *.
      */
-    manageCustomCategories(){
+    manageCustomCategories(): void {
         const html = $(document.createElement('div'));
         html.attr('id', 'acm_custom_categories');
         const selectElement = $(`<select id="preset_selector" title="Preset Selector"></select>`);
-        this.settings.getSetting('dropdownPresets').forEach((preset, index) => {
+        this.settings.getSetting('dropdownPresets').forEach((preset: Preset, index: number) => {
             selectElement.append(`<option data-preset="${index}">${escapeHtml(preset.name)}</option>`);
         });
         html.append(`
@@ -390,25 +372,19 @@ export class PresetManager {
 
     /**
      * Displays the list of categories for a specified preset ID in the user interface.
-     * Handles initialization of category container, population of existing categories,
-     * and rendering of components such as tags, drag handles, and action buttons.
-     *
-     * @param {number} presetID - The ID of the selected preset whose categories are to be displayed.
-     * @param {boolean} [init=false] - Indicates whether the category container is being initialized for the first time. Defaults to `false`.
-     * @return {void} This method does not return a value.
      */
-    printCategoriesList(presetID, init = false){
+    printCategoriesList(presetID: number, init: boolean = false): void {
         const catContainer = init
             ? $('<div id="catContainer"></div>')
             : $('#catContainer').empty() && $('#catContainer');
 
         const preset = this.getPreset(presetID);
-        if(!preset.categories?.length){
+        if (!preset.categories?.length) {
             catContainer.append('No category defined');
             $('#acm_custom_categories').append(catContainer);
         }
         else {
-            preset.categories.forEach((cat,index) => {
+            preset.categories.forEach((cat: Category, index: number) => {
                 // Normalize category for backwards compatibility
                 cat = this.normalizeCategory(cat);
 
@@ -489,21 +465,16 @@ export class PresetManager {
 
     /**
      * Makes the categories draggable and sortable within the specified container.
-     * Enables drag-and-drop functionality to change the order of categories, updating
-     * the configuration and saving the new order on drop.
-     *
-     * @param {string} containerSelector - The selector for the container element where categories should be made draggable.
-     * @return {void} No return value.
      */
-    makeCategoryDraggable(containerSelector) {
+    makeCategoryDraggable(containerSelector: string): void {
         $(containerSelector).sortable({
             handle: '.drag-handle',
             items: '> div',
             tolerance: 'pointer',
             placeholder: 'sortable-placeholder',
-            update: ()=> {
-                const newOrder = [];
-                $(containerSelector).children('div').each(function () {
+            update: () => {
+                const newOrder: number[] = [];
+                $(containerSelector).children('div').each(function (this: HTMLElement) {
                     newOrder.push($(this).data('catid'));
                 });
                 const presetID = $('#preset_selector option:selected').data('preset');
@@ -513,18 +484,14 @@ export class PresetManager {
         });
 
         $('.drag-handle')
-            .on('mousedown',function () { $(this).css('cursor', 'grabbing'); })
-            .on('mouseup', function () { $(this).css('cursor', 'grab'); },
-            );
+            .on('mousedown', function (this: HTMLElement) { $(this).css('cursor', 'grabbing'); })
+            .on('mouseup', function (this: HTMLElement) { $(this).css('cursor', 'grab'); });
     }
 
     /**
-     * Toggles the state of a tag button between "add" and "cancel" styles
-     * and shows or hides the associated category tag input field.
-     *
-     * @param {object} button The button element to be toggled.
+     * Toggles the state of a tag button between "add" and "cancel" styles.
      */
-    toggleTagButton(button) {
+    toggleTagButton(button: JQuery<HTMLElement>): void {
         // Find the input within the same tag section
         const tagSection = button.closest('.acm_catTagList');
         const input = tagSection.find('input.tag_input');

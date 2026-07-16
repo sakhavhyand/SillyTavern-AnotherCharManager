@@ -1,13 +1,22 @@
-import { getIdByAvatar, resetScrollHeight } from '../utils.js';
+import { getIdByAvatar, resetScrollHeight } from '../acm-utils';
+// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { setCharacterId, setMenuType } from '/script.js';
-import { CharCreationManager } from './CharCreationManager.js';
-import { PresetManager } from './PresetManager.js';
-import { TagManager } from './TagManager.js';
-import { CharListManager } from "./CharListManager.js";
+import { CharCreationManager } from './CharCreationManager';
+import { PresetManager } from './PresetManager';
+import { TagManager } from './TagManager';
+import { CharListManager } from './CharListManager';
 const { Popper } = SillyTavern.libs;
 
 export class ModalManager {
-    constructor(eventManager, settings, st) {
+    eventManager: any;
+    settings: any;
+    st: any;
+    charCreationManager: CharCreationManager;
+    tagManager: TagManager;
+    presetManager: PresetManager;
+    charListManager: CharListManager;
+
+    constructor(eventManager: any, settings: any, st: any) {
         this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
@@ -20,9 +29,9 @@ export class ModalManager {
     /**
      * Initializes the modal component
      */
-    async init() {
+    async init(): Promise<void> {
         // Load the modal HTML template
-        let modalHtml;
+        let modalHtml: string;
         try {
             modalHtml = await this.st.renderExtensionTemplateAsync(`third-party/${this.settings.extensionName}/templates`, 'modal');
         } catch (error) {
@@ -60,13 +69,13 @@ export class ModalManager {
 
 
         // Put the button before rm_button_group_chats in the form_character_search_form
-        // on hover, should say: "Open Char Manager"
         $('#rm_button_group_chats').before('<button id="acm-manager" class="menu_button fa-solid fa-users faSmallFontSquareFix" title="Open Char Manager"></button>');
 
         // Initialize popper.js for dropdowns
         this.initializePoppers();
         this.initializeModalEvents();
         this.initializeUIMenuEvents();
+        this.initializeDescTabMode();
         this.charCreationManager.initializeCharacterCreationEvents();
         this.tagManager.init();
         this.presetManager.init();
@@ -75,32 +84,37 @@ export class ModalManager {
 
     /**
      * Initializes popper.js for dropdown positioning
-     * @private
      */
-    initializePoppers() {
+    initializePoppers(): void {
         // Create poppers for various dropdowns
         const Export = Popper.createPopper(
-            document.getElementById('acm_export_button'),
-            document.getElementById('acm_export_format_popup'),
+            document.getElementById('acm_export_button')!,
+            document.getElementById('acm_export_format_popup')!,
             { placement: 'left' },
         );
 
         const UI = Popper.createPopper(
-            document.getElementById('acm_switch_ui'),
-            document.getElementById('dropdown-ui-menu'),
+            document.getElementById('acm_switch_ui')!,
+            document.getElementById('dropdown-ui-menu')!,
             { placement: 'top' },
         );
 
         const UISub = Popper.createPopper(
-            document.getElementById('acm_dropdown_sub'),
-            document.getElementById('dropdown-submenu'),
+            document.getElementById('acm_dropdown_sub')!,
+            document.getElementById('dropdown-submenu')!,
             { placement: 'right' },
         );
 
         const UIPreset = Popper.createPopper(
-            document.getElementById('acm_dropdown_cat'),
-            document.getElementById('preset-submenu'),
+            document.getElementById('acm_dropdown_cat')!,
+            document.getElementById('preset-submenu')!,
             { placement: 'right' },
+        );
+
+        const Settings = Popper.createPopper(
+            document.getElementById('acm_settings_button'),
+            document.getElementById('acm-settings-popup'),
+            { placement: 'top' },
         );
 
         // Store poppers for later use
@@ -109,17 +123,14 @@ export class ModalManager {
             UI,
             UISub,
             UIPreset,
+            Settings,
         };
     }
 
     /**
      * Opens a modal window and initializes its contents and settings.
-     * This method adjusts global variables, updates UI components, and applies specific display and transition effects.
-     *
-     * @return {void} This function does not return any value.
      */
-    openModal() {
-
+    openModal(): void {
         // Memorize some global variables
         if (this.st.characterId !== undefined && this.st.characterId >= 0) {
             this.settings.setMem_avatar(this.st.characters[this.st.characterId].avatar);
@@ -128,17 +139,16 @@ export class ModalManager {
         }
         this.settings.setMem_menu(this.st.menuType);
 
-        document.querySelector('#acm_lock').classList.add('is-active');
+        document.querySelector('#acm_lock')!.classList.add('is-active');
 
         // Display the modal with our list layout
-        // $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
         $('#acm_popup').css('display', 'flex').transition({
             opacity: 1,
             duration: 125,
             easing: 'ease-in-out',
         });
 
-        const charSortOrderSelect = document.getElementById('char_sort_order');
+        const charSortOrderSelect = document.getElementById('char_sort_order') as HTMLSelectElement;
         Array.from(charSortOrderSelect.options).forEach(option => {
             const field = option.getAttribute('data-field');
             const order = option.getAttribute('data-order');
@@ -150,30 +160,41 @@ export class ModalManager {
         this.charListManager.updateFavFilterButtonState(favOnly);
 
         this.eventManager.emit('modal:opened');
+
+        // Apply persisted tab/dropdown view mode for char-details-desc
+        const $desc = $('#char-details-desc');
+        const $toggle = $('#acm-desc-view-toggle');
+        if (this.settings.getSetting('detailsTabMode')) {
+            $desc.addClass('acm-tab-mode');
+            $toggle.addClass('active');
+            const firstTab = $('#acm-desc-tab-bar .acm-tab-button').first().data('acm-tab');
+            $('#acm-desc-tab-bar .acm-tab-button').removeClass('active').first().addClass('active');
+            $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+            $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"]`).addClass('acm-section-active');
+        } else {
+            $desc.removeClass('acm-tab-mode');
+            $toggle.removeClass('active');
+            $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+        }
     }
 
     /**
      * Closes the character details section and optionally resets the character selection.
-     *
-     * @param {boolean} [reset=true] - Indicates whether to reset the character selection. Defaults to true.
-     * @return {void} Does not return a value.
      */
-    closeDetails( reset = true ) {
-        if(reset){ setCharacterId(getIdByAvatar(this.settings.mem_avatar)); }
+    closeDetails(reset: boolean = true): void {
+        if (reset) { setCharacterId(getIdByAvatar(this.settings.mem_avatar)); }
 
         $('#acm_export_format_popup').hide();
-        document.querySelector(`[data-avatar="${this.settings.selectedChar}"]`)?.classList.replace('char_selected','char_select');
-        document.getElementById('char-details').classList.remove('open');
-        document.getElementById('char-sep').style.display = 'none';
+        document.querySelector(`[data-avatar="${this.settings.selectedChar}"]`)?.classList.replace('char_selected', 'char_select');
+        document.getElementById('char-details')!.classList.remove('open');
+        document.getElementById('char-sep')!.style.display = 'none';
         this.settings.setSelectedChar(undefined);
     }
 
     /**
-     * Closes the modal by resetting certain state variables, hiding the popup, and resetting its styles and classes.
-     *
-     * @return {void} This function does not return a value.
+     * Closes the modal by resetting certain state variables, hiding the popup.
      */
-    closeModal() {
+    closeModal(): void {
         this.closeDetails(false);
         if (this.settings.mem_avatar !== undefined) {
             setCharacterId(getIdByAvatar(this.settings.mem_avatar));
@@ -181,7 +202,7 @@ export class ModalManager {
         setMenuType(this.settings.mem_menu);
         this.settings.setMem_avatar(undefined);
 
-        document.querySelector('#acm_lock').classList.remove('is-active');
+        document.querySelector('#acm_lock')!.classList.remove('is-active');
 
         const $popup = $('#acm_popup');
         $popup.transition({
@@ -196,16 +217,13 @@ export class ModalManager {
     }
 
     /**
-     * Toggles the visibility of dropdown menus based on the provided options. Can either close all menus, toggle a specific menu, or update popper positioning for open menus.
-     *
-     * @param {Object} [options={}] - The configuration options for toggling dropdown menus.
-     * @param {boolean} [options.closeAll=false] - If true, closes all dropdown menus regardless of current state.
-     * @param {string|null} [options.menuToToggle=null] - The key of the specific menu to toggle. Keys must match the predefined menu identifiers (e.g., "main", "sub", "preset", "export").
-     * @param {boolean} [options.updatePoppers=true] - If true, updates the positioning of popper instances associated with the menus.
-     *
-     * @return {void} This function does not return a value.
+     * Toggles the visibility of dropdown menus based on the provided options.
      */
-    toggleDropdownMenus(options = {}) {
+    toggleDropdownMenus(options: {
+        closeAll?: boolean;
+        menuToToggle?: string | null;
+        updatePoppers?: boolean;
+    } = {}): void {
         const {
             closeAll = false,
             menuToToggle = null,
@@ -213,7 +231,7 @@ export class ModalManager {
         } = options;
 
         // Menu elements
-        const menus = {
+        const menus: Record<string, { element: string; popper: string }> = {
             main: {
                 element: '#dropdown-ui-menu',
                 popper: 'UI',
@@ -229,6 +247,10 @@ export class ModalManager {
             export: {
                 element: '#acm_export_format_popup',
                 popper: 'Export',
+            },
+            settings: {
+                element: '#acm-settings-popup',
+                popper: 'Settings',
             },
         };
 
@@ -254,24 +276,21 @@ export class ModalManager {
 
     /**
      * Initializes a function to handle clicks outside of specified dropdown elements.
-     * The function ensures that interactions outside a defined list of dropdown-related elements
-     * trigger the closure of all dropdown menus.
-     *
-     * @return {Function} Returns an event handler function that can be used to detect and handle clicks
-     * outside of specified dropdown elements by closing all dropdown menus.
      */
-    initializeDropdownClickOutside() {
+    initializeDropdownClickOutside(): (event: MouseEvent) => void {
         const excludedElements = [
             'dropdown-ui-menu',
             'dropdown-submenu',
             'preset-submenu',
             'acm_switch_ui',
             'acm_export_format_popup',
-            'acm_export_button']
+            'acm_export_button',
+            'acm-settings-popup',
+            'acm_settings_button']
             .map(id => document.getElementById(id));
 
-        return (event) => {
-            if (!excludedElements.some(element => element?.contains(event.target))) {
+        return (event: MouseEvent) => {
+            if (!excludedElements.some(element => element?.contains(event.target as Node))) {
                 this.toggleDropdownMenus({ closeAll: true });
             }
         };
@@ -279,37 +298,31 @@ export class ModalManager {
 
     /**
      * Initializes modal-related events for interactive elements within the application.
-     *
-     * This method sets up event listeners for modal opening, closing, drawer interactions,
-     * and dynamic resizing of modal components. It ties specific UI actions to their
-     * corresponding functionalities, enhancing user interactivity with the modal.
-     *
-     * @return {void} Does not return a value.
      */
-    initializeModalEvents() {
+    initializeModalEvents(): void {
         $('#acm-manager, #acm_open').on('click', () => {
             this.openModal();
         });
 
         // Trigger when clicking on a drawer to open/close it
-        $(document).on('click', '.altgreetings-drawer-toggle', function () {
+        $(document).on('click', '.altgreetings-drawer-toggle', function (this: HTMLElement) {
             const icon = $(this).find('.idit');
             icon.toggleClass('down up').toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
             $(this).closest('.inline-drawer').children('.inline-drawer-content').stop().slideToggle();
 
             // Set the height of "autoSetHeight" text areas within the inline-drawer to their scroll height
-            $(this).closest('.inline-drawer').find('.inline-drawer-content textarea.autoSetHeight').each(function () {
-                resetScrollHeight($(this));
+            $(this).closest('.inline-drawer').find('.inline-drawer-content textarea.autoSetHeight').each(function (this: HTMLElement) {
+                resetScrollHeight(this);
             });
         });
 
         // Trigger when the modal is closed to reset some global parameters
-        $('#acm_popup_close').on('click',  () => {
+        $('#acm_popup_close').on('click', () => {
             this.closeModal();
         });
 
         // Trigger when clicking on the separator to close the character details
-        $(document).on('click', '#char-sep',  () => {
+        $(document).on('click', '#char-sep', () => {
             this.closeDetails();
         });
 
@@ -317,13 +330,19 @@ export class ModalManager {
         const $popup = $('#acm_popup');
         const $preview = $('#acm_popup_preview');
 
-        $slider.on('input', function () {
+        // Apply persisted width to slider
+        $slider.val(this.settings.getSetting('popupWidth'));
+        $('#acm_widthValue').text($slider.val() + '%');
+
+        $slider.on('input', function (this: HTMLElement) {
+            const val = $(this).val();
             $preview.show().css({
-                'width': $(this).val() + '%',
+                'width': val + '%',
                 'height': $popup.outerHeight() + 'px',
             });
-        }).on('change',  (event) => {
-            const newWidth = $(event.target).val();
+            $('#acm_widthValue').text(val + '%');
+        }).on('change', (event: JQuery.TriggeredEvent) => {
+            const newWidth = $(event.target).val() as string;
             $popup.css('width', newWidth + '%');
             $preview.hide();
             this.settings.updateSetting('popupWidth', newWidth);
@@ -334,25 +353,24 @@ export class ModalManager {
             });
         });
 
-        this.eventManager.on('modal:closeDetails', (data)=> {
+        this.eventManager.on('modal:closeDetails', (data: any) => {
             this.closeDetails(data);
         });
 
-        this.eventManager.on('modal:close', ()=> {
+        this.eventManager.on('modal:close', () => {
             this.closeModal();
         });
     }
 
     /**
      * Initializes UI menu events by binding click event handlers to various elements.
-     * The method manages dropdown menu toggles, updates settings, refreshes lists, and manages custom categories.
-     * Event handlers are dynamically assigned based on specific selectors.
-     *
-     * @return {void} This method does not return a value.
      */
-    initializeUIMenuEvents() {
+    initializeUIMenuEvents(): void {
         $('#acm_switch_ui').on('click', () => {
             this.toggleDropdownMenus({ menuToToggle: 'main' });
+        });
+        $('#acm_settings_button').on('click', () => {
+            this.toggleDropdownMenus({ menuToToggle: 'settings' });
         });
         $('#acm_dropdown_sub').on('click', () => {
             this.toggleDropdownMenus({ menuToToggle: 'sub' });
@@ -361,7 +379,7 @@ export class ModalManager {
             this.toggleDropdownMenus({ menuToToggle: 'preset' });
         });
 
-        const menuActions = {
+        const menuActions: Record<string, (event?: JQuery.TriggeredEvent) => void> = {
             '#acm_switch_classic': () => {
                 if (this.settings.getSetting('dropdownUI')) {
                     this.settings.updateSetting('dropdownUI', false);
@@ -385,8 +403,8 @@ export class ModalManager {
             '#acm_manage_categories': () => {
                 this.eventManager.emit('modal:openPresetManager');
             },
-            '[data-ui="preset"]': (event) => {
-                const presetId = $(event.target).closest('[data-ui="preset"]').data('preset');
+            '[data-ui="preset"]': (event?: JQuery.TriggeredEvent) => {
+                const presetId = $(event!.target).closest('[data-ui="preset"]').data('preset');
                 if (!this.settings.getSetting('dropdownUI') ||
                     (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') !== 'custom') ||
                     (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') === 'custom' && this.settings.getSetting('presetId') !== presetId)) {
@@ -399,7 +417,7 @@ export class ModalManager {
         };
 
         Object.entries(menuActions).forEach(([selector, action]) => {
-            $(document).on('click', selector, (event) => {
+            $(document).on('click', selector, (event: JQuery.TriggeredEvent) => {
                 action(event);
                 this.toggleDropdownMenus({ closeAll: true });
             });
@@ -408,4 +426,60 @@ export class ModalManager {
         document.addEventListener('click', this.initializeDropdownClickOutside());
     }
 
+    /**
+     * Initializes tab-based view mode for the character details description area.
+     * Handles tab switching and the dropdown/tab view toggle button.
+     * @private
+     */
+    initializeDescTabMode() {
+        // Tab button click handler
+        $(document).on('click', '#acm-desc-tab-bar .acm-tab-button', (e) => {
+            const $btn = $(e.currentTarget);
+            const tabName = $btn.data('acm-tab');
+
+            // Update active tab button
+            $('#acm-desc-tab-bar .acm-tab-button').removeClass('active');
+            $btn.addClass('active');
+
+            // Update active content section
+            $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+            $(`#char-details-desc > .inline-drawer[data-acm-section="${tabName}"]`).addClass('acm-section-active');
+
+            // Reset textarea heights in the newly visible content
+            const $activeContent = $(`#char-details-desc > .inline-drawer[data-acm-section="${tabName}"] > .inline-drawer-content`);
+            $activeContent.find('textarea.autoSetHeight').each(function () {
+                resetScrollHeight(this);
+            });
+        });
+
+        // Toggle switch: switch between dropdown and tab view
+        $(document).on('click', '#acm-desc-view-toggle', () => {
+            const $toggle = $('#acm-desc-view-toggle');
+            const $desc = $('#char-details-desc');
+            const isNowActive = !$toggle.hasClass('active');
+            $toggle.toggleClass('active', isNowActive);
+
+            if (!isNowActive) {
+                // Switch to dropdown mode
+                $desc.removeClass('acm-tab-mode');
+                $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+                this.settings.updateSetting('detailsTabMode', false);
+            } else {
+                // Switch to tab mode
+                $desc.addClass('acm-tab-mode');
+                // Activate the first tab by default
+                const firstTab = $('#acm-desc-tab-bar .acm-tab-button').first().data('acm-tab');
+                $('#acm-desc-tab-bar .acm-tab-button').removeClass('active').first().addClass('active');
+                $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+                $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"]`).addClass('acm-section-active');
+                this.settings.updateSetting('detailsTabMode', true);
+
+                // Reset textarea heights for the active section
+                const $activeContent = $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"] > .inline-drawer-content`);
+                $activeContent.find('textarea.autoSetHeight').each(function () {
+                    resetScrollHeight(this);
+                });
+            }
+        });
+    }
 }

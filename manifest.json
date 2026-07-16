@@ -3,9 +3,10 @@
     "loading_order": 50,
     "requires": [],
     "optional": [],
-    "js": "index.js",
-    "css": "style.css",
+    "js": "dist/index.js",
+    "css": "src/style.css",
     "author": "Rendal",
     "version": "2.5",
-    "homePage": "https://github.com/sakhavhyand/SillyTavern-AnotherCharManager"
+    "homePage": "https://github.com/sakhavhyand/SillyTavern-AnotherCharManager",
+    "auto_update": true
 }
