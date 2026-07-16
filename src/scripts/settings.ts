@@ -20,10 +20,10 @@ export interface ExtensionSettings {
     favOnly: boolean;
     dropdownUI: boolean;
     dropdownMode: string;
+    detailsTabMode: boolean;
     dropdownOpenSections: DropdownOpenSections;
     presetId: number;
     dropdownPresets: DropdownPreset[];
-    acm?: any;
 }
 
 export interface CreateData {
@@ -56,6 +56,7 @@ export const defaultSettings: Readonly<ExtensionSettings> = Object.freeze({
     sortingOrder: 'asc',
     favOnly: false,
     dropdownUI: false,
+    detailsTabMode: false,
     dropdownMode: 'allTags',
     dropdownOpenSections: {
         allTags: [],

@@ -30,6 +30,7 @@ interface Window {
         UI: any;
         UISub: any;
         UIPreset: any;
+        Settings: any;
     };
     acmIsUpdatingDetails: boolean;
 }

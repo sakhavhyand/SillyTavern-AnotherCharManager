@@ -75,6 +75,7 @@ export class ModalManager {
         this.initializePoppers();
         this.initializeModalEvents();
         this.initializeUIMenuEvents();
+        this.initializeDescTabMode();
         this.charCreationManager.initializeCharacterCreationEvents();
         this.tagManager.init();
         this.presetManager.init();
@@ -110,12 +111,19 @@ export class ModalManager {
             { placement: 'right' },
         );
 
+        const Settings = Popper.createPopper(
+            document.getElementById('acm_settings_button'),
+            document.getElementById('acm-settings-popup'),
+            { placement: 'top' },
+        );
+
         // Store poppers for later use
         window.acmPoppers = {
             Export,
             UI,
             UISub,
             UIPreset,
+            Settings,
         };
     }
 
@@ -152,6 +160,22 @@ export class ModalManager {
         this.charListManager.updateFavFilterButtonState(favOnly);
 
         this.eventManager.emit('modal:opened');
+
+        // Apply persisted tab/dropdown view mode for char-details-desc
+        const $desc = $('#char-details-desc');
+        const $toggle = $('#acm-desc-view-toggle');
+        if (this.settings.getSetting('detailsTabMode')) {
+            $desc.addClass('acm-tab-mode');
+            $toggle.addClass('active');
+            const firstTab = $('#acm-desc-tab-bar .acm-tab-button').first().data('acm-tab');
+            $('#acm-desc-tab-bar .acm-tab-button').removeClass('active').first().addClass('active');
+            $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+            $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"]`).addClass('acm-section-active');
+        } else {
+            $desc.removeClass('acm-tab-mode');
+            $toggle.removeClass('active');
+            $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+        }
     }
 
     /**
@@ -224,6 +248,10 @@ export class ModalManager {
                 element: '#acm_export_format_popup',
                 popper: 'Export',
             },
+            settings: {
+                element: '#acm-settings-popup',
+                popper: 'Settings',
+            },
         };
 
         if (closeAll) {
@@ -256,7 +284,9 @@ export class ModalManager {
             'preset-submenu',
             'acm_switch_ui',
             'acm_export_format_popup',
-            'acm_export_button']
+            'acm_export_button',
+            'acm-settings-popup',
+            'acm_settings_button']
             .map(id => document.getElementById(id));
 
         return (event: MouseEvent) => {
@@ -300,11 +330,17 @@ export class ModalManager {
         const $popup = $('#acm_popup');
         const $preview = $('#acm_popup_preview');
 
+        // Apply persisted width to slider
+        $slider.val(this.settings.getSetting('popupWidth'));
+        $('#acm_widthValue').text($slider.val() + '%');
+
         $slider.on('input', function (this: HTMLElement) {
+            const val = $(this).val();
             $preview.show().css({
-                'width': $(this).val() + '%',
+                'width': val + '%',
                 'height': $popup.outerHeight() + 'px',
             });
+            $('#acm_widthValue').text(val + '%');
         }).on('change', (event: JQuery.TriggeredEvent) => {
             const newWidth = $(event.target).val() as string;
             $popup.css('width', newWidth + '%');
@@ -332,6 +368,9 @@ export class ModalManager {
     initializeUIMenuEvents(): void {
         $('#acm_switch_ui').on('click', () => {
             this.toggleDropdownMenus({ menuToToggle: 'main' });
+        });
+        $('#acm_settings_button').on('click', () => {
+            this.toggleDropdownMenus({ menuToToggle: 'settings' });
         });
         $('#acm_dropdown_sub').on('click', () => {
             this.toggleDropdownMenus({ menuToToggle: 'sub' });
@@ -385,5 +424,62 @@ export class ModalManager {
         });
 
         document.addEventListener('click', this.initializeDropdownClickOutside());
+    }
+
+    /**
+     * Initializes tab-based view mode for the character details description area.
+     * Handles tab switching and the dropdown/tab view toggle button.
+     * @private
+     */
+    initializeDescTabMode() {
+        // Tab button click handler
+        $(document).on('click', '#acm-desc-tab-bar .acm-tab-button', (e) => {
+            const $btn = $(e.currentTarget);
+            const tabName = $btn.data('acm-tab');
+
+            // Update active tab button
+            $('#acm-desc-tab-bar .acm-tab-button').removeClass('active');
+            $btn.addClass('active');
+
+            // Update active content section
+            $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+            $(`#char-details-desc > .inline-drawer[data-acm-section="${tabName}"]`).addClass('acm-section-active');
+
+            // Reset textarea heights in the newly visible content
+            const $activeContent = $(`#char-details-desc > .inline-drawer[data-acm-section="${tabName}"] > .inline-drawer-content`);
+            $activeContent.find('textarea.autoSetHeight').each(function () {
+                resetScrollHeight(this);
+            });
+        });
+
+        // Toggle switch: switch between dropdown and tab view
+        $(document).on('click', '#acm-desc-view-toggle', () => {
+            const $toggle = $('#acm-desc-view-toggle');
+            const $desc = $('#char-details-desc');
+            const isNowActive = !$toggle.hasClass('active');
+            $toggle.toggleClass('active', isNowActive);
+
+            if (!isNowActive) {
+                // Switch to dropdown mode
+                $desc.removeClass('acm-tab-mode');
+                $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+                this.settings.updateSetting('detailsTabMode', false);
+            } else {
+                // Switch to tab mode
+                $desc.addClass('acm-tab-mode');
+                // Activate the first tab by default
+                const firstTab = $('#acm-desc-tab-bar .acm-tab-button').first().data('acm-tab');
+                $('#acm-desc-tab-bar .acm-tab-button').removeClass('active').first().addClass('active');
+                $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+                $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"]`).addClass('acm-section-active');
+                this.settings.updateSetting('detailsTabMode', true);
+
+                // Reset textarea heights for the active section
+                const $activeContent = $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"] > .inline-drawer-content`);
+                $activeContent.find('textarea.autoSetHeight').each(function () {
+                    resetScrollHeight(this);
+                });
+            }
+        });
     }
 }

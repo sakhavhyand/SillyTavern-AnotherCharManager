@@ -8,12 +8,12 @@ import {
 } from '../settings';
 
 interface SettingsManagerParams {
-    extensionSettings: ExtensionSettings;
+    extensionSettings: any;
     saveSettingsDebounced: (...args: any[]) => void;
 }
 
 export class SettingsManager {
-    extensionSettings: ExtensionSettings;
+    extensionSettings: any;
     saveSettingsDebounced: (...args: any[]) => void;
     default: Readonly<ExtensionSettings>;
     create_data: CreateData;
