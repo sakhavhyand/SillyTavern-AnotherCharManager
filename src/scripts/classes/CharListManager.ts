@@ -438,9 +438,7 @@ export class CharListManager {
         }
         else {
             // Calculate the number of elements per line according to width
-            const containerWidth = container.clientWidth;
-            const itemWidth = 120; // Approximate width of a card + gap
-            const itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
+            const itemsPerRow = this.calculateItemsPerRow(container);
 
             // Create the virtual scroller
             this.virtualScroller = new VirtualScroller({
@@ -461,13 +459,22 @@ export class CharListManager {
         if (this.virtualScroller) {
             const container = document.getElementById('character-list');
             if (!container) return;
-            const containerWidth = container.clientWidth;
-            const itemWidth = 120;
 
             // Update and refresh
-            this.virtualScroller.itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
-            this.virtualScroller.refresh();
+            this.virtualScroller.itemsPerRow = this.calculateItemsPerRow(container);
         }
+
+        for (const scroller of this.dropdownScrollers.values()) {
+            scroller.itemsPerRow = this.calculateItemsPerRow(scroller.container);
+        }
+    }
+
+    private calculateItemsPerRow(container: HTMLElement): number {
+        const style = getComputedStyle(container);
+        const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+        const availableWidth = Math.max(0, container.clientWidth - horizontalPadding);
+        const cardWidth = 120; // 110px card width plus its horizontal margins
+        return Math.max(1, Math.floor(availableWidth / cardWidth));
     }
 
     destroyVirtualScroller(): void {
@@ -725,9 +732,7 @@ export class CharListManager {
 
     createDropdownScroller(contentDiv: HTMLElement, items: any[]): void {
         if (items.length === 0) return;
-        const containerWidth = contentDiv.clientWidth;
-        const itemWidth = 120;
-        const itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
+        const itemsPerRow = this.calculateItemsPerRow(contentDiv);
         const scroller = new VirtualScroller({
             container: contentDiv,
             items: items,

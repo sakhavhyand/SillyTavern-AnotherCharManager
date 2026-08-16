@@ -75,7 +75,7 @@ export class ModalManager {
         this.initializePoppers();
         this.initializeModalEvents();
         this.initializeUIMenuEvents();
-        this.initializeDescTabMode();
+        this.initializeSettingsMenu();
         this.charCreationManager.initializeCharacterCreationEvents();
         this.tagManager.init();
         this.presetManager.init();
@@ -347,10 +347,20 @@ export class ModalManager {
             $preview.hide();
             this.settings.updateSetting('popupWidth', newWidth);
 
-            // Refresh virtual scroller after resize
-            requestAnimationFrame(() => {
-                this.eventManager.emit('charList:handleResize');
-            });
+            // The popup has a 300ms width transition. Waiting one frame reads
+            // its old/intermediate width, so refresh once the transition has
+            // reached its final layout. The timeout covers reduced-motion and
+            // browsers that do not dispatch transitionend here.
+            let refreshed = false;
+            const refreshScroller = () => {
+                if (refreshed) return;
+                refreshed = true;
+                $popup.off('transitionend.acmResize', refreshScroller);
+                requestAnimationFrame(() => this.eventManager.emit('charList:handleResize'));
+            };
+
+            $popup.one('transitionend.acmResize', refreshScroller);
+            setTimeout(refreshScroller, 350);
         });
 
         this.eventManager.on('modal:closeDetails', (data: any) => {
@@ -431,7 +441,7 @@ export class ModalManager {
      * Handles tab switching and the dropdown/tab view toggle button.
      * @private
      */
-    initializeDescTabMode() {
+    initializeSettingsMenu() {
         // Tab button click handler
         $(document).on('click', '#acm-desc-tab-bar .acm-tab-button', (e) => {
             const $btn = $(e.currentTarget);
