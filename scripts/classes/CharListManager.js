@@ -15,6 +15,7 @@ export class CharListManager {
         this.virtualScroller = null;
         this.dropdownScrollers = new Map();
         this.modalOpen = false;
+        this.cardsPerRow = this.settings.getSetting('cardsPerRow') || 5;
         this.charManager = new CharacterManager(this.eventManager, this.settings, this.st, this.presetManager.tagManager);
     }
 
@@ -60,6 +61,10 @@ export class CharListManager {
 
         this.eventManager.on('charList:handleResize', () => {
             this.handleContainerResize();
+        });
+
+        this.eventManager.on('charList:setCardsPerRow', ({ cols, persist }) => {
+            this.setCardsPerRow(cols, persist);
         });
 
         this.eventManager.on('char:select', (data) => {
@@ -481,10 +486,8 @@ export class CharListManager {
             this.virtualScroller.setItems(sortedList, preserveScroll);
         }
         else {
-            // Calculate the number of elements per line according to width
-            const containerWidth = container.clientWidth;
-            const itemWidth = 120; // Approximate width of a card + gap
-            const itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
+            // Bootstrap guess for card width (no cards rendered yet to measure)
+            this.applyCardWidthForColumns();
 
             // Create the virtual scroller
             this.virtualScroller = new VirtualScroller({
@@ -492,10 +495,89 @@ export class CharListManager {
                 items: sortedList,
                 renderItem: (item) => { return this.createCharacterBlock(item.avatar); },
                 itemHeight: 180, // Height of a line of cards (adjust, according to your CSS)
-                itemsPerRow: itemsPerRow,
+                itemsPerRow: this.cardsPerRow,
                 buffer: 3, // Preload 3 lines before/after
             });
+
+            // Cards now exist — solve for the exact width that fills the row
+            this.applyCardWidthForColumns();
         }
+    }
+
+    /**
+     * Sets the target number of cards per row and re-fits the card width to it.
+     *
+     * @param {number} cols - Desired number of cards per row.
+     * @param {boolean} [persist=false] - Whether to save this as the new setting
+     * (false while dragging the slider, true once the user releases it).
+     * @return {void}
+     */
+    setCardsPerRow(cols, persist = false) {
+        if (!cols || cols < 1) return;
+        this.cardsPerRow = cols;
+        if (persist) this.settings.updateSetting('cardsPerRow', cols);
+        this.applyCardWidthForColumns();
+    }
+
+    /**
+     * Solves for the --acm-card-width value that makes exactly `this.cardsPerRow`
+     * cards fill the row's available width with no leftover gutter, then
+     * refreshes the virtual scroller so it re-measures against the new size.
+     *
+     * @return {void}
+     */
+    applyCardWidthForColumns() {
+        const container = document.getElementById('character-list');
+        if (!container) return;
+
+        const width = this.computeCardWidthForColumns(container, this.cardsPerRow);
+        if (width !== null) {
+            container.style.setProperty('--acm-card-width', width);
+        }
+
+        if (this.virtualScroller) {
+            this.virtualScroller.itemsPerRow = this.cardsPerRow;
+            this.virtualScroller.refresh();
+        }
+    }
+
+    /**
+     * Computes the card width (the --acm-card-width value) that fits exactly
+     * `cols` cards per row with no wasted space. Reads padding/margin/border/
+     * gap live from a rendered card via getComputedStyle instead of
+     * duplicating those CSS numbers here, so it can't drift out of sync with
+     * the stylesheet the way a hardcoded guess would.
+     *
+     * @param {HTMLElement} container - The #character-list element.
+     * @param {number} cols - Desired number of cards per row.
+     * @return {number|null} The card width to assign, or null if it can't be measured.
+     */
+    computeCardWidthForColumns(container, cols) {
+        const containerStyle = getComputedStyle(container);
+        const gap = parseFloat(containerStyle.columnGap) || 0;
+        const availableWidth = container.clientWidth
+            - parseFloat(containerStyle.paddingLeft)
+            - parseFloat(containerStyle.paddingRight);
+
+        const sample = container.querySelector('.card');
+        if (!sample) {
+            // No card rendered yet — naive guess, corrected once one exists.
+            return Math.max(Math.floor((availableWidth - (cols - 1) * gap) / cols), 20);
+        }
+
+        const cardStyle = getComputedStyle(sample);
+        const currentVar = parseFloat(containerStyle.getPropertyValue('--acm-card-width')) || parseFloat(cardStyle.width);
+        if (!currentVar) return null;
+
+        // padding/margin scale proportionally with --acm-card-width (see CSS);
+        // border does not, so it's treated as a fixed per-card cost.
+        const scalablePx = parseFloat(cardStyle.paddingLeft) + parseFloat(cardStyle.paddingRight)
+            + parseFloat(cardStyle.marginLeft) + parseFloat(cardStyle.marginRight);
+        const fixedPx = parseFloat(cardStyle.borderLeftWidth) + parseFloat(cardStyle.borderRightWidth);
+        const scaleRatio = scalablePx / currentVar;
+
+        const width = (availableWidth - (cols - 1) * gap - cols * fixedPx) / (cols * (1 + scaleRatio));
+        return Math.max(Math.floor(width), 20);
     }
 
     /**
@@ -510,9 +592,10 @@ export class CharListManager {
      */
     handleContainerResize() {
         if (this.virtualScroller) {
-            // VirtualScroller measures its own actual DOM layout and
-            // corrects itemsPerRow itself — see _syncItemsPerRow.
-            this.virtualScroller.refresh();
+            // Keep the configured cards-per-row fixed and re-solve the card
+            // width to fit it; VirtualScroller then measures its own actual
+            // DOM layout and corrects itself — see _syncItemsPerRow.
+            this.applyCardWidthForColumns();
         }
     }
 

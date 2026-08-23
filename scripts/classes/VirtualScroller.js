@@ -29,11 +29,12 @@ export class VirtualScroller {
 
     /**
      * Measures how many items the browser actually placed on the first
-     * rendered row (by comparing offsetTop) and corrects itemsPerRow if the
-     * configured value drifted from reality. Wrapping is done by CSS
-     * (flex-wrap), so the true count depends on exact CSS box sizing
-     * (padding/margin/gap) that JS should not have to duplicate — mismatches
-     * here are what cause items to visually land in the wrong row.
+     * rendered row, and the pixel height of that row (by comparing
+     * offsetTop), then corrects itemsPerRow/itemHeight if the configured
+     * values drifted from reality. Wrapping and card size are done by CSS,
+     * so the true numbers depend on exact CSS box sizing (padding/margin/
+     * gap/card-size) that JS should not have to duplicate — mismatches here
+     * are what cause items to visually land in the wrong row.
      */
     _syncItemsPerRow() {
         if (this._syncingItemsPerRow) return;
@@ -42,17 +43,23 @@ export class VirtualScroller {
         if (elements.length < 2) return;
 
         const firstTop = elements[0].offsetTop;
-        let measured = elements.length;
+        let measuredCols = elements.length;
+        let measuredRowHeight = null;
         for (let i = 1; i < elements.length; i++) {
             if (elements[i].offsetTop !== firstTop) {
-                measured = i;
+                measuredCols = i;
+                measuredRowHeight = elements[i].offsetTop - firstTop;
                 break;
             }
         }
 
-        if (measured > 0 && measured !== this.itemsPerRow) {
+        const colsChanged = measuredCols > 0 && measuredCols !== this.itemsPerRow;
+        const heightChanged = measuredRowHeight !== null && Math.abs(measuredRowHeight - this.itemHeight) > 0.5;
+
+        if (colsChanged || heightChanged) {
             this._syncingItemsPerRow = true;
-            this.itemsPerRow = measured;
+            if (colsChanged) this.itemsPerRow = measuredCols;
+            if (heightChanged) this.itemHeight = measuredRowHeight;
             this._doRender(true);
             this._syncingItemsPerRow = false;
         }
