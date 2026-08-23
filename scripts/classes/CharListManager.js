@@ -510,12 +510,8 @@ export class CharListManager {
      */
     handleContainerResize() {
         if (this.virtualScroller) {
-            const container = document.getElementById('character-list');
-            const containerWidth = container.clientWidth;
-            const itemWidth = 120;
-
-            // Update and refresh
-            this.virtualScroller.itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
+            // VirtualScroller measures its own actual DOM layout and
+            // corrects itemsPerRow itself — see _syncItemsPerRow.
             this.virtualScroller.refresh();
         }
     }

@@ -24,6 +24,38 @@ export class VirtualScroller {
         this._onScroll = () => this.render();
         this.container.addEventListener('scroll', this._onScroll, { passive: true });
         this._doRender();
+        this._syncItemsPerRow();
+    }
+
+    /**
+     * Measures how many items the browser actually placed on the first
+     * rendered row (by comparing offsetTop) and corrects itemsPerRow if the
+     * configured value drifted from reality. Wrapping is done by CSS
+     * (flex-wrap), so the true count depends on exact CSS box sizing
+     * (padding/margin/gap) that JS should not have to duplicate — mismatches
+     * here are what cause items to visually land in the wrong row.
+     */
+    _syncItemsPerRow() {
+        if (this._syncingItemsPerRow) return;
+
+        const elements = Array.from(this.container.querySelectorAll('[data-avatar]'));
+        if (elements.length < 2) return;
+
+        const firstTop = elements[0].offsetTop;
+        let measured = elements.length;
+        for (let i = 1; i < elements.length; i++) {
+            if (elements[i].offsetTop !== firstTop) {
+                measured = i;
+                break;
+            }
+        }
+
+        if (measured > 0 && measured !== this.itemsPerRow) {
+            this._syncingItemsPerRow = true;
+            this.itemsPerRow = measured;
+            this._doRender(true);
+            this._syncingItemsPerRow = false;
+        }
     }
 
     calculateVisibleRange() {
@@ -146,7 +178,8 @@ export class VirtualScroller {
      * Refreshes the display (useful after resize)
      */
     refresh() {
-        this.render(true);
+        this._doRender(true);
+        this._syncItemsPerRow();
     }
 
     /**
