@@ -1,5 +1,4 @@
 import { getIdByAvatar, resetScrollHeight } from '../acm-utils';
-// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { setCharacterId, setMenuType } from '/script.js';
 import { CharCreationManager } from './CharCreationManager';
 import { PresetManager } from './PresetManager';
@@ -34,7 +33,7 @@ export class ModalManager {
         let modalHtml: string;
         try {
             modalHtml = await this.st.renderExtensionTemplateAsync(`third-party/${this.settings.extensionName}/templates`, 'modal');
-        } catch (error) {
+        } catch (_error) {
             console.error('Error fetching modal.html. This is a normal error if you have the old folder name and you don\'t have to do anything.');
             try {
                 modalHtml = await this.st.renderExtensionTemplateAsync(`third-party/${this.settings.oldExtensionName}/templates`, 'modal');

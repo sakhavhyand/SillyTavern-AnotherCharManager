@@ -1,10 +1,6 @@
-// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { depth_prompt_depth_default, depth_prompt_role_default, setCharacterId, talkativeness_default, getPastCharacterChats, system_message_types } from '/script.js';
-// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { ensureImageFormatSupported, getCharaFilename } from '/scripts/utils.js';
-// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { renameGroupMember } from '/scripts/group-chats.js';
-// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { world_info } from '/scripts/world-info.js';
 import {
     getBase64Async,
@@ -99,7 +95,7 @@ export class CharacterManager {
         });
         // Add listener to refresh the display on characters delete
         this.st.eventSource.on(this.st.event_types.CHARACTER_DELETED, () => {
-            let charDetailsState = document.getElementById('char-details');
+            const charDetailsState = document.getElementById('char-details');
             if (charDetailsState && charDetailsState.style.display !== 'none') {
                 this.eventManager.emit('modal:closeDetails');
             }
@@ -523,7 +519,7 @@ export class CharacterManager {
             url += `?crop=${encodeURIComponent(JSON.stringify(crop_data))}`;
         }
 
-        let formData = new FormData();
+        const formData = new FormData();
         if (newAvatar instanceof File) {
             const convertedFile = await ensureImageFormatSupported(newAvatar);
             formData.set('avatar', convertedFile);
@@ -553,7 +549,7 @@ export class CharacterManager {
                     await this.st.eventSource.emit(this.st.event_types.CHARACTER_EDITED, { detail: { id: id, avatarReplaced: true, character: this.st.characters[id] } });
                     resolve();
                 },
-                error: function (jqXHR: any, exception: any) {
+                error: function () {
                     toastr.error('Something went wrong while saving the character, or the image file provided was in an invalid format. Double check that the image is not a webp.');
                     reject();
                 },
@@ -565,7 +561,7 @@ export class CharacterManager {
      * Updates the attributes of a character by sending a POST request with the given data.
      */
     async editChar(update: any): Promise<void> {
-        let url = '/api/characters/merge-attributes';
+        const url = '/api/characters/merge-attributes';
 
         const response = await fetch(url, {
             method: 'POST',
@@ -680,7 +676,7 @@ export class CharacterManager {
             return '<span id="chicken">Nothing here but chickens!!</span>';
         } else {
             for (let i = 0; i < item.length; i++) {
-                let greetingNumber = i + 1;
+                const greetingNumber = i + 1;
                 altGreetingsHTML += `<div class="inline-drawer">
                 <div id="altGreetDrawer${greetingNumber}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
                     <div style="display: flex;flex-grow: 1;">

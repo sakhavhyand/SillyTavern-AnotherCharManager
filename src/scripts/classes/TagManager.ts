@@ -1,5 +1,4 @@
 import { equalsIgnoreCaseAndAccents, escapeHtml, includesIgnoreCaseAndAccents } from '../acm-utils';
-// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { createTagInput } from '/scripts/tags.js';
 
 export class TagManager {
@@ -111,14 +110,14 @@ export class TagManager {
         event: any,
         ui: any,
         listSelector: string,
-        { tagListOptions = {}, mode = 'classic', allLists = [] }: {
+        { tagListOptions: _tagListOptions = {}, mode = 'classic', allLists = [] }: {
             tagListOptions?: Record<string, any>;
             mode?: string;
             allLists?: string[];
         } = {},
     ): boolean {
-        let tagName = ui.item.value;
-        let tag = this.st.tagList.find((t: any) => equalsIgnoreCaseAndAccents(t.name, tagName));
+        const tagName = ui.item.value;
+        const tag = this.st.tagList.find((t: any) => equalsIgnoreCaseAndAccents(t.name, tagName));
 
         if (!tag) {
             toastr.error('You can\'t create tag from this interface. Please use the tag editor instead.');

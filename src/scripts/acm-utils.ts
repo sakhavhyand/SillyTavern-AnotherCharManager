@@ -22,11 +22,14 @@ export function escapeHtml(str: string): string {
  * @param {number} [timeout=300] - The time, in milliseconds, to delay the function execution.
  * @return {Function} A new debounced function that delays the execution of the original function.
  */
-export function debounce(func: Function, timeout: number = 300): Function {
+export function debounce<TArgs extends unknown[]>(
+    func: (...args: TArgs) => void,
+    timeout: number = 300,
+): (...args: TArgs) => void {
     let timer: number;
-    return (...args: any) => {
+    return (...args: TArgs) => {
         clearTimeout(timer);
-        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+        timer = window.setTimeout(() => func(...args), timeout);
     };
 }
 

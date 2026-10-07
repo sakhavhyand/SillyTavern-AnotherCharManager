@@ -1,6 +1,4 @@
-// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { createTagMapFromList } from '/scripts/tags.js';
-// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { ensureImageFormatSupported } from '/scripts/utils.js';
 import { delay, getBase64Async, updateTokenCount } from '../acm-utils';
 

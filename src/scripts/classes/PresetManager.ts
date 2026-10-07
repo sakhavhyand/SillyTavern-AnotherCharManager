@@ -85,14 +85,12 @@ export class PresetManager {
         // Trigger on a click on the add tag button in a category
         $(document).on('click', '.addCatTag', (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
-            const selectedCat = $element.closest('[data-catid]').data('catid');
             this.toggleTagButton($element);
         });
 
         // Trigger on a click on the minus tag button in a category
         $(document).on('click', '.cancelCatTag', (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
-            const selectedCat = $element.closest('[data-catid]').data('catid');
             this.toggleTagButton($element);
         });
 
@@ -119,7 +117,7 @@ export class PresetManager {
             this.manageCustomCategories();
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             if (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') === 'custom') {
-                $('.popup-button-ok').on('click', this.eventManager.emit('charList:refresh'));
+                $('.popup-button-ok').one('click', () => this.eventManager.emit('charList:refresh'));
             }
             this.printCategoriesList(selectedPreset, true);
         });

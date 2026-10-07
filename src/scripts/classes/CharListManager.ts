@@ -1,6 +1,4 @@
-// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { setCharacterId, setMenuType } from '/script.js';
-// @ts-ignore - External SillyTavern module, resolved by webpack externals
 import { timestampToMoment, sortMoments } from '/scripts/utils.js';
 import { debounce, escapeHtml, getIdByAvatar } from '../acm-utils';
 import { VirtualScroller } from './VirtualScroller';
@@ -265,7 +263,7 @@ export class CharListManager {
         const facultativeTags = $('#acm_facultativeTags > span').map(function (this: HTMLElement) { return $(this).data('tagid'); }).get().filter((id: any) => id);
 
         // Filtering based on tags
-        let tagFilteredChars = charactersCopy.filter((item: any) => {
+        const tagFilteredChars = charactersCopy.filter((item: any) => {
             const characterTags = this.st.tagMap[item.avatar] || [];
 
             // First: Exclude characters with any excluded tags
