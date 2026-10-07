@@ -4,6 +4,7 @@ export const OLD_EXTENSION_NAME = 'SillyTavern-AnotherTagManager';
 
 export const defaultSettings = Object.freeze({
     popupWidth: 50,
+    cardsPerRow: 5,
     sortingField: 'name',
     sortingOrder: 'asc',
     favOnly: false,

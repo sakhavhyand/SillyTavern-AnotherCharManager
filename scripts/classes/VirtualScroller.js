@@ -24,6 +24,45 @@ export class VirtualScroller {
         this._onScroll = () => this.render();
         this.container.addEventListener('scroll', this._onScroll, { passive: true });
         this._doRender();
+        this._syncItemsPerRow();
+    }
+
+    /**
+     * Measures how many items the browser actually placed on the first
+     * rendered row, and the pixel height of that row (by comparing
+     * offsetTop), then corrects itemsPerRow/itemHeight if the configured
+     * values drifted from reality. Wrapping and card size are done by CSS,
+     * so the true numbers depend on exact CSS box sizing (padding/margin/
+     * gap/card-size) that JS should not have to duplicate — mismatches here
+     * are what cause items to visually land in the wrong row.
+     */
+    _syncItemsPerRow() {
+        if (this._syncingItemsPerRow) return;
+
+        const elements = Array.from(this.container.querySelectorAll('[data-avatar]'));
+        if (elements.length < 2) return;
+
+        const firstTop = elements[0].offsetTop;
+        let measuredCols = elements.length;
+        let measuredRowHeight = null;
+        for (let i = 1; i < elements.length; i++) {
+            if (elements[i].offsetTop !== firstTop) {
+                measuredCols = i;
+                measuredRowHeight = elements[i].offsetTop - firstTop;
+                break;
+            }
+        }
+
+        const colsChanged = measuredCols > 0 && measuredCols !== this.itemsPerRow;
+        const heightChanged = measuredRowHeight !== null && Math.abs(measuredRowHeight - this.itemHeight) > 0.5;
+
+        if (colsChanged || heightChanged) {
+            this._syncingItemsPerRow = true;
+            if (colsChanged) this.itemsPerRow = measuredCols;
+            if (heightChanged) this.itemHeight = measuredRowHeight;
+            this._doRender(true);
+            this._syncingItemsPerRow = false;
+        }
     }
 
     calculateVisibleRange() {
@@ -146,7 +185,8 @@ export class VirtualScroller {
      * Refreshes the display (useful after resize)
      */
     refresh() {
-        this.render(true);
+        this._doRender(true);
+        this._syncItemsPerRow();
     }
 
     /**

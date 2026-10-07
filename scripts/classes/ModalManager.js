@@ -58,6 +58,7 @@ export class ModalManager {
         $('#acm_popup').css('width', initialWidth + '%');
         $('#acm_widthSlider').val(initialWidth);
 
+        $('#acm_cardsPerRowSlider').val(this.settings.getSetting('cardsPerRow'));
 
         // Put the button before rm_button_group_chats in the form_character_search_form
         // on hover, should say: "Open Char Manager"
@@ -332,6 +333,16 @@ export class ModalManager {
             requestAnimationFrame(() => {
                 this.eventManager.emit('charList:handleResize');
             });
+        });
+
+        const $cardsPerRowSlider = $('#acm_cardsPerRowSlider');
+
+        $cardsPerRowSlider.on('input', (event) => {
+            const cols = parseInt($(event.target).val(), 10);
+            this.eventManager.emit('charList:setCardsPerRow', { cols, persist: false });
+        }).on('change', (event) => {
+            const cols = parseInt($(event.target).val(), 10);
+            this.eventManager.emit('charList:setCardsPerRow', { cols, persist: true });
         });
 
         this.eventManager.on('modal:closeDetails', (data)=> {
