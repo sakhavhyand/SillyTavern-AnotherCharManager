@@ -15,6 +15,7 @@ export interface DropdownPreset {
 
 export interface ExtensionSettings {
     popupWidth: number;
+    cardsPerRow: number;
     sortingField: string;
     sortingOrder: 'asc' | 'desc';
     favOnly: boolean;
@@ -52,6 +53,7 @@ export interface CreateData {
 
 export const defaultSettings: Readonly<ExtensionSettings> = Object.freeze({
     popupWidth: 50,
+    cardsPerRow: 5,
     sortingField: 'name',
     sortingOrder: 'asc',
     favOnly: false,

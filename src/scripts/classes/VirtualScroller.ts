@@ -34,11 +34,12 @@ export class VirtualScroller {
     container: HTMLElement;
     items: any[];
     renderItem: (item: any) => HTMLElement;
-    itemHeight: number;
-    itemWidth: number;
     buffer: number;
 
+    private _itemHeight: number;
+    private _itemWidth: number;
     private _itemsPerRow: number;
+    private _autoItemsPerRow: boolean;
     private _virtualizer: Virtualizer<HTMLElement, HTMLElement>;
     private _cleanupVirtualizer: (() => void) | null = null;
     private _resizeObserver: ResizeObserver | null = null;
@@ -53,13 +54,45 @@ export class VirtualScroller {
         this.container = options.container;
         this.items = options.items ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.items;
         this.renderItem = options.renderItem ?? (() => document.createElement('div'));
-        this.itemHeight = options.itemHeight ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.itemHeight;
-        this.itemWidth = options.itemWidth ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.itemWidth;
+        this._itemHeight = options.itemHeight ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.itemHeight;
+        this._itemWidth = options.itemWidth ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.itemWidth;
+        this._autoItemsPerRow = options.itemsPerRow === undefined;
         this._itemsPerRow = options.itemsPerRow ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.itemsPerRow;
         this.buffer = options.buffer ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.buffer;
 
         this._virtualizer = new Virtualizer(this._virtualizerOptions());
         this.init();
+    }
+
+    get itemHeight(): number {
+        return this._itemHeight;
+    }
+
+    set itemHeight(value: number) {
+        if (value <= 0 || value === this._itemHeight) return;
+        this._itemHeight = value;
+        this._updateVirtualizer();
+    }
+
+    get itemWidth(): number {
+        return this._itemWidth;
+    }
+
+    set itemWidth(value: number) {
+        const nextValue = Math.max(1, Math.floor(value));
+        if (nextValue === this._itemWidth) return;
+        this._itemWidth = nextValue;
+        if (this._autoItemsPerRow) {
+            const width = this.container.clientWidth;
+            if (width > 0) {
+                const calculated = Math.max(1, Math.floor(width / this._itemWidth));
+                if (calculated !== this._itemsPerRow) {
+                    this._itemsPerRow = calculated;
+                    this._animateNextLayout = true;
+                    this.refresh();
+                }
+            }
+        }
     }
 
     get itemsPerRow(): number {
@@ -68,17 +101,19 @@ export class VirtualScroller {
 
     set itemsPerRow(value: number) {
         const nextValue = Math.max(1, Math.floor(value));
+        this._autoItemsPerRow = false;
         if (nextValue === this._itemsPerRow) return;
         this._itemsPerRow = nextValue;
         this._animateNextLayout = true;
         this._updateVirtualizer();
+        this.render(true);
     }
 
     private _virtualizerOptions(): VirtualizerOptions<HTMLElement, HTMLElement> {
         return {
             count: Math.ceil(this.items.length / this._itemsPerRow),
             getScrollElement: () => this.container,
-            estimateSize: () => this.itemHeight,
+            estimateSize: () => this._itemHeight,
             getItemKey: index => index,
             overscan: this.buffer,
             observeElementRect,
@@ -104,9 +139,15 @@ export class VirtualScroller {
             const width = entries[0]?.contentRect.width;
             if (!width || this._destroyed) return;
 
-            const itemsPerRow = Math.max(1, Math.floor(width / this.itemWidth));
-            if (itemsPerRow === this._itemsPerRow) return;
-            this.itemsPerRow = itemsPerRow;
+            if (this._autoItemsPerRow) {
+                const itemsPerRow = Math.max(1, Math.floor(width / this._itemWidth));
+                if (itemsPerRow !== this._itemsPerRow) {
+                    this._itemsPerRow = itemsPerRow;
+                    this._animateNextLayout = true;
+                    this.refresh();
+                    return;
+                }
+            }
             this.refresh();
         });
         this._resizeObserver.observe(this.container);

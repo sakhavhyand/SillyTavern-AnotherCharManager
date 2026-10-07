@@ -362,6 +362,22 @@ export class ModalManager {
             setTimeout(refreshScroller, 350);
         });
 
+        const $cardsPerRowSlider = $('#acm_cardsPerRowSlider');
+        const $cardsPerRowValue = $('#acm_cardsPerRowValue');
+
+        $cardsPerRowSlider.val(this.settings.cardsPerRow || 5);
+        $cardsPerRowValue.text(this.settings.cardsPerRow || 5);
+
+        $cardsPerRowSlider.on('input', (event) => {
+            const cols = parseInt(<string>$(event.target).val(), 10);
+            $cardsPerRowValue.text(cols);
+            this.eventManager.emit('charList:setCardsPerRow', { cols, persist: false });
+        }).on('change', (event) => {
+            const cols = parseInt(<string>$(event.target).val(), 10);
+            $cardsPerRowValue.text(cols);
+            this.eventManager.emit('charList:setCardsPerRow', { cols, persist: true });
+        });
+
         this.eventManager.on('modal:closeDetails', (data: any) => {
             this.closeDetails(data);
         });

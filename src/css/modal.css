@@ -137,7 +137,8 @@
     -webkit-font-smoothing: subpixel-antialiased;
 }
 
-#acm_widthSlider {
+#acm_widthSlider,
+#acm_cardsPerRowSlider {
     width: 100px;
 }
 
