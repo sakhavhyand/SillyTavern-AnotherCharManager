@@ -278,18 +278,61 @@
 
 /* Individual tab button */
 .acm-tab-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
     flex: 1 1 0;
     text-align: center;
-    padding: 4px 6px;
+    padding: 3px 4px;
     cursor: pointer;
     border-radius: calc(var(--acm-border-radius-md) - 2px);
     border: 1px solid transparent;
-    font-size: 0.85em;
     transition: background-color 200ms, border-color 200ms;
+    user-select: none;
+    min-width: 0;
+}
+
+.acm-tab-title {
+    font-size: 0.85em;
+    font-weight: bold;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    user-select: none;
+    max-width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.acm-tab-subtext {
+    font-size: 0.72em;
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.acm-tab-button .editor_maximize,
+.acm-tab-button .acm-add-alt-greeting {
+    cursor: pointer;
+    opacity: 0.75;
+    font-size: 0.9em;
+    transition: opacity 150ms ease, transform 150ms ease;
+    padding: 1px 2px;
+}
+
+.acm-tab-button .editor_maximize:hover,
+.acm-tab-button .acm-add-alt-greeting:hover {
+    opacity: 1;
+    transform: scale(1.2);
 }
 
 .acm-tab-button:hover {
@@ -301,10 +344,13 @@
     border-color: var(--SmartThemeBorderColor);
 }
 
-
 /* ===== TAB MODE RULES ===== */
 
 /* Show the header bar and tab buttons */
+#char-details-desc.acm-tab-mode {
+    overflow: hidden;
+}
+
 #char-details-desc.acm-tab-mode .acm-desc-header-bar {
     display: flex;
 }
@@ -318,34 +364,61 @@
     display: none;
 }
 
-/* Show only the active section */
+/* Show only the active section taking full available height */
 #char-details-desc.acm-tab-mode > .inline-drawer.acm-section-active {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Hide the top-level drawer headers inside tabs to avoid duplicate headers */
+#char-details-desc.acm-tab-mode > .inline-drawer > .inline-drawer-header {
+    display: none !important;
+}
+
+/* Force active section's content visible and stretch to fill zone */
+#char-details-desc.acm-tab-mode > .inline-drawer.acm-section-active > .inline-drawer-content {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    height: 100%;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Textareas fill full available space in tab mode */
+#char-details-desc.acm-tab-mode > .inline-drawer.acm-section-active > .inline-drawer-content > label {
     display: flex;
     flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    height: 100%;
+    margin: 0;
 }
 
-/* Force active section's content visible (overrides core ST display:none) */
-#char-details-desc.acm-tab-mode > .inline-drawer.acm-section-active > .inline-drawer-content {
-    display: block !important;
+#char-details-desc.acm-tab-mode > .inline-drawer.acm-section-active > .inline-drawer-content > label > textarea {
+    display: block;
+    flex: 1 1 0;
+    min-height: 0;
+    height: 100% !important;
+    max-height: none !important;
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
 }
 
-/* Hide section-level drawer icons only (not nested alt greeting icons) */
-#char-details-desc.acm-tab-mode > .inline-drawer > .inline-drawer-header > .inline-drawer-icon {
-    display: none !important;
-}
-
-#char-details-desc.acm-tab-mode > .inline-drawer > .inline-drawer-header > .altGreetings_buttons > .inline-drawer-icon {
-    display: none !important;
-}
-
-/* Block core ST's global .inline-drawer-toggle click handler in tab mode */
-#char-details-desc.acm-tab-mode > .inline-drawer .inline-drawer-toggle > div:first-of-type {
-    pointer-events: none;
-}
-
-/* Restore pointer-events for interactive elements inside headers */
-#char-details-desc.acm-tab-mode .editor_maximize,
-#char-details-desc.acm-tab-mode .notes-link,
-#char-details-desc.acm-tab-mode .notes-link * {
-    pointer-events: auto;
+/* Alt greetings container in tab mode scrolls cleanly within available space */
+#char-details-desc.acm-tab-mode #altGreetings_content {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
+    gap: 6px;
+    padding: 2px;
 }

@@ -18,6 +18,9 @@
     align-content: flex-start;
     overflow-y: auto;
     overflow-x: hidden;
+    /* Reserve the scrollbar's space so it appearing/disappearing doesn't change
+       the width, which would re-fit the cards and could toggle it back. */
+    scrollbar-gutter: stable;
     padding-right: 10px;
     gap: 5px;
     flex-direction: row;

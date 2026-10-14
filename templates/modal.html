@@ -116,16 +116,32 @@
                     <div id="acm-desc-tab-bar" class="acm-tab-bar">
                         <div class="acm-tab-buttons">
                             <div class="acm-tab-button active" data-acm-tab="desc">
-                                <b>Description</b>
+                                <span class="acm-tab-title">Description</span>
+                                <span class="acm-tab-subtext">
+                                    <span id="acm_tab_desc_tokens">0 tokens</span>
+                                    <i class="editor_maximize fa-solid fa-maximize" data-for="acm_description" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
+                                </span>
                             </div>
                             <div class="acm-tab-button" data-acm-tab="greeting">
-                                <b>Greeting</b>
+                                <span class="acm-tab-title">Greeting</span>
+                                <span class="acm-tab-subtext">
+                                    <span id="acm_tab_greeting_tokens">0 tokens</span>
+                                    <i class="editor_maximize fa-solid fa-maximize" data-for="acm_firstMess" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
+                                </span>
                             </div>
                             <div class="acm-tab-button" data-acm-tab="altgreetings">
-                                <b>Alt. Greetings</b>
+                                <span class="acm-tab-title">
+                                    Alt. Greetings
+                                    <i class="fa-solid fa-plus acm-add-alt-greeting" title="Add Alternative Greeting"></i>
+                                </span>
+                                <span class="acm-tab-subtext" id="acm_tab_altgreetings_count">0 greetings</span>
                             </div>
                             <div class="acm-tab-button" data-acm-tab="creatorsnotes">
-                                <b>Creator's Notes</b>
+                                <span class="acm-tab-title">Creator's Notes</span>
+                                <span class="acm-tab-subtext">
+                                    <span id="acm_tab_creatorsnotes_tokens">0 tokens</span>
+                                    <i class="editor_maximize fa-solid fa-maximize" data-for="acm_creatornotes" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -136,9 +152,6 @@
                                  <span class="drawer-header-item">
                                     <b>Description</b>
                                     <i class="editor_maximize fa-solid fa-maximize" data-for="acm_description" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
-                                    <a href="https://docs.sillytavern.app/usage/core-concepts/characterdesign/#character-description" class="notes-link" target="_blank">
-                                        <span class="fa-solid fa-circle-question note-link-span"></span>
-                                    </a>
                                 </span>
                                 <span id="acm_description_tokens" class="drawer-header-item"></span>
                             </div>
@@ -156,9 +169,6 @@
                                 <span class="drawer-header-item">
                                     <b>Greeting</b>
                                     <i class="editor_maximize fa-solid fa-maximize" data-for="acm_firstMess" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
-                                    <a href="https://docs.sillytavern.app/usage/core-concepts/characterdesign/#first-message" class="notes-link" target="_blank">
-                                        <span class="fa-solid fa-circle-question note-link-span"></span>
-                                    </a>
                                 </span>
                                 <span id="acm_firstMess_tokens" class="drawer-header-item"></span>
                             </div>
@@ -184,7 +194,7 @@
                         <div id="altGreetings_content" class="inline-drawer-content">
                         </div>
                     </div>
-                    <div class="inline-drawer">
+                    <div class="inline-drawer" data-acm-section="creatorsnotes">
                         <div class="inline-drawer-toggle inline-drawer-header inline-drawer-design"
                              id="CN_header">
                             <div style="display: flex;flex-grow: 1;">
@@ -247,7 +257,7 @@
     <hr class="dropdown-separator">
     <div id="acm_popup_cardsize" class="acm-settings-row">
         <label for="acm_cardsPerRowSlider" title="Number of character cards per row">Cards per row: </label>
-        <input id="acm_cardsPerRowSlider" max="12" min="2" step="1" type="range" value="5">
+        <input id="acm_cardsPerRowSlider" max="18" min="4" step="1" type="range" value="5">
         <span id="acm_cardsPerRowValue">5</span>
     </div>
     <hr class="dropdown-separator">

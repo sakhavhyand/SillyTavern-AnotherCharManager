@@ -25,6 +25,7 @@ export class SettingsManager {
     mem_avatar: any;
     acm_crop_data: any;
 
+
     constructor({ extensionSettings, saveSettingsDebounced }: SettingsManagerParams) {
         this.extensionSettings = extensionSettings;
         this.saveSettingsDebounced = saveSettingsDebounced;
@@ -48,7 +49,7 @@ export class SettingsManager {
 
         // Add default settings for any missing keys
         for (const key in this.default) {
-            if (!Object.prototype.hasOwnProperty.call(this.extensionSettings.acm, key)) {
+            if (this.extensionSettings.acm[key] === undefined) {
                 this.extensionSettings.acm[key] = (this.default as any)[key];
             }
         }
@@ -75,15 +76,17 @@ export class SettingsManager {
     }
 
     getSetting(key: string): any {
-        return this.extensionSettings.acm![key];
+        return this.extensionSettings?.acm?.[key] ?? (this.default as any)[key];
     }
 
     updateSetting(key: string, value: any): void {
-        if (Object.prototype.hasOwnProperty.call(this.extensionSettings.acm, key)) {
-            this.extensionSettings.acm![key] = value;
-            this.saveSettingsDebounced();
+        if (!this.extensionSettings.acm) {
+            this.extensionSettings.acm = {};
         }
+        this.extensionSettings.acm[key] = value;
+        this.saveSettingsDebounced();
     }
+
 
     updateCreateData(field: string, value: any): void {
         if (Object.prototype.hasOwnProperty.call(this.create_data, field)) {

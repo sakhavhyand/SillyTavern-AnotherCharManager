@@ -42,7 +42,7 @@ export class TagManager {
      */
     displayTag(tagId: string, mode: string = 'classic'): string {
         let tagClass = 'fa-solid fa-circle-xmark ';
-        let identityAttr = `data-tagid="${tagId}"`;
+        let identityAttr = `data-tagid="${escapeHtml(tagId)}"`;
 
         switch (mode) {
             case 'category':
@@ -50,7 +50,7 @@ export class TagManager {
                 break;
             case 'details':
                 tagClass += 'tag_remove';
-                identityAttr = `id="${tagId}"`;
+                identityAttr = `id="${escapeHtml(tagId)}"`;
                 break;
             default:
                 tagClass += 'tag_acm_remove';
@@ -59,7 +59,7 @@ export class TagManager {
 
         const tag = this.st.tagList.find((t: any) => t.id === tagId);
         if (tag) {
-            return `<span class="tag" style="background-color: ${tag.color}; color: ${tag.color2};" ${identityAttr}>
+            return `<span class="tag" style="background-color: ${escapeHtml(tag.color)}; color: ${escapeHtml(tag.color2)};" ${identityAttr}>
                     <span class="tag_name">${escapeHtml(tag.name)}</span>
                     <i class="${tagClass}"></i>
                 </span>`;

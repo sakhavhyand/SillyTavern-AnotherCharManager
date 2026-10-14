@@ -158,6 +158,10 @@ export class ModalManager {
         const favOnly = this.settings.getSetting('favOnly');
         this.charListManager.updateFavFilterButtonState(favOnly);
 
+        const currentCardsPerRow = this.charListManager.clampCardsPerRow(this.settings.getSetting('cardsPerRow'));
+        $('#acm_cardsPerRowSlider').val(currentCardsPerRow);
+        $('#acm_cardsPerRowValue').text(currentCardsPerRow);
+
         this.eventManager.emit('modal:opened');
 
         // Apply persisted tab/dropdown view mode for char-details-desc
@@ -345,28 +349,15 @@ export class ModalManager {
             $popup.css('width', newWidth + '%');
             $preview.hide();
             this.settings.updateSetting('popupWidth', newWidth);
-
-            // The popup has a 300ms width transition. Waiting one frame reads
-            // its old/intermediate width, so refresh once the transition has
-            // reached its final layout. The timeout covers reduced-motion and
-            // browsers that do not dispatch transitionend here.
-            let refreshed = false;
-            const refreshScroller = () => {
-                if (refreshed) return;
-                refreshed = true;
-                $popup.off('transitionend.acmResize', refreshScroller);
-                requestAnimationFrame(() => this.eventManager.emit('charList:handleResize'));
-            };
-
-            $popup.one('transitionend.acmResize', refreshScroller);
-            setTimeout(refreshScroller, 350);
+            // The character list's ResizeObserver re-fits the cards as the popup resizes.
         });
 
         const $cardsPerRowSlider = $('#acm_cardsPerRowSlider');
         const $cardsPerRowValue = $('#acm_cardsPerRowValue');
 
-        $cardsPerRowSlider.val(this.settings.cardsPerRow || 5);
-        $cardsPerRowValue.text(this.settings.cardsPerRow || 5);
+        const initialCardsPerRow = this.charListManager.clampCardsPerRow(this.settings.getSetting('cardsPerRow'));
+        $cardsPerRowSlider.val(initialCardsPerRow);
+        $cardsPerRowValue.text(initialCardsPerRow);
 
         $cardsPerRowSlider.on('input', (event) => {
             const cols = parseInt(<string>$(event.target).val(), 10);

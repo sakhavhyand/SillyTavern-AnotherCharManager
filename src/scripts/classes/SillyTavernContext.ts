@@ -27,6 +27,11 @@ export class SillyTavernContext {
         return this.ctx.getCharacters();
     }
 
+    /** Reloads a single character from the server and replaces it in `characters`. */
+    getOneCharacter(avatar: string): Promise<void> {
+        return this.ctx.getOneCharacter(avatar);
+    }
+
     unshallowCharacter(char: any): Promise<any> {
         return this.ctx.unshallowCharacter(char);
     }

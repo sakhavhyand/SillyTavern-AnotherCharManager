@@ -34,6 +34,25 @@ export function debounce<TArgs extends unknown[]>(
 }
 
 /**
+ * Recursively merges `source` into `target` (mutating and returning `target`).
+ * Plain objects are merged key by key; arrays and other values replace the target's.
+ *
+ * @param {object} target - The object to merge into.
+ * @param {object} source - The object whose values take precedence.
+ * @return {object} The merged target.
+ */
+export function mergeDeep(target: Record<string, any>, source: Record<string, any>): Record<string, any> {
+    for (const [key, value] of Object.entries(source)) {
+        if ($.isPlainObject(value) && $.isPlainObject(target[key])) {
+            mergeDeep(target[key], value);
+        } else {
+            target[key] = $.isPlainObject(value) ? mergeDeep({}, value) : value;
+        }
+    }
+    return target;
+}
+
+/**
  * Returns a promise that resolves to the base64 encoded string of a file.
  * @param {Blob} file The file to read.
  * @returns {Promise<string>} A promise that resolves to the base64 encoded string.
@@ -120,8 +139,9 @@ function compareIgnoreCaseAndAccents(a: string, b: string, comparisonFunction: (
  * @param {string} avatar - The avatar image or identifier of the character.
  * @return {string|undefined} The ID of the character as a string if found, otherwise undefined.
  */
-export function getIdByAvatar(avatar: string): string | undefined{
-    const index = acm.st.characters.findIndex((character: any) => character.avatar === avatar);
+export function getIdByAvatar(avatar: string): string | undefined {
+    if (!acm?.st?.characters || !Array.isArray(acm.st.characters)) return undefined;
+    const index = acm.st.characters.findIndex((character: any) => character?.avatar === avatar);
     return index !== -1 ? String(index) : undefined;
 }
 
@@ -137,6 +157,14 @@ export async function updateTokenCount(fieldId: string): Promise<void> {
     const inputValue = String(inputElement.val());
     const tokenCount = await acm.st.getTokenCountAsync(acm.st.substituteParams(inputValue));
     tokenCountElement.html(`Tokens: ${tokenCount}`);
+
+    if (fieldId === '#acm_description') {
+        $('#acm_tab_desc_tokens').text(`${tokenCount} tokens`);
+    } else if (fieldId === '#acm_firstMess') {
+        $('#acm_tab_greeting_tokens').text(`${tokenCount} tokens`);
+    } else if (fieldId === '#acm_creatornotes' || fieldId === '#acm_creator_notes_textarea') {
+        $('#acm_tab_creatorsnotes_tokens').text(`${tokenCount} tokens`);
+    }
 }
 
 /**

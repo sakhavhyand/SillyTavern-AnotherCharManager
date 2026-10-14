@@ -35,7 +35,7 @@ export class PresetManager {
         $(document).on('change', '#preset_selector', (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
             const newPreset = $element.find(':selected').data('preset');
-            $('#preset_name').html(this.getPreset(newPreset).name);
+            $('#preset_name').text(this.getPreset(newPreset).name);
             this.printCategoriesList(newPreset);
         });
 
@@ -45,7 +45,7 @@ export class PresetManager {
             const newPresetName = await this.st.callGenericPopup('<h3>New preset name:</h3>', this.st.POPUP_TYPE.INPUT, this.getPreset(selectedPreset).name);
             if (newPresetName && newPresetName.trim() !== '') {
                 this.updatePresetName(selectedPreset, newPresetName);
-                $('#preset_name').html(newPresetName);
+                $('#preset_name').text(newPresetName);
                 $('#preset_selector option').filter((_: number, element: HTMLElement) => $(element).data('preset') === selectedPreset).text(newPresetName);
                 this.updateDropdownPresetNames();
             }

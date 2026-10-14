@@ -65,10 +65,6 @@ export class CharListManager {
             this.refreshCharListDebounced(data);
         });
 
-        this.eventManager.on('charList:handleResize', () => {
-            this.handleContainerResize();
-        });
-
         this.eventManager.on('charList:setCardsPerRow', ({ cols, persist }) => {
             this.setCardsPerRow(cols, persist);
         });
@@ -352,14 +348,18 @@ export class CharListManager {
      * Sorts an array of character objects based on a specified property and order.
      */
     sortCharAR(chars: any[]): any[] {
+        // Read once per sort, not once per comparison
+        const sort_data = this.settings.getSetting('sortingField');
+        const sort_order = this.settings.getSetting('sortingOrder');
+        // Same ordering as localeCompare() with default options, but much faster on big lists
+        const collator = new Intl.Collator();
+
         return chars.sort((a, b) => {
             let comparison = 0;
-            const sort_data = this.settings.getSetting('sortingField');
-            const sort_order = this.settings.getSetting('sortingOrder');
 
             switch (sort_data) {
                 case 'name':
-                    comparison = a[sort_data].localeCompare(b[sort_data]);
+                    comparison = collator.compare(a[sort_data], b[sort_data]);
                     break;
                 case 'tags':
                     comparison = (this.st.tagMap[a.avatar]?.length || 0) - (this.st.tagMap[b.avatar]?.length || 0);
@@ -379,19 +379,24 @@ export class CharListManager {
     }
 
     /**
-     * Creates and returns a character block element based on the provided avatar.
+     * Creates and returns a character block element for the given character.
+     * Takes the character object directly (the list items already are the
+     * characters), avoiding a search through the whole list for every card.
      */
-    createCharacterBlock(avatar: string): HTMLDivElement {
-        const id = getIdByAvatar(avatar);
-        const char = this.st.characters[id];
-        const tagCount = this.st.tagMap[avatar]?.length ?? 0;
+    createCharacterBlock(char: any): HTMLDivElement {
+        const avatar: string = char?.avatar ?? '';
+        const tagCount = (this.st.tagMap && this.st.tagMap[avatar]) ? this.st.tagMap[avatar].length : 0;
 
         const charClass = (this.settings.selectedChar !== undefined && this.settings.selectedChar === avatar) ? 'char_selected' : 'char_select';
-        const isFav = (char.fav || char.data.extensions.fav) ? 'fav' : '';
+        const isFav = (char?.fav || char?.data?.extensions?.fav) ? 'fav' : '';
+
+        const charName = char?.name ?? avatar ?? '';
+        const charAvatar = char?.avatar ?? avatar ?? '';
 
         const div = document.createElement('div');
         div.className = `card ${charClass} ${isFav}`;
-        div.title = `[${escapeHtml(char.name)} - Tags: ${tagCount}]`;
+        // Plain DOM property, not HTML: escaping here would show "&amp;" literally
+        div.title = `[${charName} - Tags: ${tagCount}]`;
         div.setAttribute('data-avatar', avatar);
 
         // Media
@@ -399,8 +404,8 @@ export class CharListManager {
         media.className = 'card__media';
         const img = document.createElement('img');
         img.id = `img_${avatar}`;
-        img.src = this.st.getThumbnailUrl('avatar', avatar);
-        img.alt = char.avatar;
+        img.src = this.charManager.getAvatarThumbnailUrl(avatar);
+        img.alt = charAvatar;
         img.draggable = false;
         media.appendChild(img);
 
@@ -409,7 +414,7 @@ export class CharListManager {
         header.className = 'card__header';
         const title = document.createElement('h3');
         title.className = 'card__header-title';
-        title.textContent = char.name;
+        title.textContent = charName;
         const meta = document.createElement('p');
         meta.className = 'card__header-meta';
         meta.textContent = `Tags: ${tagCount}`;
@@ -446,10 +451,13 @@ export class CharListManager {
             this.virtualScroller = new VirtualScroller({
                 container: container,
                 items: sortedList,
-                renderItem: (item: any) => { return this.createCharacterBlock(item.avatar); },
+                renderItem: (item: any) => this.createCharacterBlock(item),
                 itemHeight: 180, // Height of a line of cards
-                itemsPerRow: this.settings.cardsPerRow,
+                itemsPerRow: this.clampCardsPerRow(this.settings.getSetting('cardsPerRow')),
                 buffer: 3, // Preload 3 lines before/after
+                // Card width is derived from the container width, so re-solve
+                // it whenever the list is resized (window, popup width, details panel...)
+                onResize: () => this.applyCardWidthForColumns(),
             });
 
             // Cards now exist — solve for the exact width that fills the row
@@ -466,10 +474,18 @@ export class CharListManager {
      * @return {void}
      */
     setCardsPerRow(cols: number, persist: boolean = false): void {
-        if (!cols || cols < 1) return;
-        this.settings.cardsPerRow = cols;
-        if (persist) this.settings.updateSetting('cardsPerRow', cols);
-        this.applyCardWidthForColumns();
+        const validCols = this.clampCardsPerRow(cols);
+        if (persist) {
+            this.settings.updateSetting('cardsPerRow', validCols);
+        }
+        this.applyCardWidthForColumns(validCols);
+    }
+
+    /**
+     * Restricts a cards-per-row value to the slider's range (4-18), falling back to 5.
+     */
+    clampCardsPerRow(cols: unknown): number {
+        return Math.min(18,Math.max(4, Math.floor(Number(cols) || 5)));
     }
 
     /**
@@ -477,19 +493,21 @@ export class CharListManager {
      * cards fill the row's available width with no leftover gutter, then
      * refreshes the virtual scroller so it re-measures against the new size.
      *
+     * @param {number} [cols] - Optional target column count. Defaults to saved setting.
      * @return {void}
      */
-    applyCardWidthForColumns(): void {
+    applyCardWidthForColumns(cols?: number): void {
         const container = document.getElementById('character-list');
         if (!container) return;
 
-        const width = this.computeCardWidthForColumns(container, this.settings.cardsPerRow);
+        const cardsPerRow = this.clampCardsPerRow(cols ?? this.settings.getSetting('cardsPerRow'));
+        const width = this.computeCardWidthForColumns(container, cardsPerRow);
         if (width !== null) {
             container.style.setProperty('--acm-card-width', String(width));
         }
 
         if (this.virtualScroller) {
-            this.virtualScroller.itemsPerRow = this.settings.cardsPerRow;
+            this.virtualScroller.itemsPerRow = cardsPerRow;
             this.virtualScroller.refresh();
         }
     }
@@ -505,17 +523,20 @@ export class CharListManager {
      * @param {number} cols - Desired number of cards per row.
      * @return {number|null} The card width to assign, or null if it can't be measured.
      */
-    computeCardWidthForColumns(container, cols) {
+    computeCardWidthForColumns(container: HTMLElement, cols: number): number | null {
+        const validCols = Math.max(1, Math.floor(Number(cols) || 5));
         const containerStyle = getComputedStyle(container);
         const gap = parseFloat(containerStyle.columnGap) || 0;
         const availableWidth = container.clientWidth
             - parseFloat(containerStyle.paddingLeft)
             - parseFloat(containerStyle.paddingRight);
 
+        if (availableWidth <= 0) return null;
+
         const sample = container.querySelector('.card');
         if (!sample) {
             // No card rendered yet — naive guess, corrected once one exists.
-            return Math.max(Math.floor((availableWidth - (cols - 1) * gap) / cols), 20);
+            return Math.max(Math.floor((availableWidth - (validCols - 1) * gap) / validCols), 20);
         }
 
         const cardStyle = getComputedStyle(sample);
@@ -529,21 +550,8 @@ export class CharListManager {
         const fixedPx = parseFloat(cardStyle.borderLeftWidth) + parseFloat(cardStyle.borderRightWidth);
         const scaleRatio = scalablePx / currentVar;
 
-        const width = (availableWidth - (cols - 1) * gap - cols * fixedPx) / (cols * (1 + scaleRatio));
+        const width = (availableWidth - (validCols - 1) * gap - validCols * fixedPx) / (validCols * (1 + scaleRatio));
         return Math.max(Math.floor(width), 20);
-    }
-
-    /**
-     * Adjusts the virtual scroller's items per row based on the container's current width.
-     */
-    handleContainerResize(): void {
-        if (this.virtualScroller) {
-            this.applyCardWidthForColumns();
-        }
-
-        for (const scroller of this.dropdownScrollers.values()) {
-            scroller.itemsPerRow = this.calculateItemsPerRow(scroller.container);
-        }
     }
 
     private calculateItemsPerRow(container: HTMLElement): number {
@@ -738,7 +746,7 @@ export class CharListManager {
         const isOpen = this.isDropdownSectionOpen(type, content);
         const openClass = isOpen ? ' open' : '';
 
-        return `<div class="dropdown-container${openClass}" data-type="${type}" data-content="${content}">
+        return `<div class="dropdown-container${openClass}" data-type="${escapeHtml(type)}" data-content="${escapeHtml(content)}">
         <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">
             ${escapeHtml(title)} (${count})
         </div>
@@ -813,10 +821,14 @@ export class CharListManager {
         const scroller = new VirtualScroller({
             container: contentDiv,
             items: items,
-            renderItem: (item: any) => this.createCharacterBlock(item.avatar),
+            renderItem: (item: any) => this.createCharacterBlock(item),
             itemHeight: 180,
             itemsPerRow: itemsPerRow,
             buffer: 2,
+            onResize: () => {
+                scroller.itemsPerRow = this.calculateItemsPerRow(contentDiv);
+                scroller.refresh();
+            },
         });
         const key = this.dropdownScrollerKey(contentDiv);
         this.dropdownScrollers.set(key, scroller);

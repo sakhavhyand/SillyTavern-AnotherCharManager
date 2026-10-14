@@ -18,10 +18,9 @@ export class EventManager {
     }
 
     emit(event: string, ...args: any[]): void {
+        // Opt-in debugging: localStorage.setItem('eventTracing', 'true')
         if (localStorage.getItem('eventTracing') === 'true') {
             console.trace('Event emitted:', event, args);
-        } else {
-            console.debug('Event emitted:', event);
         }
 
         if (!this.listeners[event]) return;
