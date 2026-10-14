@@ -6,6 +6,7 @@ declare var SillyTavern: {
     libs: {
         Fuse: any;
         Popper: any;
+        DOMPurify: any;
     };
 };
 

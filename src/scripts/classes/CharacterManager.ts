@@ -12,6 +12,7 @@ import {
     getCardElement,
     mergeDeep,
     parseTagList,
+    renderCreatorNotes,
     toYYYYMMDD,
 } from '../acm-utils';
 
@@ -75,20 +76,9 @@ export class CharacterManager {
         const elementsToInitialize: Record<string, () => Promise<void> | void> = {
             '#acm_description': async () => { const descZone = $('#acm_description'); const update = { avatar: this.settings.selectedChar, description: String(descZone.val()), data: { description: String(descZone.val()) } }; this.queueEdit(update); await updateTokenCount('#acm_description'); },
             '#acm_firstMess': async () => { const firstMesZone = $('#acm_firstMess'); const update = { avatar: this.settings.selectedChar, first_mes: String(firstMesZone.val()), data: { first_mes: String(firstMesZone.val()) } }; this.queueEdit(update); await updateTokenCount('#acm_firstMess'); },
-            '#acm_creatornotes': async () => {
-                const creatorNotes = $('#acm_creatornotes');
-                $('#acm_creator_notes_textarea').val(String(creatorNotes.val()));
-                const update = {
-                    avatar: this.settings.selectedChar,
-                    creatorcomment: String(creatorNotes.val()),
-                    data: { creator_notes: String(creatorNotes.val()) },
-                };
-                this.queueEdit(update);
-                await updateTokenCount('#acm_creatornotes');
-            },
             '#acm_creator_notes_textarea': async () => {
                 const creatorNotes = $('#acm_creator_notes_textarea');
-                $('#acm_creatornotes').val(String(creatorNotes.val()));
+                $('#acm_creatornotes_view').html(renderCreatorNotes(String(creatorNotes.val())));
                 const update = {
                     avatar: this.settings.selectedChar,
                     creatorcomment: String(creatorNotes.val()),
@@ -292,7 +282,7 @@ export class CharacterManager {
         $('#acm_tab_altgreetings_count').text(`${altGreetingsCount} greetings`);
 
         const creatorNotesVal = char.data?.creator_notes || char.creatorcomment || '';
-        $('#acm_creatornotes').val(creatorNotesVal);
+        $('#acm_creatornotes_view').html(renderCreatorNotes(creatorNotesVal)).scrollTop(0);
         const creatorNotesTokens = await this.st.getTokenCountAsync(this.st.substituteParams(creatorNotesVal));
         $('#acm_tab_creatorsnotes_tokens').text(`${creatorNotesTokens} tokens`);
 

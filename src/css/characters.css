@@ -422,3 +422,80 @@
     gap: 6px;
     padding: 2px;
 }
+
+/* ===== DROPDOWN MODE RULES ===== */
+
+/* Closed sections only take their header's height */
+#char-details-desc:not(.acm-tab-mode) > .inline-drawer {
+    flex: 0 0 auto;
+}
+
+/* The open section (one at a time, see ModalManager) fills the available height
+   instead of growing past the panel. Its chevron tells whether it is open. */
+#char-details-desc:not(.acm-tab-mode) > .inline-drawer:has(> .inline-drawer-header .idit.up) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 8em;
+}
+
+#char-details-desc:not(.acm-tab-mode) > .inline-drawer:has(> .inline-drawer-header .idit.up) > .inline-drawer-content {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto !important;
+    overflow: hidden !important;
+}
+
+#char-details-desc:not(.acm-tab-mode) > .inline-drawer:has(> .inline-drawer-header .idit.up) > .inline-drawer-content > label {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    margin: 0;
+}
+
+/* Textareas fill their section and scroll inside, instead of sizing to their content */
+#char-details-desc:not(.acm-tab-mode) > .inline-drawer > .inline-drawer-content > label > textarea {
+    display: block;
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto !important;
+    max-height: none !important;
+    field-sizing: fixed;
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
+}
+
+#char-details-desc:not(.acm-tab-mode) #altGreetings_content {
+    overflow-y: auto !important;
+    gap: 6px;
+    padding: 2px;
+}
+
+/* ===== CREATOR'S NOTES (read-only rendered HTML) ===== */
+#acm_creatornotes_view {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+    text-align: start;
+    padding: 5px 10px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 5px;
+    background-color: var(--black30a);
+}
+
+#acm_creatornotes_view img,
+#acm_creatornotes_view video {
+    max-width: 100%;
+    height: auto;
+}
+
+#acm_creatornotes_view:empty::before {
+    content: 'No creator\'s notes.';
+    opacity: 0.5;
+    font-style: italic;
+}

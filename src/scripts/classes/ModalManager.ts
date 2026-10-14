@@ -319,6 +319,27 @@ export class ModalManager {
             });
         });
 
+        // Dropdown mode: top-level sections open one at a time, without the slide animation,
+        // so the open section fills the panel at once. Runs before ST's document-level drawer
+        // handler and stops it; alt greeting sub-drawers keep the default behavior.
+        const descElement = document.getElementById('char-details-desc');
+        $(descElement).on('click', '.inline-drawer-header', function (this: HTMLElement, event: JQuery.TriggeredEvent) {
+            const drawer = this.parentElement;
+            if (drawer?.parentElement !== descElement) return;
+            // Let the expand / add greeting buttons do their own thing
+            if ($(event.target).closest('.editor_maximize, .fa-circle-plus').length) return;
+            event.stopPropagation();
+
+            const expand = !$(this).find('.idit').hasClass('up');
+            $(descElement).children('.inline-drawer').each(function (this: HTMLElement) {
+                const isOpen = this === drawer && expand;
+                $(this).children('.inline-drawer-header').find('.idit')
+                    .toggleClass('up fa-circle-chevron-up', isOpen)
+                    .toggleClass('down fa-circle-chevron-down', !isOpen);
+                $(this).children('.inline-drawer-content').stop(true, true).css('display', isOpen ? '' : 'none');
+            });
+        });
+
         // Trigger when the modal is closed to reset some global parameters
         $('#acm_popup_close').on('click', () => {
             this.closeModal();

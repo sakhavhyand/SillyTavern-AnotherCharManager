@@ -9,6 +9,7 @@
             "/script.js": ["src/types/script.d.ts"],
             "/scripts/tags.js": ["src/types/tags.d.ts"],
             "/scripts/utils.js": ["src/types/utils.d.ts"],
+            "/scripts/chats.js": ["src/types/chats.d.ts"],
             "/scripts/group-chats.js": ["src/types/group-chats.d.ts"],
             "/scripts/world-info.js": ["src/types/world-info.d.ts"]
         },

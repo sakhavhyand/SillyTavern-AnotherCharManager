@@ -5,4 +5,5 @@ export const depth_prompt_depth_default: number;
 export const depth_prompt_role_default: string;
 export const talkativeness_default: number;
 export const system_message_types: Record<string, string>;
+export let converter: { makeHtml(text: string): string };
 export function getPastCharacterChats(characterId?: number | null): Promise<Array<{ file_name: string }>>;

@@ -1,3 +1,5 @@
+import { converter } from '/script.js';
+import { encodeStyleTags, decodeStyleTags } from '/scripts/chats.js';
 import { acm } from '../index';
 
 /**
@@ -88,8 +90,8 @@ export function matchesTagRules(characterTags: readonly unknown[], rules: TagRul
 
     if (excluded.some(id => tags.has(String(id)))) return false;
     if (!mandatory.every(id => tags.has(String(id)))) return false;
-    if (facultative.length > 0 && !facultative.some(id => tags.has(String(id)))) return false;
-    return true;
+    return !(facultative.length > 0 && !facultative.some(id => tags.has(String(id))));
+
 }
 
 /**
@@ -215,9 +217,26 @@ export async function updateTokenCount(fieldId: string): Promise<void> {
         $('#acm_tab_desc_tokens').text(`${tokenCount} tokens`);
     } else if (fieldId === '#acm_firstMess') {
         $('#acm_tab_greeting_tokens').text(`${tokenCount} tokens`);
-    } else if (fieldId === '#acm_creatornotes' || fieldId === '#acm_creator_notes_textarea') {
+    } else if (fieldId === '#acm_creator_notes_textarea') {
         $('#acm_tab_creatorsnotes_tokens').text(`${tokenCount} tokens`);
     }
+}
+
+/**
+ * Renders creator's notes (Markdown/HTML) into sanitized HTML, the same way ST does for its
+ * own creator's notes. Custom <style> rules are always scoped to `#acm_creatornotes_view`,
+ * so a card can never restyle the rest of the UI.
+ *
+ * @param {string} text - The raw creator's notes.
+ * @return {string} The sanitized HTML.
+ */
+export function renderCreatorNotes(text: string): string {
+    if (!text) return '';
+    let html = converter.makeHtml(acm.st.substituteParams(text));
+    html = encodeStyleTags(html);
+    html = SillyTavern.libs.DOMPurify.sanitize(html, { MESSAGE_SANITIZE: true, ADD_TAGS: ['custom-style'] });
+    html = decodeStyleTags(html, { prefix: '#acm_creatornotes_view ' });
+    return html;
 }
 
 /**
