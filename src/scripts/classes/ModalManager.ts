@@ -1,4 +1,4 @@
-import { getIdByAvatar, resetScrollHeight } from '../acm-utils';
+import { getCardElement, getIdByAvatar, resetScrollHeight } from '../acm-utils';
 import { setCharacterId, setMenuType } from '/script.js';
 import { CharCreationManager } from './CharCreationManager';
 import { PresetManager } from './PresetManager';
@@ -188,7 +188,7 @@ export class ModalManager {
         if (reset) { setCharacterId(getIdByAvatar(this.settings.mem_avatar)); }
 
         $('#acm_export_format_popup').hide();
-        document.querySelector(`[data-avatar="${this.settings.selectedChar}"]`)?.classList.replace('char_selected', 'char_select');
+        getCardElement(this.settings.selectedChar)?.classList.replace('char_selected', 'char_select');
         document.getElementById('char-details')!.classList.remove('open');
         document.getElementById('char-sep')!.style.display = 'none';
         this.settings.setSelectedChar(undefined);

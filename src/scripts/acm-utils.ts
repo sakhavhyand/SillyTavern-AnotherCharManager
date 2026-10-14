@@ -53,6 +53,46 @@ export function mergeDeep(target: Record<string, any>, source: Record<string, an
 }
 
 /**
+ * Parses a comma-separated tag list: trims each tag and drops empty and duplicate entries.
+ * "a,b , ,a" -> ["a", "b"]; "" -> [].
+ *
+ * @param {string} value - The raw comma-separated text.
+ * @return {string[]} The cleaned list of tags.
+ */
+export function parseTagList(value: string): string[] {
+    const tags = String(value ?? '').split(',').map(tag => tag.trim()).filter(Boolean);
+    return [...new Set(tags)];
+}
+
+export interface TagRules {
+    /** The character must have ALL of these. */
+    mandatory?: readonly unknown[];
+    /** The character must have AT LEAST ONE of these (ignored if empty). */
+    facultative?: readonly unknown[];
+    /** The character must have NONE of these. */
+    excluded?: readonly unknown[];
+}
+
+/**
+ * Checks a character's tags against mandatory / at-least-one / excluded tag rules.
+ * Shared by the filter bar and custom categories. IDs are compared as strings, since
+ * legacy tag IDs are numeric strings that can turn into numbers along the way.
+ *
+ * @param {unknown[]} characterTags - The character's tag IDs (from tagMap).
+ * @param {TagRules} rules - The tag rules to apply.
+ * @return {boolean} True if the character satisfies every rule.
+ */
+export function matchesTagRules(characterTags: readonly unknown[], rules: TagRules): boolean {
+    const tags = new Set((characterTags ?? []).map(String));
+    const { mandatory = [], facultative = [], excluded = [] } = rules;
+
+    if (excluded.some(id => tags.has(String(id)))) return false;
+    if (!mandatory.every(id => tags.has(String(id)))) return false;
+    if (facultative.length > 0 && !facultative.some(id => tags.has(String(id)))) return false;
+    return true;
+}
+
+/**
  * Returns a promise that resolves to the base64 encoded string of a file.
  * @param {Blob} file The file to read.
  * @returns {Promise<string>} A promise that resolves to the base64 encoded string.
@@ -143,6 +183,19 @@ export function getIdByAvatar(avatar: string): string | undefined {
     if (!acm?.st?.characters || !Array.isArray(acm.st.characters)) return undefined;
     const index = acm.st.characters.findIndex((character: any) => character?.avatar === avatar);
     return index !== -1 ? String(index) : undefined;
+}
+
+/**
+ * Returns the rendered card of a character in the ACM list, if it is currently in the DOM.
+ * Scoped to the list because other SillyTavern UI (e.g. the welcome screen) also uses
+ * `data-avatar`, and escaped because avatar filenames may contain quotes.
+ *
+ * @param {string} avatar - The avatar filename of the character.
+ * @return {HTMLElement|null} The card element, or null if it isn't rendered.
+ */
+export function getCardElement(avatar: string | undefined): HTMLElement | null {
+    if (!avatar) return null;
+    return document.querySelector<HTMLElement>(`#character-list .card[data-avatar="${CSS.escape(avatar)}"]`);
 }
 
 /**

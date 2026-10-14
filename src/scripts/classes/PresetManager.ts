@@ -8,6 +8,16 @@ interface Category {
     excludedTags?: string[];
 }
 
+type TagField = 'mandatoryTags' | 'facultativeTags' | 'excludedTags';
+
+type NormalizedCategory = Category & Required<Pick<Category, TagField | 'tags'>>;
+
+const TAG_FIELDS: Record<string, TagField> = {
+    mandatory: 'mandatoryTags',
+    facultative: 'facultativeTags',
+    excluded: 'excludedTags',
+};
+
 interface Preset {
     name: string;
     categories: Category[];
@@ -98,7 +108,8 @@ export class PresetManager {
             const $element = $(event.currentTarget);
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const selectedCat = $element.closest('[data-catid]').data('catid');
-            const selectedTag = $element.closest('[data-tagid]').data('tagid');
+            // attr(), not data(): data() turns numeric-looking legacy IDs into numbers
+            const selectedTag = $element.closest('[data-tagid]').attr('data-tagid');
 
             // Determine tag type from the parent section
             const tagSection = $element.closest('[data-tagtype]');
@@ -130,67 +141,79 @@ export class PresetManager {
     }
 
     /**
-     * Gets a specific preset by index
+     * Returns a deep copy of all presets, safe to modify.
      */
-    getPreset(presetIndex: number): Preset {
-        if (presetIndex < 0 || presetIndex >= this.settings.getSetting('dropdownPresets').length) {
-            throw new Error('Invalid preset index');
-        }
-        return { ...this.settings.getSetting('dropdownPresets')[presetIndex] };
+    private clonePresets(): Preset[] {
+        return structuredClone(this.settings.getSetting('dropdownPresets') ?? []);
     }
 
     /**
-     * Gets a specific category from a preset
+     * Applies a change to a deep copy of the presets, then saves the copy.
+     * The stored settings are never modified in place.
+     */
+    private updatePresets(change: (presets: Preset[]) => void): void {
+        const presets = this.clonePresets();
+        change(presets);
+        this.settings.updateSetting('dropdownPresets', presets);
+    }
+
+    private assertPresetIndex(presets: Preset[], presetIndex: number): void {
+        if (!(presetIndex >= 0 && presetIndex < presets.length)) {
+            throw new Error('Invalid preset index');
+        }
+    }
+
+    private assertCategoryIndex(preset: Preset, categoryIndex: number): void {
+        if (!(categoryIndex >= 0 && categoryIndex < preset.categories.length)) {
+            throw new Error('Invalid category index');
+        }
+    }
+
+    /**
+     * Gets a copy of a specific preset by index
+     */
+    getPreset(presetIndex: number): Preset {
+        const presets = this.clonePresets();
+        this.assertPresetIndex(presets, presetIndex);
+        return presets[presetIndex];
+    }
+
+    /**
+     * Gets a copy of a specific category from a preset
      */
     getCategory(presetIndex: number, categoryIndex: number): Category {
         const preset = this.getPreset(presetIndex);
-        if (categoryIndex < 0 || categoryIndex >= preset.categories.length) {
-            throw new Error('Invalid category index');
-        }
-        return { ...preset.categories[categoryIndex] };
+        this.assertCategoryIndex(preset, categoryIndex);
+        return preset.categories[categoryIndex];
     }
 
     /**
      * Updates a specific preset name
      */
     updatePresetName(presetIndex: number, name: string): void {
-        if (presetIndex < 0 || presetIndex >= this.settings.getSetting('dropdownPresets').length) {
-            throw new Error('Invalid preset index');
-        }
         if (typeof name !== 'string' || name.trim() === '') {
             throw new Error('Preset name must be a non-empty string');
         }
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex] = {
-            ...updatedPresets[presetIndex],
-            name: name,
-        };
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            presets[presetIndex].name = name;
+        });
     }
 
     /**
      * Updates all categories of a specific preset
      */
     updatePresetCategories(presetIndex: number, categories: Category[]): void {
-        if (presetIndex < 0 || presetIndex >= this.settings.getSetting('dropdownPresets').length) {
-            throw new Error('Invalid preset index');
-        }
         if (!Array.isArray(categories)) {
             throw new Error('Categories must be an array');
         }
-        if (!categories.every(category =>
-            typeof category === 'object' &&
-            typeof category.name === 'string' &&
-            Array.isArray(category.tags),
-        )) {
-            throw new Error('Invalid category format. Each category must have a name (string) and tags (array)');
+        if (!categories.every(category => typeof category === 'object' && typeof category?.name === 'string')) {
+            throw new Error('Invalid category format. Each category must have a name (string)');
         }
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex] = {
-            ...updatedPresets[presetIndex],
-            categories: [...categories],
-        };
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            presets[presetIndex].categories = structuredClone(categories);
+        });
     }
 
     /**
@@ -200,124 +223,85 @@ export class PresetManager {
         if (typeof name !== 'string' || name.trim() === '') {
             throw new Error('Category name must be a non-empty string');
         }
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex] = {
-            ...updatedPresets[presetIndex],
-            categories: [...updatedPresets[presetIndex].categories, { name, tags: [] }],
-        };
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            presets[presetIndex].categories.push(this.normalizeCategory({ name }));
+        });
     }
 
     /**
-     * Updates a specific category in a preset
+     * Renames a specific category in a preset
      */
     updateCategoryName(presetIndex: number, categoryIndex: number, name: string): void {
-        const preset = this.getPreset(presetIndex);
-        if (categoryIndex < 0 || categoryIndex >= preset.categories.length) {
-            throw new Error('Invalid category index');
-        }
         if (typeof name !== 'string' || name.trim() === '') {
             throw new Error('Category name must be a non-empty string');
         }
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex].categories[categoryIndex] = {
-            ...updatedPresets[presetIndex].categories[categoryIndex],
-            name,
-        };
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            this.assertCategoryIndex(presets[presetIndex], categoryIndex);
+            presets[presetIndex].categories[categoryIndex].name = name;
+        });
     }
 
     /**
      * Removes a category from a preset
      */
     removePresetCategory(presetIndex: number, categoryIndex: number): void {
-        const preset = this.getPreset(presetIndex);
-        if (categoryIndex < 0 || categoryIndex >= preset.categories.length) {
-            throw new Error('Invalid category index');
-        }
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex].categories = updatedPresets[presetIndex].categories
-            .filter((_: Category, index: number) => index !== categoryIndex);
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            this.assertCategoryIndex(presets[presetIndex], categoryIndex);
+            presets[presetIndex].categories.splice(categoryIndex, 1);
+        });
     }
 
     /**
      * Adds a tag to a category
      */
     addTagToCategory(presetIndex: number, categoryIndex: number, tagId: string, tagType: string = 'mandatory'): void {
-        const category = this.getCategory(presetIndex, categoryIndex);
-        const fieldMap: Record<string, string> = {
-            'mandatory': 'mandatoryTags',
-            'facultative': 'facultativeTags',
-            'excluded': 'excludedTags',
-        };
-        const fieldName = fieldMap[tagType] || 'mandatoryTags';
-
-        // Ensure the field exists
-        if (!category[fieldName]) {
-            category[fieldName] = [];
-        }
-
-        if (category[fieldName].includes(tagId)) {
-            return; // Tag already exists in the category
-        }
-
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex].categories[categoryIndex][fieldName].push(tagId);
-
-        // Maintain backwards compatibility: keep 'tags' pointing to mandatoryTags
-        if (fieldName === 'mandatoryTags') {
-            updatedPresets[presetIndex].categories[categoryIndex].tags =
-                updatedPresets[presetIndex].categories[categoryIndex].mandatoryTags;
-        }
-
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+        const fieldName = TAG_FIELDS[tagType] ?? 'mandatoryTags';
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            this.assertCategoryIndex(presets[presetIndex], categoryIndex);
+            // Normalizing guarantees every tag list exists (older categories only have `tags`)
+            const category = this.normalizeCategory(presets[presetIndex].categories[categoryIndex]);
+            const list = category[fieldName];
+            if (!list.some(id => String(id) === String(tagId))) {
+                list.push(String(tagId));
+            }
+            presets[presetIndex].categories[categoryIndex] = category;
+        });
     }
 
     /**
      * Removes a tag from a category
      */
     removeTagFromCategory(presetIndex: number, categoryIndex: number, tagId: string, tagType: string = 'mandatory'): void {
-        const fieldMap: Record<string, string> = {
-            'mandatory': 'mandatoryTags',
-            'facultative': 'facultativeTags',
-            'excluded': 'excludedTags',
-        };
-        const fieldName = fieldMap[tagType] || 'mandatoryTags';
-
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        const category = updatedPresets[presetIndex].categories[categoryIndex];
-
-        if (category[fieldName]) {
-            category[fieldName] = category[fieldName].filter((id: string) => id !== tagId);
-        }
-
-        // Maintain backwards compatibility: keep 'tags' pointing to mandatoryTags
-        if (fieldName === 'mandatoryTags') {
+        const fieldName = TAG_FIELDS[tagType] ?? 'mandatoryTags';
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            this.assertCategoryIndex(presets[presetIndex], categoryIndex);
+            const category = this.normalizeCategory(presets[presetIndex].categories[categoryIndex]);
+            // Compare as strings: legacy tag IDs are numeric strings
+            category[fieldName] = category[fieldName].filter(id => String(id) !== String(tagId));
             category.tags = category.mandatoryTags;
-        }
-
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+            presets[presetIndex].categories[categoryIndex] = category;
+        });
     }
 
     /**
-     * Normalizes a category structure for backwards compatibility.
+     * Returns a normalized copy of a category (the input is not modified):
+     * every tag list exists, older categories with only `tags` get them as
+     * mandatory tags, and `tags` mirrors `mandatoryTags` for backwards compatibility.
      */
-    normalizeCategory(category: Category): Category {
-        // If category doesn't have the new structure but has old 'tags', migrate it
-        if (!category.mandatoryTags && category.tags) {
-            category.mandatoryTags = [...category.tags];
-        }
-
-        // Ensure all tag type arrays exist
-        if (!category.mandatoryTags) category.mandatoryTags = [];
-        if (!category.facultativeTags) category.facultativeTags = [];
-        if (!category.excludedTags) category.excludedTags = [];
-
-        // Maintain backwards compatibility: keep 'tags' as reference to mandatoryTags
-        category.tags = category.mandatoryTags;
-
-        return category;
+    normalizeCategory(category: Category): NormalizedCategory {
+        const mandatoryTags = [...(category.mandatoryTags ?? category.tags ?? [])];
+        return {
+            ...category,
+            mandatoryTags,
+            facultativeTags: [...(category.facultativeTags ?? [])],
+            excludedTags: [...(category.excludedTags ?? [])],
+            tags: mandatoryTags,
+        };
     }
 
     /**

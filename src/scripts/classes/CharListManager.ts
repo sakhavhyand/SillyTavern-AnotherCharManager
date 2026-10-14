@@ -1,6 +1,6 @@
 import { setCharacterId, setMenuType } from '/script.js';
 import { timestampToMoment, sortMoments } from '/scripts/utils.js';
-import { debounce, escapeHtml, getIdByAvatar } from '../acm-utils';
+import { debounce, escapeHtml, getCardElement, getIdByAvatar, matchesTagRules } from '../acm-utils';
 import { VirtualScroller } from './VirtualScroller';
 import { CharacterManager } from './CharacterManager';
 
@@ -181,37 +181,23 @@ export class CharListManager {
 
     /**
      * Checks if a character matches the filters defined in a custom category.
+     * Expects a category already passed through `presetManager.normalizeCategory`.
      */
     matchesCategoryFilters(item: any, category: any): boolean {
-        const characterTags = this.st.tagMap[item.avatar] || [];
+        return matchesTagRules(this.st.tagMap[item.avatar] || [], {
+            mandatory: category.mandatoryTags,
+            facultative: category.facultativeTags,
+            excluded: category.excludedTags,
+        });
+    }
 
-        // Normalize category for backwards compatibility
-        const normalizedCategory = this.presetManager.normalizeCategory(category);
-        const { mandatoryTags = [], facultativeTags = [], excludedTags = [] } = normalizedCategory;
-
-        // First: Exclude characters with any excluded tags
-        if (excludedTags.length > 0) {
-            const hasExcludedTag = characterTags.some((tagId: string) => excludedTags.includes(String(tagId)));
-            if (hasExcludedTag) return false;
-        }
-
-        // Second: Check if character has ALL mandatory tags
-        if (mandatoryTags.length > 0) {
-            const hasAllMandatoryTags = mandatoryTags.every((tagId: string) =>
-                characterTags.includes(String(tagId)),
-            );
-            if (!hasAllMandatoryTags) return false;
-        }
-
-        // Third: Check if character has at least ONE facultative tag (if any are defined)
-        if (facultativeTags.length > 0) {
-            const hasAtLeastOneFacultativeTag = facultativeTags.some((tagId: string) =>
-                characterTags.includes(String(tagId)),
-            );
-            if (!hasAtLeastOneFacultativeTag) return false;
-        }
-
-        return true;
+    /**
+     * Reads the tag IDs currently placed in one of the filter bar's tag lists.
+     * Uses attr() rather than data(): jQuery's data() turns numeric-looking
+     * legacy IDs (e.g. "1345561466591") into numbers, which then never match.
+     */
+    getFilterTagIds(listSelector: string): string[] {
+        return $(listSelector).children('span[data-tagid]').map((_: number, el: HTMLElement) => $(el).attr('data-tagid')).get().filter(Boolean);
     }
 
     /**
@@ -258,34 +244,14 @@ export class CharListManager {
             ? [...this.st.characters].filter((character: any) => character.fav === true || character.data.extensions.fav === true)
             : [...this.st.characters];
 
-        const excludedTags = $('#acm_excludedTags > span').map(function (this: HTMLElement) { return $(this).data('tagid'); }).get().filter((id: any) => id);
-        const mandatoryTags = $('#acm_mandatoryTags > span').map(function (this: HTMLElement) { return $(this).data('tagid'); }).get().filter((id: any) => id);
-        const facultativeTags = $('#acm_facultativeTags > span').map(function (this: HTMLElement) { return $(this).data('tagid'); }).get().filter((id: any) => id);
+        const tagRules = {
+            mandatory: this.getFilterTagIds('#acm_mandatoryTags'),
+            facultative: this.getFilterTagIds('#acm_facultativeTags'),
+            excluded: this.getFilterTagIds('#acm_excludedTags'),
+        };
 
         // Filtering based on tags
-        const tagFilteredChars = charactersCopy.filter((item: any) => {
-            const characterTags = this.st.tagMap[item.avatar] || [];
-
-            // First: Exclude characters with any excluded tags
-            if (excludedTags.length > 0) {
-                const hasExcludedTag = characterTags.some((tagId: string) => excludedTags.includes(tagId));
-                if (hasExcludedTag) return false;
-            }
-
-            // Second: Filter out characters that don't have ALL mandatory tags
-            if (mandatoryTags.length > 0) {
-                const hasAllMandatoryTags = mandatoryTags.every((tagId: string) => characterTags.includes(tagId));
-                if (!hasAllMandatoryTags) return false;
-            }
-
-            // Third: Filter out characters that don't have at least ONE facultative tag
-            if (facultativeTags.length > 0) {
-                const hasAtLeastOneFacultativeTag = facultativeTags.some((tagId: string) => characterTags.includes(tagId));
-                if (!hasAtLeastOneFacultativeTag) return false;
-            }
-
-            return true;
-        });
+        const tagFilteredChars = charactersCopy.filter((item: any) => matchesTagRules(this.st.tagMap[item.avatar] || [], tagRules));
 
         if (this.settings.searchValue !== '') {
             const searchValueTrimmed = this.settings.searchValue.trim();
@@ -573,10 +539,8 @@ export class CharListManager {
      * Selects a character avatar, updates character details, and adjusts the display accordingly.
      */
     async selectAndDisplay(avatar: string, scrollTo: boolean = false): Promise<void> {
-        // Check if a visible character is already selected
-        if (typeof this.settings.selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${this.settings.selectedChar}"]`) !== null) {
-            document.querySelector(`[data-avatar="${this.settings.selectedChar}"]`)!.classList.replace('char_selected', 'char_select');
-        }
+        // Unselect the previously selected card, if it is rendered
+        getCardElement(this.settings.selectedChar)?.classList.replace('char_selected', 'char_select');
         setMenuType('character_edit');
         this.settings.setSelectedChar(avatar);
         setCharacterId(getIdByAvatar(avatar));
@@ -591,17 +555,12 @@ export class CharListManager {
             this.virtualScroller.scrollToAvatar(avatar);
         } else if (scrollTo) {
             // Use native scroll in dropdown view
-            const element = document.querySelector(`[data-avatar="${avatar}"]`);
-            if (element) {
-                element.scrollIntoView({ block: 'center', behavior: 'smooth' });
-            }
+            getCardElement(avatar)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
         }
 
-        // Update selected state only if element exists in DOM
-        const avatarElement = document.querySelector(`[data-avatar="${avatar}"]`);
-        if (avatarElement) {
-            avatarElement.classList.replace('char_select', 'char_selected');
-        }
+        // Update selected state only if the card is rendered (otherwise it's
+        // rendered selected later, from settings.selectedChar)
+        getCardElement(avatar)?.classList.replace('char_select', 'char_selected');
 
         document.getElementById('char-sep')!.style.display = 'block';
         document.getElementById('char-details')!.classList.add('open');
@@ -803,9 +762,8 @@ export class CharListManager {
                 const [presetId, categoryIndex] = content.split('-').map(Number);
                 const category = this.presetManager.getPreset(presetId).categories[categoryIndex];
                 if (!category) return [];
-                return sortedList.filter((item: any) =>
-                    this.matchesCategoryFilters(item, this.presetManager.normalizeCategory(category)),
-                );
+                const normalized = this.presetManager.normalizeCategory(category);
+                return sortedList.filter((item: any) => this.matchesCategoryFilters(item, normalized));
             },
             creator: () => sortedList.filter((item: any) => {
                 if (content === 'No Creator') return !item.data.creator;

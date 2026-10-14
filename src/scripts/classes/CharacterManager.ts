@@ -9,7 +9,9 @@ import {
     debounce,
     delay,
     escapeHtml,
+    getCardElement,
     mergeDeep,
+    parseTagList,
     toYYYYMMDD,
 } from '../acm-utils';
 
@@ -106,7 +108,7 @@ export class CharacterManager {
             '#acm_character_notes_role': () => { const update = { avatar: this.settings.selectedChar, data: { extensions: { depth_prompt: { role: String($('#acm_character_notes_role').val()) } } } }; this.queueEdit(update); },
             '#acm_talkativeness_slider': () => { const talkativeness = $('#acm_talkativeness_slider'); const update = { avatar: this.settings.selectedChar, talkativeness: String(talkativeness.val()), data: { extensions: { talkativeness: String(talkativeness.val()) } } }; this.queueEdit(update); },
             '#acm_mes_examples': async () => { const example = $('#acm_mes_examples'); const update = { avatar: this.settings.selectedChar, mes_example: String(example.val()), data: { mes_example: String(example.val()) } }; this.queueEdit(update); await updateTokenCount('#acm_mes_examples'); },
-            '#acm_tags_textarea': () => { const tagZone = $('#acm_tags_textarea'); const val = String(tagZone.val()); const update = { avatar: this.settings.selectedChar, tags: val.split(', '), data: { tags: val.split(', ') } }; this.queueEdit(update); },
+            '#acm_tags_textarea': () => { const tags = parseTagList(String($('#acm_tags_textarea').val())); const update = { avatar: this.settings.selectedChar, tags, data: { tags } }; this.queueEdit(update); },
         };
 
         Object.keys(elementsToInitialize).forEach(function (id) {
@@ -577,7 +579,7 @@ export class CharacterManager {
         this.avatarVersions.set(avatar, Date.now());
         const newImageUrl = this.getAvatarThumbnailUrl(avatar);
         $('#avatar_img').attr('src', newImageUrl);
-        $(`[data-avatar="${CSS.escape(avatar)}"] .card__media img`).attr('src', newImageUrl);
+        getCardElement(avatar)?.querySelector('.card__media img')?.setAttribute('src', newImageUrl);
     }
 
     /**
@@ -813,14 +815,8 @@ export class CharacterManager {
             </div>`;
         // Add the new inline-drawer block
         $('#chicken').empty();
+        // Typing in it is handled by the delegated '.altGreeting_zone' input listener
         drawerContainer.appendChild(altGreetingDiv);
-        // Add the event on the textarea
-        const textarea = altGreetingDiv.querySelector('.altGreeting_zone');
-        if (textarea) {
-            textarea.addEventListener('input', (event) => {
-                this.saveAltGreetings(event as any);
-            });
-        }
         // Save it
         this.saveAltGreetings();
     }

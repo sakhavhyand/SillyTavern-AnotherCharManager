@@ -187,7 +187,8 @@ export class TagManager {
      * Finds tags based on the provided request, resolving the result with filtered and sorted tags.
      */
     findTag(request: any, resolve: (result: string[]) => void, listSelector: string): void {
-        const skipIds = [...($(listSelector).find('.tag').map((_: number, el: HTMLElement) => $(el).data('tagid')))];
+        // attr(), not data(): data() turns numeric-looking legacy IDs into numbers
+        const skipIds = $(listSelector).find('.tag').map((_: number, el: HTMLElement) => $(el).attr('data-tagid')).get();
         const haystack = this.st.tagList
             .filter((t: any) => !skipIds.includes(t.id))
             .sort((a: any, b: any) => this.compareTagsForSort(a, b))
