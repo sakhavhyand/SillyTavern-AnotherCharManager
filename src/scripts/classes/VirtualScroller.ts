@@ -12,6 +12,11 @@ interface VirtualScrollerOptions {
     renderItem?: (item: any) => HTMLElement;
     /** Stable identity of an item, used to reuse its rendered element. Defaults to `item.avatar`. */
     getItemKey?: (item: any, index: number) => string;
+    /**
+     * What the item's rendered element displays. A rendered element is reused only
+     * while its version is unchanged (compared with ===). Defaults to the item itself.
+     */
+    getItemVersion?: (item: any) => unknown;
     itemHeight?: number;
     itemWidth?: number;
     itemsPerRow?: number;
@@ -36,6 +41,12 @@ interface RenderedRow {
     signature: string | null;
 }
 
+interface RenderedCard {
+    el: HTMLElement;
+    /** getItemVersion() of the item when the element was rendered. */
+    version: unknown;
+}
+
 /**
  * Grid-oriented wrapper around TanStack Virtual Core. TanStack virtualizes
  * rows; each virtual row renders `itemsPerRow` character cards.
@@ -45,6 +56,7 @@ export class VirtualScroller {
     items: any[];
     renderItem: (item: any) => HTMLElement;
     getItemKey: (item: any, index: number) => string;
+    getItemVersion: (item: any) => unknown;
     buffer: number;
     onResize: ((width: number) => void) | null;
 
@@ -66,14 +78,14 @@ export class VirtualScroller {
     /** Rendered rows by virtual row index. */
     private _rows = new Map<number, RenderedRow>();
     /** Rendered cards by item key (only those currently in the DOM). */
-    private _cards = new Map<string, HTMLElement>();
-    private _invalidated = false;
+    private _cards = new Map<string, RenderedCard>();
 
     constructor(options: VirtualScrollerOptions) {
         this.container = options.container;
         this.items = options.items ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.items;
         this.renderItem = options.renderItem ?? (() => document.createElement('div'));
         this.getItemKey = options.getItemKey ?? ((item, index) => String(item?.avatar ?? index));
+        this.getItemVersion = options.getItemVersion ?? (item => item);
         this._itemHeight = options.itemHeight ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.itemHeight;
         this._itemWidth = options.itemWidth ?? DEFAULT_VIRTUAL_SCROLLER_OPTIONS.itemWidth;
         this._autoItemsPerRow = options.itemsPerRow === undefined;
@@ -220,33 +232,32 @@ export class VirtualScroller {
             });
         }
 
-        if (this._invalidated) {
-            // Item data changed: don't reuse any card, rebuild every visible row.
-            this._invalidated = false;
-            this._cards.clear();
-            for (const row of this._rows.values()) row.signature = null;
-        }
-
         const itemsPerRow = Math.max(1, Math.floor(Number(this._itemsPerRow) || DEFAULT_VIRTUAL_SCROLLER_OPTIONS.itemsPerRow));
         const canvas = this._canvas!;
         canvas.style.height = `${Math.max(0, this._virtualizer.getTotalSize() || 0)}px`;
         const renderedRows: HTMLElement[] = [];
 
         // Rows and cards that are still visible are kept as-is; only rows whose
-        // content changed are rebuilt, and they reuse existing cards by key. This
-        // keeps scrolling cheap and avoids reloading images or losing hover state.
+        // content changed are rebuilt, and they reuse existing cards by key as
+        // long as the card's version (what it displays) is unchanged. This keeps
+        // scrolling and list refreshes cheap and avoids reloading images or
+        // losing hover state.
         const nextRows = new Map<number, RenderedRow>();
-        const nextCards = new Map<string, HTMLElement>();
+        const nextCards = new Map<string, RenderedCard>();
+        const isCurrent = (key: string, version: unknown) => {
+            const card = this._cards.get(key);
+            return card !== undefined && card.version === version;
+        };
         const virtualItems = this._virtualizer.getVirtualItems() || [];
         for (const virtualRow of virtualItems) {
             if (!virtualRow || typeof virtualRow.index !== 'number') continue;
 
             const start = virtualRow.index * itemsPerRow;
             const end = Math.min(start + itemsPerRow, (this.items?.length || 0));
-            const entries: { item: any; key: string }[] = [];
+            const entries: { item: any; key: string; version: unknown }[] = [];
             for (let index = start; index < end; index++) {
                 const item = this.items[index];
-                if (item !== undefined) entries.push({ item, key: this.getItemKey(item, index) });
+                if (item !== undefined) entries.push({ item, key: this.getItemKey(item, index), version: this.getItemVersion(item) });
             }
             const signature = entries.map(entry => entry.key).join('\n');
 
@@ -254,33 +265,35 @@ export class VirtualScroller {
             if (!row) {
                 const el = document.createElement('div');
                 el.dataset.index = String(virtualRow.index);
-                el.style.cssText = 'position:absolute;top:0;left:0;width:100%;display:flex;justify-content:space-around;align-items:stretch';
+                // One equal-width grid column per item, item centered in it: a partial
+                // last row stays aligned with the columns of the full rows above.
+                el.style.cssText = 'position:absolute;top:0;left:0;width:100%;display:grid;justify-items:center;align-items:stretch';
                 canvas.appendChild(el);
                 row = { el, signature: null };
             }
 
-            if (row.signature !== signature) {
+            if (row.signature !== signature || !entries.every(({ key, version }) => isCurrent(key, version))) {
                 const cards: HTMLElement[] = [];
-                for (const { item, key } of entries) {
-                    let card = this._cards.get(key);
-                    if (!card) {
-                        card = this.renderItem(item);
-                        if (!card) continue;
-                        card.style.flexShrink = '0';
-                        card.style.boxSizing = 'border-box';
+                for (const { item, key, version } of entries) {
+                    let el = isCurrent(key, version) ? this._cards.get(key)!.el : null;
+                    if (!el) {
+                        el = this.renderItem(item);
+                        if (!el) continue;
+                        el.style.flexShrink = '0';
+                        el.style.boxSizing = 'border-box';
                     }
-                    cards.push(card);
-                    nextCards.set(key, card);
+                    cards.push(el);
+                    nextCards.set(key, { el, version });
                 }
                 row.el.replaceChildren(...cards);
                 row.signature = signature;
             } else {
                 for (const { key } of entries) {
-                    const card = this._cards.get(key);
-                    if (card) nextCards.set(key, card);
+                    nextCards.set(key, this._cards.get(key)!);
                 }
             }
 
+            row.el.style.gridTemplateColumns = `repeat(${itemsPerRow}, minmax(0, 1fr))`;
             row.el.style.transform = `translateY(${virtualRow.start || 0}px)`;
             nextRows.set(virtualRow.index, row);
             renderedRows.push(row.el);
@@ -367,10 +380,9 @@ export class VirtualScroller {
     }
 
     setItems(items: any[], preserveScroll: boolean = false): void {
+        // Cards whose version changed (edits, tag changes...) are rebuilt on the next
+        // render; unchanged ones are reused.
         this.items = items;
-        // The list is refreshed after edits, tag changes, etc. Rendered cards may
-        // be stale even when the keys are the same, so rebuild them on next render.
-        this._invalidated = true;
         this._updateVirtualizer();
         this.render(preserveScroll);
     }
