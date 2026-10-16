@@ -1,6 +1,5 @@
-import { setCharacterId, setMenuType } from '/script.js';
 import { timestampToMoment, sortMoments } from '/scripts/utils.js';
-import { debounce, escapeHtml, getCardElement, getIdByAvatar, matchesTagRules } from '../acm-utils';
+import { debounce, escapeHtml, getCardElement, matchesTagRules } from '../acm-utils';
 import { VirtualScroller } from './VirtualScroller';
 import { CharacterManager } from './CharacterManager';
 
@@ -539,9 +538,7 @@ export class CharListManager {
     async selectAndDisplay(avatar: string, scrollTo: boolean = false): Promise<void> {
         // Unselect the previously selected card, if it is rendered
         getCardElement(this.settings.selectedChar)?.classList.replace('char_selected', 'char_select');
-        setMenuType('character_edit');
         this.settings.setSelectedChar(avatar);
-        setCharacterId(getIdByAvatar(avatar));
         $('#acm_export_format_popup').hide();
         window.acmIsUpdatingDetails = true;
         await this.charManager.fillDetails(avatar);

@@ -21,8 +21,6 @@ export class SettingsManager {
     oldExtensionName: string;
     selectedChar: string | undefined;
     searchValue: string;
-    mem_menu: any;
-    mem_avatar: any;
     acm_crop_data: any;
 
 
@@ -38,8 +36,6 @@ export class SettingsManager {
 
         this.selectedChar = undefined;
         this.searchValue = '';
-        this.mem_menu = undefined;
-        this.mem_avatar = undefined;
         this.acm_crop_data = undefined;
     }
 
@@ -61,14 +57,6 @@ export class SettingsManager {
 
     setSearchValue(value: string): void {
         this.searchValue = value;
-    }
-
-    setMem_menu(value: any): void {
-        this.mem_menu = value;
-    }
-
-    setMem_avatar(value: any): void {
-        this.mem_avatar = value;
     }
 
     setCrop_data(value: any): void {

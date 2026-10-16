@@ -1,4 +1,4 @@
-import { depth_prompt_depth_default, depth_prompt_role_default, setCharacterId, talkativeness_default, getPastCharacterChats, system_message_types, printCharactersDebounced } from '/script.js';
+import { deleteCharacter, depth_prompt_depth_default, depth_prompt_role_default, setCharacterId, talkativeness_default, getPastCharacterChats, system_message_types, printCharactersDebounced } from '/script.js';
 import { ensureImageFormatSupported, getCharaFilename } from '/scripts/utils.js';
 import { renameGroupMember } from '/scripts/group-chats.js';
 import { world_info } from '/scripts/world-info.js';
@@ -175,9 +175,7 @@ export class CharacterManager {
         $('#acm_dupe_button').on('click', () => this.duplicateCharacter());
 
         // Delete character
-        $('#acm_delete_button').on('click', function () {
-            $('#delete_button').trigger('click');
-        });
+        $('#acm_delete_button').on('click', () => this.deleteSelectedCharacter());
 
         // Edit a character avatar
         $('#edit_avatar_button').on('change', async (event: JQuery.TriggeredEvent) => {
@@ -413,6 +411,32 @@ export class CharacterManager {
     }
 
     /**
+     * Deletes the currently selected character, with the same confirmation as ST's delete button
+     * (which can't be used: it deletes the active character).
+     */
+    async deleteSelectedCharacter(): Promise<void> {
+        const avatar = this.settings.selectedChar;
+        if (!avatar) return;
+
+        let deleteChats = false;
+        const confirmed = await this.st.callGenericPopup(
+            `<h3>Delete the character?</h3>
+            <b>THIS IS PERMANENT!<br><br>
+            <label for="acm_del_char_checkbox" class="checkbox_label justifyCenter">
+                <input type="checkbox" id="acm_del_char_checkbox" />
+                <small>Also delete the chat files</small>
+            </label></b>`,
+            this.st.POPUP_TYPE.CONFIRM,
+            '',
+            { onClose: () => { deleteChats = !!$('#acm_del_char_checkbox').prop('checked'); } },
+        );
+        if (!confirmed) return;
+
+        // Pending edits are dropped by the CHARACTER_DELETED listener
+        await deleteCharacter(avatar, { deleteChats });
+    }
+
+    /**
      * Renames the currently selected character.
      */
     async renameCharacter(): Promise<void> {
@@ -454,8 +478,11 @@ export class CharacterManager {
 
                     await this.st.eventSource.emit(this.st.event_types.CHARACTER_RENAMED, oldAvatar, newAvatar);
 
-                    // Unload current character
-                    setCharacterId(undefined);
+                    // getCharacters() re-selects the active character by its avatar, which no longer
+                    // exists if it's the one renamed: unload it during the reload (as ST's rename does)
+                    const activeId = this.st.characterId;
+                    const renamingActive = activeId !== undefined && this.st.characters[activeId]?.avatar === oldAvatar;
+                    if (renamingActive) setCharacterId(undefined);
                     // Reload characters list
                     await this.st.getCharacters();
 
@@ -463,16 +490,11 @@ export class CharacterManager {
                     const newChId = this.st.characters.findIndex((c: any) => c.avatar == data.avatar);
 
                     if (newChId !== -1) {
-                        // Select the character after the renaming
-                        setCharacterId(newChId);
+                        if (renamingActive) setCharacterId(newChId);
                         this.settings.setSelectedChar(newAvatar);
 
                         // Async delay to update UI
                         await delay(1);
-
-                        if (this.st.characterId === -1) {
-                            throw new Error('New character not selected');
-                        }
 
                         // Also rename as a group member
                         await renameGroupMember(oldAvatar, newAvatar, newName);
@@ -481,7 +503,7 @@ export class CharacterManager {
                     <i><b>Sprites folder (if any) should be renamed manually.</b></i>`, this.st.POPUP_TYPE.CONFIRM);
 
                         if (renamePastChatsConfirm) {
-                            await this.renamePastChats(newAvatar, newName);
+                            await this.renamePastChats(newChId, newAvatar, newName);
                             toastr.success('Character renamed and past chats updated!');
                         }
                     }
@@ -507,10 +529,7 @@ export class CharacterManager {
     async openCharacterChat(): Promise<void> {
         // Save pending edits first so the chat loads the up-to-date character
         await this.flushEdits();
-        setCharacterId(undefined);
-        this.settings.setMem_avatar(undefined);
-        this.st.selectCharacterById(getIdByAvatar(this.settings.selectedChar));
-        this.eventManager.emit('modal:closeDetails', false);
+        await this.st.selectCharacterById(getIdByAvatar(this.settings.selectedChar));
         this.eventManager.emit('modal:close');
     }
 
@@ -680,8 +699,8 @@ export class CharacterManager {
     /**
      * Renames past chats and updates their associated avatar and chat name.
      */
-    async renamePastChats(newAvatar: string, newValue: string): Promise<void> {
-        const pastChats = await getPastCharacterChats();
+    async renamePastChats(characterId: number, newAvatar: string, newValue: string): Promise<void> {
+        const pastChats = await getPastCharacterChats(characterId);
 
         for (const { file_name } of pastChats) {
             try {

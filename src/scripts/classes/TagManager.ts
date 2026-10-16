@@ -1,12 +1,14 @@
-import { equalsIgnoreCaseAndAccents, escapeHtml, includesIgnoreCaseAndAccents } from '../acm-utils';
-import { createTagInput } from '/scripts/tags.js';
+import { equalsIgnoreCaseAndAccents, escapeHtml, includesIgnoreCaseAndAccents, withCharacterContext } from '../acm-utils';
+import { applyCharacterTagsToMessageDivs, createTagInput, removeTagFromEntity } from '/scripts/tags.js';
 
 export class TagManager {
     eventManager: any;
+    settings: any;
     st: any;
 
-    constructor(eventManager: any, st: any) {
+    constructor(eventManager: any, settings: any, st: any) {
         this.eventManager = eventManager;
+        this.settings = settings;
         this.st = st;
     }
 
@@ -20,8 +22,8 @@ export class TagManager {
      * Initializes multiple tag input components on specified elements with provided configurations.
      */
     init(): void {
-        createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
-        createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
+        this.initCreationTagInput();
+        this.initDetailsTagInput();
         // Grouping the three interdependent inputs using the 'multiple' mode
         const multiInputs = [
             '#acm_mandatoryInput',
@@ -35,6 +37,51 @@ export class TagManager {
         ];
 
         this.acmCreateTagInput(multiInputs, multiLists, { tagOptions: { removable: true } }, 'multiple');
+    }
+
+    /**
+     * Wraps the select handler of an ST tag input so it applies to the given character instead of
+     * the active one. ST's handler is synchronous (and can create new tags, which isn't exported).
+     */
+    redirectTagInput(inputSelector: string, getAvatar: () => string | undefined): void {
+        const $input = $(inputSelector);
+        // @ts-ignore
+        const stSelect = $input.autocomplete('option', 'select');
+        // @ts-ignore
+        $input.autocomplete('option', 'select', (event: any, ui: any) => withCharacterContext(getAvatar(), () => stSelect(event, ui)));
+    }
+
+    /**
+     * Tag input of the character creation form. Tags are only listed, and assigned on creation.
+     */
+    initCreationTagInput(): void {
+        createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
+        this.redirectTagInput('#acmTagInput', () => undefined);
+
+        // Runs before ST's document-level '.tag_remove' handler, which would remove the tag from the active character
+        $('#acmTagList').on('click', '.tag_remove', (event: JQuery.TriggeredEvent) => {
+            event.stopPropagation();
+            $(event.currentTarget).closest('.tag').remove();
+        });
+    }
+
+    /**
+     * Tag input of the character details, applied to the character displayed in ACM.
+     */
+    initDetailsTagInput(): void {
+        createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
+        this.redirectTagInput('#input_tag', () => this.settings.selectedChar);
+
+        // Runs before ST's document-level '.tag_remove' handler, which would remove the tag from the active character
+        $('#tag_List').on('click', '.tag_remove', (event: JQuery.TriggeredEvent) => {
+            event.stopPropagation();
+            const avatar = this.settings.selectedChar;
+            const tagElement = $(event.currentTarget).closest('.tag');
+            const tag = this.st.tagList.find((t: any) => t.id === tagElement.attr('id'));
+            if (!avatar || !tag) return;
+            removeTagFromEntity(tag, avatar, { tagElement });
+            applyCharacterTagsToMessageDivs();
+        });
     }
 
     /**

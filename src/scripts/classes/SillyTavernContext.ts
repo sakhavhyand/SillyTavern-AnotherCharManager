@@ -12,8 +12,10 @@ export class SillyTavernContext {
     get characters(): any[] { return this.ctx.characters; }
     get tagMap(): Record<string, string[]> { return this.ctx.tagMap; }
     get tagList(): any[] { return this.ctx.tags; }
-    get characterId(): number | undefined { return this.ctx.characterId; }
-    get menuType(): string { return this.ctx.menuType; }
+    // getContext() copies primitives by value, so these must be read from a fresh context every time
+    get characterId(): string | undefined { return SillyTavern.getContext().characterId; }
+    get groupId(): string | null { return SillyTavern.getContext().groupId; }
+    get menuType(): string { return SillyTavern.getContext().menuType; }
     get extensionSettings(): any { return this.ctx.extensionSettings; }
     get event_types(): any { return this.ctx.event_types; }
     get POPUP_TYPE(): any { return this.ctx.POPUP_TYPE; }
@@ -36,7 +38,7 @@ export class SillyTavernContext {
         return this.ctx.unshallowCharacter(char);
     }
 
-    selectCharacterById(id: number | string): void {
+    selectCharacterById(id: number | string): Promise<void> {
         return this.ctx.selectCharacterById(id);
     }
 

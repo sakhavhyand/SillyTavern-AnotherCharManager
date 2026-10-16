@@ -1,4 +1,4 @@
-import { converter } from '/script.js';
+import { converter, setCharacterId, setMenuType } from '/script.js';
 import { encodeStyleTags, decodeStyleTags } from '/scripts/chats.js';
 import { acm } from '../index';
 
@@ -185,6 +185,27 @@ export function getIdByAvatar(avatar: string): string | undefined {
     if (!acm?.st?.characters || !Array.isArray(acm.st.characters)) return undefined;
     const index = acm.st.characters.findIndex((character: any) => character?.avatar === avatar);
     return index !== -1 ? String(index) : undefined;
+}
+
+/**
+ * Runs a SillyTavern function that only works on the active character (`this_chid`) against
+ * another character, or against no character (as in ST's creation form) if `avatar` is undefined,
+ * then gives the active character back.
+ * ACM must never leave `this_chid` pointing to a browsed character: ST uses it to save the open
+ * chat, to send messages and to re-select the character after `getCharacters()`.
+ * `fn` must be synchronous, so nothing else can run while the state is borrowed.
+ */
+export function withCharacterContext<T>(avatar: string | undefined, fn: () => T): T {
+    const previousId = acm.st.characterId;
+    const previousMenu = acm.st.menuType;
+    setCharacterId(avatar === undefined ? undefined : getIdByAvatar(avatar));
+    setMenuType(avatar === undefined ? 'create' : 'character_edit');
+    try {
+        return fn();
+    } finally {
+        setCharacterId(previousId);
+        setMenuType(previousMenu);
+    }
 }
 
 /**

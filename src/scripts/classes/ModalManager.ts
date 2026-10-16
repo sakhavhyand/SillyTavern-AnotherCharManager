@@ -1,5 +1,4 @@
-import { getCardElement, getIdByAvatar, resetScrollHeight } from '../acm-utils';
-import { setCharacterId, setMenuType } from '/script.js';
+import { getCardElement, resetScrollHeight } from '../acm-utils';
 import { CharCreationManager } from './CharCreationManager';
 import { PresetManager } from './PresetManager';
 import { TagManager } from './TagManager';
@@ -20,7 +19,7 @@ export class ModalManager {
         this.settings = settings;
         this.st = st;
         this.charCreationManager = new CharCreationManager(this.eventManager, this.settings, this.st);
-        this.tagManager = new TagManager(this.eventManager, this.st);
+        this.tagManager = new TagManager(this.eventManager, this.settings, this.st);
         this.presetManager = new PresetManager(this.eventManager, this.settings, this.st, this.tagManager);
         this.charListManager = new CharListManager(this.eventManager, this.settings, this.st, this.presetManager);
     }
@@ -130,14 +129,6 @@ export class ModalManager {
      * Opens a modal window and initializes its contents and settings.
      */
     openModal(): void {
-        // Memorize some global variables
-        if (this.st.characterId !== undefined && this.st.characterId >= 0) {
-            this.settings.setMem_avatar(this.st.characters[this.st.characterId].avatar);
-        } else {
-            this.settings.setMem_avatar(undefined);
-        }
-        this.settings.setMem_menu(this.st.menuType);
-
         document.querySelector('#acm_lock')!.classList.add('is-active');
 
         // Display the modal with our list layout
@@ -182,11 +173,9 @@ export class ModalManager {
     }
 
     /**
-     * Closes the character details section and optionally resets the character selection.
+     * Closes the character details section.
      */
-    closeDetails(reset: boolean = true): void {
-        if (reset) { setCharacterId(getIdByAvatar(this.settings.mem_avatar)); }
-
+    closeDetails(): void {
         $('#acm_export_format_popup').hide();
         getCardElement(this.settings.selectedChar)?.classList.replace('char_selected', 'char_select');
         document.getElementById('char-details')!.classList.remove('open');
@@ -195,15 +184,10 @@ export class ModalManager {
     }
 
     /**
-     * Closes the modal by resetting certain state variables, hiding the popup.
+     * Closes the modal and hides the popup.
      */
     closeModal(): void {
-        this.closeDetails(false);
-        if (this.settings.mem_avatar !== undefined) {
-            setCharacterId(getIdByAvatar(this.settings.mem_avatar));
-        }
-        setMenuType(this.settings.mem_menu);
-        this.settings.setMem_avatar(undefined);
+        this.closeDetails();
 
         document.querySelector('#acm_lock')!.classList.remove('is-active');
 
@@ -390,8 +374,8 @@ export class ModalManager {
             this.eventManager.emit('charList:setCardsPerRow', { cols, persist: true });
         });
 
-        this.eventManager.on('modal:closeDetails', (data: any) => {
-            this.closeDetails(data);
+        this.eventManager.on('modal:closeDetails', () => {
+            this.closeDetails();
         });
 
         this.eventManager.on('modal:close', () => {
