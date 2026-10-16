@@ -35,6 +35,25 @@ export class CharacterManager {
     init(): void {
         this.initializeCharactersEvents();
         this.initializeFieldUpdaters();
+        this.checkLegacyAvatarPlugin();
+    }
+
+    /**
+     * Tells the user the AvatarEdit server plugin is no longer needed, if it's still installed.
+     */
+    async checkLegacyAvatarPlugin(): Promise<void> {
+        try {
+            const response = await fetch('/api/plugins/avataredit/probe', { method: 'POST', headers: this.st.getRequestHeaders() });
+            if (response.status === 204) {
+                toastr.info(
+                    'Avatar replacement now uses SillyTavern\'s built-in endpoint. The SillyTavern-AvatarEdit server plugin is no longer needed and can be safely removed.',
+                    'AnotherCharManager',
+                    { timeOut: 15000, extendedTimeOut: 5000 },
+                );
+            }
+        } catch {
+            // Plugin not reachable, nothing to report
+        }
     }
 
     /** Unsaved edits, merged per avatar so edits to different fields never overwrite each other. */
@@ -162,12 +181,7 @@ export class CharacterManager {
 
         // Edit a character avatar
         $('#edit_avatar_button').on('change', async (event: JQuery.TriggeredEvent) => {
-            const isAvailable = await this.checkApiAvailability();
-            if (isAvailable) {
-                await this.update_avatar(event.currentTarget as HTMLInputElement);
-            } else {
-                toastr.warning('Please check if the needed plugin is installed! Link in the README.');
-            }
+            await this.update_avatar(event.currentTarget as HTMLInputElement);
         });
 
         // Rename character
@@ -208,19 +222,6 @@ export class CharacterManager {
         const tagListElement = document.getElementById('tag_List');
         if (tagListElement) {
             tagListObserver.observe(tagListElement, { childList: true });
-        }
-    }
-
-    /**
-     * Checks the availability of the AvatarEdit API.
-     */
-    async checkApiAvailability(): Promise<boolean> {
-        try {
-            const response = await fetch('/api/plugins/avataredit/probe', { method: 'POST', headers: this.st.getRequestHeaders() });
-            return response.status === 204;
-        } catch (err) {
-            console.error('Error checking API availability:', err);
-            return false;
         }
     }
 
@@ -578,48 +579,41 @@ export class CharacterManager {
     async replaceAvatar(newAvatar: File | string, id: string, crop_data: any = undefined): Promise<void> {
         // The server rewrites the PNG with its stored data, so save pending edits first
         await this.flushEdits();
-        let url = '/api/plugins/avataredit/edit-avatar';
+        // Native ST endpoint (1.14.0+): keeps the card data, only swaps the image
+        let url = '/api/characters/edit-avatar';
 
         if (crop_data !== undefined) {
             url += `?crop=${encodeURIComponent(JSON.stringify(crop_data))}`;
         }
 
+        const avatar = this.st.characters[id].avatar;
         const formData = new FormData();
         if (newAvatar instanceof File) {
             const convertedFile = await ensureImageFormatSupported(newAvatar);
             formData.set('avatar', convertedFile);
         }
 
-        formData.set('avatar_url', this.st.characters[id].avatar);
+        formData.set('avatar_url', avatar);
 
-        return new Promise((resolve, reject) => {
-            jQuery.ajax({
-                type: 'POST',
-                url: url,
-                data: formData,
-                cache: false,
-                contentType: false,
-                processData: false,
-                success: async () => {
-                    toastr.success('Avatar replaced successfully.');
-                    await fetch(this.st.getThumbnailUrl('avatar', formData.get('avatar_url') as string), {
-                        method: 'GET',
-                        cache: 'no-cache',
-                        headers: {
-                            'pragma': 'no-cache',
-                            'cache-control': 'no-cache',
-                        },
-                    });
-                    await this.st.getCharacters();
-                    await this.st.eventSource.emit(this.st.event_types.CHARACTER_EDITED, { detail: { id: id, avatarReplaced: true, character: this.st.characters[id] } });
-                    resolve();
-                },
-                error: function () {
-                    toastr.error('Something went wrong while saving the character, or the image file provided was in an invalid format. Double check that the image is not a webp.');
-                    reject();
-                },
-            });
+        const response = await fetch(url, {
+            method: 'POST',
+            // Let the browser set the multipart boundary
+            headers: this.st.getRequestHeaders({ omitContentType: true }),
+            body: formData,
+            cache: 'no-cache',
         });
+
+        if (!response.ok) {
+            toastr.error('Something went wrong while saving the character, or the image file provided was in an invalid format.');
+            throw new Error(`Avatar replacement failed: ${response.status} ${await response.text()}`);
+        }
+
+        toastr.success('Avatar replaced successfully.');
+        // Refresh the browser cache for the thumbnail and the full image
+        await fetch(this.st.getThumbnailUrl('avatar', avatar), { method: 'GET', cache: 'reload' });
+        await fetch(`/characters/${encodeURIComponent(avatar)}`, { method: 'GET', cache: 'reload' });
+        await this.st.getCharacters();
+        await this.st.eventSource.emit(this.st.event_types.CHARACTER_EDITED, { detail: { id: id, avatarReplaced: true, character: this.st.characters[id] } });
     }
 
     /**

@@ -22,7 +22,7 @@ I've decided to work on it to have something that better suits my needs, because
 
 This extension has been tested from SillyTavern 1.11.0 to the last stable version.
 
-To be able to use the replace avatar feature, you will need the [SillyTavern-AvatarEdit](https://github.com/sakhavhyand/SillyTavern-AvatarEdit) plugin.
+The replace avatar feature requires SillyTavern 1.14.0 or later. No server plugin is needed anymore.
 
 ## Installation
 
