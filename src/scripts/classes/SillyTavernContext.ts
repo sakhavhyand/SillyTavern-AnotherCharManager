@@ -16,6 +16,8 @@ export class SillyTavernContext {
     get characterId(): string | undefined { return SillyTavern.getContext().characterId; }
     get groupId(): string | null { return SillyTavern.getContext().groupId; }
     get menuType(): string { return SillyTavern.getContext().menuType; }
+    get groups(): any[] { return SillyTavern.getContext().groups; }
+    get accountStorage(): any { return this.ctx.accountStorage; }
     get extensionSettings(): any { return this.ctx.extensionSettings; }
     get event_types(): any { return this.ctx.event_types; }
     get POPUP_TYPE(): any { return this.ctx.POPUP_TYPE; }

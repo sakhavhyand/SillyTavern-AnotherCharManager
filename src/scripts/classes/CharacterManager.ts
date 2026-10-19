@@ -432,8 +432,52 @@ export class CharacterManager {
         );
         if (!confirmed) return;
 
-        // Pending edits are dropped by the CHARACTER_DELETED listener
-        await deleteCharacter(avatar, { deleteChats });
+        // ST's deleteCharacter() always closes the open chat. Only needed if it uses this character.
+        const id = getIdByAvatar(avatar);
+        const group = this.st.groupId ? this.st.groups.find((g: any) => g.id == this.st.groupId) : null;
+        if (id === undefined || this.st.characterId === id || group?.members?.includes(avatar)) {
+            // Pending edits are dropped by the CHARACTER_DELETED listener
+            await deleteCharacter(avatar, { deleteChats });
+        } else {
+            await this.deleteInactiveCharacter(id, deleteChats);
+        }
+    }
+
+    /**
+     * Same as ST's deleteCharacter(), without closing the open chat.
+     */
+    async deleteInactiveCharacter(id: string, deleteChats: boolean): Promise<void> {
+        const character = this.st.characters[id];
+        const pastChats = deleteChats ? await getPastCharacterChats(id) : [];
+
+        const response = await fetch('/api/characters/delete', {
+            method: 'POST',
+            headers: this.st.getRequestHeaders(),
+            body: JSON.stringify({ avatar_url: character.avatar, delete_chats: deleteChats }),
+            cache: 'no-cache',
+        });
+
+        if (!response.ok) {
+            toastr.error(`Failed to delete character: ${response.status} ${response.statusText}`);
+            return;
+        }
+
+        this.st.accountStorage.removeItem(`AlertWI_${character.avatar}`);
+        this.st.accountStorage.removeItem(`AlertRegex_${character.avatar}`);
+        this.st.accountStorage.removeItem(`mediaWarningShown:${character.avatar}`);
+        delete this.st.tagMap[character.avatar];
+        toastr.warning(`Character Deleted: ${character.name}`);
+
+        for (const chat of pastChats) {
+            await this.st.eventSource.emit(this.st.event_types.CHAT_DELETED, chat.file_name.replace('.jsonl', ''));
+        }
+        // Lets other extensions clean up (attachments, regex, quick replies...). Pending edits are dropped by our listener.
+        await this.st.eventSource.emit(this.st.event_types.CHARACTER_DELETED, { id: Number(id), character });
+
+        // Re-selects the active character by avatar, so its chat stays open
+        await this.st.getCharacters();
+        this.st.saveSettingsDebounced();
+        this.eventManager.emit('charList:refresh', true);
     }
 
     /**
