@@ -1,4 +1,3 @@
-import { createTagMapFromList } from '/scripts/tags.js';
 import { ensureImageFormatSupported } from '/scripts/utils.js';
 import { delay, getBase64Async, updateTokenCount } from '../acm-utils';
 
@@ -275,7 +274,9 @@ export class CharCreationManager {
             }
 
             const avatarId = await fetchResult.text();
-            createTagMapFromList('#acmTagList', avatarId);
+            // Assign the tags listed in the form (same as ST's createTagMapFromList)
+            this.st.tagMap[avatarId] = $('#acmTagList .tag').map((_: number, el: HTMLElement) => $(el).attr('id')).get();
+            this.st.saveSettingsDebounced();
             this.settings.setCrop_data(undefined);
             await delay(500);
             this.toggleCharacterCreationPopup();

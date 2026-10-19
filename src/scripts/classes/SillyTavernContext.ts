@@ -44,6 +44,26 @@ export class SillyTavernContext {
         return this.ctx.selectCharacterById(id);
     }
 
+    timestampToMoment(timestamp: string | number): any {
+        return this.ctx.timestampToMoment(timestamp);
+    }
+
+    /** Past chats of a character, most recent first (same as ST's getPastCharacterChats). */
+    async getPastCharacterChats(avatar: string): Promise<Array<{ file_name: string }>> {
+        const response = await fetch('/api/characters/chats', {
+            method: 'POST',
+            headers: this.getRequestHeaders(),
+            body: JSON.stringify({ avatar_url: avatar }),
+        });
+        if (!response.ok) return [];
+
+        const data = await response.json();
+        if (typeof data === 'object' && data.error === true) return [];
+
+        const chats = Object.values(data) as Array<{ file_name: string }>;
+        return chats.sort((a, b) => a.file_name.localeCompare(b.file_name)).reverse();
+    }
+
     getTokenCountAsync(...args: any[]): Promise<number> {
         return this.ctx.getTokenCountAsync(...args);
     }

@@ -1,5 +1,4 @@
-import { timestampToMoment, sortMoments } from '/scripts/utils.js';
-import { debounce, escapeHtml, getCardElement, matchesTagRules } from '../acm-utils';
+import { debounce, escapeHtml, getCardElement, matchesTagRules, sortMoments } from '../acm-utils';
 import { VirtualScroller } from './VirtualScroller';
 import { CharacterManager } from './CharacterManager';
 
@@ -337,7 +336,7 @@ export class CharListManager {
                     comparison = b[sort_data] - a[sort_data];
                     break;
                 case 'create_date':
-                    comparison = sortMoments(timestampToMoment(b[sort_data]), timestampToMoment(a[sort_data]));
+                    comparison = sortMoments(this.st.timestampToMoment(b[sort_data]), this.st.timestampToMoment(a[sort_data]));
                     break;
                 case 'data_size':
                     comparison = a[sort_data] - b[sort_data];

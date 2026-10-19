@@ -1,9 +1,14 @@
-import { deleteCharacter, depth_prompt_depth_default, depth_prompt_role_default, setCharacterId, talkativeness_default, getPastCharacterChats, system_message_types, printCharactersDebounced } from '/script.js';
-import { ensureImageFormatSupported, getCharaFilename } from '/scripts/utils.js';
+import { deleteCharacter, setCharacterId, printCharactersDebounced } from '/script.js';
+import { ensureImageFormatSupported } from '/scripts/utils.js';
 import { renameGroupMember } from '/scripts/group-chats.js';
 import { world_info } from '/scripts/world-info.js';
 import {
+    DEPTH_PROMPT_DEPTH_DEFAULT,
+    DEPTH_PROMPT_ROLE_DEFAULT,
+    NARRATOR_MESSAGE_TYPE,
+    TALKATIVENESS_DEFAULT,
     getBase64Async,
+    getCharaFilename,
     getIdByAvatar,
     updateTokenCount,
     debounce,
@@ -314,9 +319,9 @@ export class CharacterManager {
         $('#acm_scenario_tokens').text(`Tokens: ${await this.st.getTokenCountAsync(this.st.substituteParams(char.scenario))}`);
         $('#acm_character_notes').val(char.data?.extensions?.depth_prompt?.prompt ?? '');
         $('#acm_character_notes_tokens').text(`Tokens: ${await this.st.getTokenCountAsync(this.st.substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''))}`);
-        $('#acm_character_notes_depth').val(char.data?.extensions?.depth_prompt?.depth ?? depth_prompt_depth_default);
-        $('#acm_character_notes_role').val(char.data?.extensions?.depth_prompt?.role ?? depth_prompt_role_default);
-        $('#acm_talkativeness_slider').val(char.talkativeness || talkativeness_default);
+        $('#acm_character_notes_depth').val(char.data?.extensions?.depth_prompt?.depth ?? DEPTH_PROMPT_DEPTH_DEFAULT);
+        $('#acm_character_notes_role').val(char.data?.extensions?.depth_prompt?.role ?? DEPTH_PROMPT_ROLE_DEFAULT);
+        $('#acm_talkativeness_slider').val(char.talkativeness || TALKATIVENESS_DEFAULT);
         $('#acm_mes_examples').val(char.mes_example);
         $('#acm_messages_examples').text(`Tokens: ${await this.st.getTokenCountAsync(this.st.substituteParams(char.mes_example))}`);
     }
@@ -448,7 +453,7 @@ export class CharacterManager {
      */
     async deleteInactiveCharacter(id: string, deleteChats: boolean): Promise<void> {
         const character = this.st.characters[id];
-        const pastChats = deleteChats ? await getPastCharacterChats(id) : [];
+        const pastChats = deleteChats ? await this.st.getPastCharacterChats(character.avatar) : [];
 
         const response = await fetch('/api/characters/delete', {
             method: 'POST',
@@ -501,7 +506,7 @@ export class CharacterManager {
                 if (response.ok) {
                     const data = await response.json();
                     const newAvatar = data.avatar;
-                    const oldName = getCharaFilename(null, { manualAvatarKey: oldAvatar });
+                    const oldName = getCharaFilename(oldAvatar);
 
                     // Replace tags list
                     this.tagManager.renameTagKey(oldAvatar, newAvatar);
@@ -547,7 +552,7 @@ export class CharacterManager {
                     <i><b>Sprites folder (if any) should be renamed manually.</b></i>`, this.st.POPUP_TYPE.CONFIRM);
 
                         if (renamePastChatsConfirm) {
-                            await this.renamePastChats(newChId, newAvatar, newName);
+                            await this.renamePastChats(newAvatar, newName);
                             toastr.success('Character renamed and past chats updated!');
                         }
                     }
@@ -743,8 +748,8 @@ export class CharacterManager {
     /**
      * Renames past chats and updates their associated avatar and chat name.
      */
-    async renamePastChats(characterId: number, newAvatar: string, newValue: string): Promise<void> {
-        const pastChats = await getPastCharacterChats(characterId);
+    async renamePastChats(newAvatar: string, newValue: string): Promise<void> {
+        const pastChats = await this.st.getPastCharacterChats(newAvatar);
 
         for (const { file_name } of pastChats) {
             try {
@@ -763,7 +768,7 @@ export class CharacterManager {
                 if (getChatResponse.ok) {
                     const currentChat = await getChatResponse.json();
                     for (const message of currentChat) {
-                        if (message.is_user || message.is_system || message.extra?.type == system_message_types.NARRATOR) {
+                        if (message.is_user || message.is_system || message.extra?.type == NARRATOR_MESSAGE_TYPE) {
                             continue;
                         }
                         if (message.name !== undefined) {

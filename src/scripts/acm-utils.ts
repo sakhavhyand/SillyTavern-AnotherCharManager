@@ -2,6 +2,12 @@ import { converter, setCharacterId, setMenuType } from '/script.js';
 import { encodeStyleTags, decodeStyleTags } from '/scripts/chats.js';
 import { acm } from '../index';
 
+// SillyTavern's values (script.js / system-messages.js), not exposed by getContext()
+export const TALKATIVENESS_DEFAULT = 0.5;
+export const DEPTH_PROMPT_DEPTH_DEFAULT = 4;
+export const DEPTH_PROMPT_ROLE_DEFAULT = 'system';
+export const NARRATOR_MESSAGE_TYPE = 'narrator';
+
 /**
  * Escapes HTML special characters in a string to prevent XSS and DOM breakage.
  * @param {string} str - The string to escape.
@@ -130,6 +136,23 @@ export async function resetScrollHeight(element: HTMLElement): Promise<void> {
  */
 export function delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Compares two moments, most recent first (same as ST's sortMoments).
+ */
+export function sortMoments(a: any, b: any): number {
+    if (a.isBefore(b)) return 1;
+    if (a.isAfter(b)) return -1;
+    return 0;
+}
+
+/**
+ * Returns the avatar filename without its extension, which ST uses as the key of
+ * character-bound lorebooks and Author's Notes (same as ST's getCharaFilename).
+ */
+export function getCharaFilename(avatar: string): string {
+    return avatar.replace(/\.[^/.]+$/, '');
 }
 
 /**
