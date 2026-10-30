@@ -72,6 +72,24 @@ export function parseTagList(value: string): string[] {
     return [...new Set(tags)];
 }
 
+/**
+ * Checks a new character name against what the server's sanitize-filename would strip or change,
+ * so the user is warned instead of getting a silently altered name.
+ *
+ * @param {string} name - The name typed by the user.
+ * @return {string | null} Why the name is refused, or null if it can be used as is.
+ */
+export function getInvalidNameReason(name: string): string | null {
+    const forbidden = [...new Set(name.match(/[/\\?<>:*|"]/g) ?? [])];
+    if (forbidden.length) return `The name can't contain these characters: ${forbidden.join(' ')}`;
+    // eslint-disable-next-line no-control-regex
+    if (/[\x00-\x1f\x80-\x9f]/.test(name)) return 'The name can\'t contain control characters.';
+    if (/^\.+$/.test(name)) return 'The name can\'t be made only of dots.';
+    if (/[. ]$/.test(name)) return 'The name can\'t end with a dot or a space.';
+    if (/^(con|prn|aux|nul|com\d|lpt\d)(\..*)?$/i.test(name)) return 'This name is reserved by the system.';
+    return null;
+}
+
 export interface TagRules {
     /** The character must have ALL of these. */
     mandatory?: readonly unknown[];

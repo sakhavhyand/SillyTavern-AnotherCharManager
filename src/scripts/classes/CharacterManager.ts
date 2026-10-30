@@ -15,6 +15,7 @@ import {
     delay,
     escapeHtml,
     getCardElement,
+    getInvalidNameReason,
     mergeDeep,
     parseTagList,
     renderCreatorNotes,
@@ -323,7 +324,7 @@ export class CharacterManager {
         $('#acm_character_notes_role').val(char.data?.extensions?.depth_prompt?.role ?? DEPTH_PROMPT_ROLE_DEFAULT);
         $('#acm_talkativeness_slider').val(char.talkativeness || TALKATIVENESS_DEFAULT);
         $('#acm_mes_examples').val(char.mes_example);
-        $('#acm_messages_examples').text(`Tokens: ${await this.st.getTokenCountAsync(this.st.substituteParams(char.mes_example))}`);
+        $('#acm_mes_examples_tokens').text(`Tokens: ${await this.st.getTokenCountAsync(this.st.substituteParams(char.mes_example))}`);
     }
 
     /**
@@ -378,13 +379,13 @@ export class CharacterManager {
      * Closes the character popup in the user interface.
      */
     closeCharacterPopup(): void {
-        $('#character_popup').transition({
+        $('#acm_character_popup').transition({
             opacity: 0,
             duration: 125,
             easing: 'ease-in-out',
         });
         setTimeout(function () {
-            $('#acm_character_popup').css('display', 'none');
+            $('#acm_character_popup').css('display', 'none').removeClass('open');
         }, 125);
     }
 
@@ -495,6 +496,12 @@ export class CharacterManager {
         const charID = getIdByAvatar(this.settings.selectedChar);
         const newName = await this.st.callGenericPopup('<h3>New name:</h3>', this.st.POPUP_TYPE.INPUT, this.st.characters[charID].name);
         if (newName && newName !== this.st.characters[charID].name) {
+            // The server would silently strip or change these
+            const invalidNameReason = getInvalidNameReason(String(newName));
+            if (invalidNameReason) {
+                toastr.warning(invalidNameReason, 'Invalid name');
+                return;
+            }
             const body = JSON.stringify({ avatar_url: oldAvatar, new_name: newName });
             const response = await fetch('/api/characters/rename', {
                 method: 'POST',
@@ -539,8 +546,10 @@ export class CharacterManager {
                     const newChId = this.st.characters.findIndex((c: any) => c.avatar == data.avatar);
 
                     if (newChId !== -1) {
-                        if (renamingActive) setCharacterId(newChId);
+                        // Same as ST's rename: selecting it again reloads its chat under the new name
+                        if (renamingActive) await this.st.selectCharacterById(newChId);
                         this.settings.setSelectedChar(newAvatar);
+                        await this.fillDetails(newAvatar);
 
                         // Async delay to update UI
                         await delay(1);
@@ -553,6 +562,8 @@ export class CharacterManager {
 
                         if (renamePastChatsConfirm) {
                             await this.renamePastChats(newAvatar, newName);
+                            // The open chat still holds the old name in memory, and would write it back on its next save
+                            if (renamingActive) await this.st.reloadCurrentChat();
                             toastr.success('Character renamed and past chats updated!');
                         }
                     }

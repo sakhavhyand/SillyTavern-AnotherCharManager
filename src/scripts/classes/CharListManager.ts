@@ -161,18 +161,10 @@ export class CharListManager {
      */
     updateCharacterCount(visibleCount: number): void {
         const total = this.st.characters.length;
-        const dropdownUI = this.settings.getSetting('dropdownUI');
-        const hasFilters = this.hasActiveFilters();
+        // Same in both UIs: the dropdown views are built from the same filtered list
+        const count = this.hasActiveFilters() ? visibleCount : total;
 
-        let displayText: string;
-        if (dropdownUI) {
-            displayText = `Characters: ${total}/${total}`;
-        } else {
-            const count = hasFilters ? visibleCount : total;
-            displayText = `Characters: ${count}/${total}`;
-        }
-
-        $('#charNumber').empty().append(displayText);
+        $('#charNumber').empty().append(`Characters: ${count}/${total}`);
     }
 
     /**

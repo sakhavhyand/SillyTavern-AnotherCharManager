@@ -1,5 +1,5 @@
 import { ensureImageFormatSupported } from '/scripts/utils.js';
-import { delay, getBase64Async, updateTokenCount } from '../acm-utils';
+import { delay, getBase64Async, getInvalidNameReason, parseTagList, updateTokenCount } from '../acm-utils';
 
 export class CharCreationManager {
     eventManager: any;
@@ -170,27 +170,26 @@ export class CharCreationManager {
      */
     async loadAvatar(input: HTMLInputElement): Promise<void> {
         if (input.files && input.files[0]) {
-            // Update the avatar data in the creation settings
-            this.settings.updateCreateData('avatar', input.files);
-            // Reset the crop data
-            this.settings.setCrop_data(undefined);
             const file = input.files[0];
+            // Lets the same file be picked again after a cancelled crop
+            input.value = '';
             const fileData = await getBase64Async(file);
             // Check if the user has disabled avatar resizing
             if (!this.st.never_resize_avatars) {
                 // Display a cropping dialog for the avatar image
                 const dlg = await this.st.callGenericPopup('Set the crop position of the avatar image', this.st.POPUP_TYPE.CROP, '', { cropImage: fileData });
 
-                if (!dlg) {
-                    console.error('The popup object is invalid:', dlg);
-                    return;
-                }
+                // Cancelled: keep the previous avatar (and its crop), as the preview does
+                if (!dlg) return;
 
                 // Save the crop data and set the cropped image as the avatar
+                this.settings.updateCreateData('avatar', file);
                 this.settings.setCrop_data(dlg.cropData);
                 $('#acm_create_avatar').attr('src', String(dlg));
             } else {
                 // Directly set the Base64 image as the avatar
+                this.settings.updateCreateData('avatar', file);
+                this.settings.setCrop_data(undefined);
                 $('#acm_create_avatar').attr('src', fileData);
             }
         }
@@ -206,6 +205,12 @@ export class CharCreationManager {
             toastr.error(this.st.t`Name is required`);
             return;
         }
+        // The server would silently strip or change these
+        const invalidNameReason = getInvalidNameReason(String($('#acm_create_name').val()));
+        if (invalidNameReason) {
+            toastr.warning(invalidNameReason, 'Invalid name');
+            return;
+        }
         const formData = new FormData();
         // Add simple fields (string, number) to the form data
         formData.append('ch_name', this.settings.create_data.name || '');
@@ -214,7 +219,8 @@ export class CharCreationManager {
         formData.append('post_history_instructions', this.settings.create_data.post_history_instructions || '');
         formData.append('character_version', this.settings.create_data.character_version || '');
         formData.append('system_prompt', this.settings.create_data.system_prompt || '');
-        formData.append('tags', this.settings.create_data.tags || '');
+        // Same cleanup as when editing them: trimmed, no empty or duplicate tags
+        formData.append('tags', parseTagList(this.settings.create_data.tags).join(','));
         formData.append('creator', this.settings.create_data.creator || '');
         formData.append('personality', this.settings.create_data.personality || '');
         formData.append('first_mes', this.settings.create_data.first_message || '');

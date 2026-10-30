@@ -44,6 +44,11 @@ export class SillyTavernContext {
         return this.ctx.selectCharacterById(id);
     }
 
+    /** Reloads the open chat from the server. */
+    reloadCurrentChat(): Promise<void> {
+        return this.ctx.reloadCurrentChat();
+    }
+
     timestampToMoment(timestamp: string | number): any {
         return this.ctx.timestampToMoment(timestamp);
     }
