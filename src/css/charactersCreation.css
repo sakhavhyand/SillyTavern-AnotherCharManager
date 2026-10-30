@@ -44,8 +44,28 @@
     font-size: 1.1rem;
 }
 
+/* Name field with its token count inline on the right */
+.acm-create-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.acm-create-name-row > label {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 #acm_create_name {
-    max-width: 300px;
+    width: 100%;
+    margin: 0;
+}
+
+.acm-create-name-tokens {
+    flex-shrink: 0;
+    font-size: 0.85em;
+    opacity: 0.7;
+    white-space: nowrap;
 }
 
 #acmTagInput {
@@ -62,41 +82,66 @@
     height: 25dvh;
 }
 
-.column-separator {
+/* Main / Advanced definitions tabs */
+.acm-create-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 10px 6px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+}
+
+.acm-create-tab {
+    flex: 1 1 0;
+    padding: 6px 10px;
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.7;
+    border: 1px solid transparent;
+    border-radius: var(--acm-border-radius-sm);
+    transition: background-color 200ms, border-color 200ms, opacity 200ms;
+}
+
+.acm-create-tab:hover {
+    opacity: 1;
+    background-color: var(--acm-accent-faint);
+}
+
+.acm-create-tab.active {
+    opacity: 1;
+    background-color: var(--acm-accent-soft);
+    border-color: var(--acm-accent);
+}
+
+/* Character's Note: depth and role on one line under the text area */
+.acm-create-depth-options {
     display: flex;
     align-items: center;
-    justify-content: center;
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
-    width: 30px;
-    min-height: 100%;
-    padding: 10px;
-    background-image: linear-gradient(348deg, var(--white30a)15%, var(--grey30a)20%, var(--black70a)80%, var(--SmartThemeQuoteColor)100%);
-    border-radius: var(--acm-border-radius-md);
-    border: 1px solid var(--SmartThemeBorderColor);
-    border-left: 1px solid rgba(255, 255, 255, 0.3);
-    border-right: 1px solid rgba(255, 255, 255, 0.3);
-    user-select: none;
-    transition: var(--acm-transition-fast);
-    cursor: pointer;
+    flex-wrap: wrap;
+    gap: 6px 16px;
 }
 
-.column-separator:hover {
-    box-shadow: 0 0 10px var(--SmartThemeQuoteColor), 0 0 20px var(--white30a);
+.acm-create-depth-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: bold;
 }
 
-.column-separator .arrow {
-    margin: 6px 0;
-    display: block;
-    transition: color 0.2s ease;
+.acm-create-depth-field > input,
+.acm-create-depth-field > select {
+    width: auto;
+    margin: 0;
 }
 
-#separator-label {
-    margin: 12px 0;
-    color: var(--SmartThemeBodyColor);
-    font-weight: 500;
-    letter-spacing: 1px;
-    font-size: var(--mainFontSize);
+#acm_depth_prompt_depth2 {
+    width: 70px;
+}
+
+.acm-create-depth-options > .extension_token_counter {
+    width: auto;
+    margin-left: auto;
 }
 
 /* ===== SLIDE TRANSITION PANELS ===== */

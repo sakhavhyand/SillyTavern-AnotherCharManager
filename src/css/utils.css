@@ -5,6 +5,13 @@
     --acm-border-radius-md: 10px;
     --acm-border-radius-lg: 12px;
     --acm-transition-fast: all 0.3s ease;
+    /* Accent color: selection, active states, primary buttons. Shades are
+       derived from it with color-mix(), so overriding this one value is enough. */
+    --acm-accent: #667eea;
+    --acm-accent-strong: color-mix(in srgb, var(--acm-accent) 80%, transparent);
+    --acm-accent-medium: color-mix(in srgb, var(--acm-accent) 55%, transparent);
+    --acm-accent-soft: color-mix(in srgb, var(--acm-accent) 30%, transparent);
+    --acm-accent-faint: color-mix(in srgb, var(--acm-accent) 15%, transparent);
 }
 
 .sortable-placeholder {

@@ -312,7 +312,7 @@ export class PresetManager {
             const $element = $(element);
             const presetIndex = $element.data('preset');
             const newName = this.getPreset(presetIndex).name;
-            if (newName) { $element.text(newName); }
+            if (newName) { $element.find('.acm-menu-label').text(newName); }
         });
     }
 

@@ -135,6 +135,13 @@ export class CharListManager {
             $(event.currentTarget).closest('[data-tagid]').remove();
             this.refreshCharListDebounced(true);
         });
+
+        $('#acm_tagQuery_reset').on('click', () => {
+            const $lists = $('#acm_mandatoryTags, #acm_facultativeTags, #acm_excludedTags');
+            if ($lists.find('[data-tagid]').length === 0) return;
+            $lists.empty();
+            this.refreshCharListDebounced(true);
+        });
     }
 
     /**
@@ -391,17 +398,24 @@ export class CharListManager {
         img.draggable = false;
         media.appendChild(img);
 
+        // Tag count badge over the avatar
+        if (tagCount > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'card__badge';
+            const icon = document.createElement('i');
+            icon.className = 'fa-solid fa-tag';
+            badge.appendChild(icon);
+            badge.appendChild(document.createTextNode(String(tagCount)));
+            media.appendChild(badge);
+        }
+
         // Header
         const header = document.createElement('div');
         header.className = 'card__header';
         const title = document.createElement('h3');
         title.className = 'card__header-title';
         title.textContent = charName;
-        const meta = document.createElement('p');
-        meta.className = 'card__header-meta';
-        meta.textContent = `Tags: ${tagCount}`;
         header.appendChild(title);
-        header.appendChild(meta);
 
         div.appendChild(media);
         div.appendChild(header);
@@ -630,7 +644,7 @@ export class CharListManager {
                         .filter((item: any) => this.st.tagMap[item.avatar]?.includes(tag.id))
                         .map((item: any) => item.avatar);
                     if (charactersForTag.length === 0) return '';
-                    return this.createDropdownContainer(tag.name, charactersForTag.length, 'allTags', tag.id);
+                    return this.createDropdownContainer(tag.name, charactersForTag.length, 'allTags', tag.id, tag);
                 }).join('');
                 const noTagsCharacters = sortedList
                     .filter((item: any) => !this.st.tagMap[item.avatar] || this.st.tagMap[item.avatar].length === 0)
@@ -694,14 +708,25 @@ export class CharListManager {
 
     /**
      * Creates a dropdown container element as a string of HTML.
+     * When a tag is given, the title is drawn as that tag (its colors), so tags
+     * sharing a name can still be told apart.
      */
-    createDropdownContainer(title: string, count: number, type: string, content: string): string {
+    createDropdownContainer(title: string, count: number, type: string, content: string, tag?: { color?: string; color2?: string }): string {
         const isOpen = this.isDropdownSectionOpen(type, content);
         const openClass = isOpen ? ' open' : '';
+        const tagStyle = [
+            tag?.color ? `background-color: ${escapeHtml(tag.color)};` : '',
+            tag?.color2 ? `color: ${escapeHtml(tag.color2)};` : '',
+        ].join(' ');
+        const titleHtml = tag
+            ? `<span class="dropdown-title-tag" style="${tagStyle}">${escapeHtml(title)}</span>`
+            : escapeHtml(title);
 
         return `<div class="dropdown-container${openClass}" data-type="${escapeHtml(type)}" data-content="${escapeHtml(content)}">
         <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">
-            ${escapeHtml(title)} (${count})
+            <span class="dropdown-title-text">${titleHtml}</span>
+            <span class="dropdown-title-count">${count}</span>
+            <i class="dropdown-chevron fa-solid fa-chevron-down"></i>
         </div>
         <div class="dropdown-content character-list">
         </div>

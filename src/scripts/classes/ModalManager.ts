@@ -94,25 +94,26 @@ export class ModalManager {
         const UI = Popper.createPopper(
             document.getElementById('acm_switch_ui')!,
             document.getElementById('dropdown-ui-menu')!,
-            { placement: 'top' },
+            { placement: 'top-start' },
         );
 
         const UISub = Popper.createPopper(
             document.getElementById('acm_dropdown_sub')!,
             document.getElementById('dropdown-submenu')!,
-            { placement: 'right' },
+            // '-end' aligns the bottoms so submenus grow upward from the footer
+            { placement: 'right-end' },
         );
 
         const UIPreset = Popper.createPopper(
             document.getElementById('acm_dropdown_cat')!,
             document.getElementById('preset-submenu')!,
-            { placement: 'right' },
+            { placement: 'right-end' },
         );
 
         const Settings = Popper.createPopper(
             document.getElementById('acm_settings_button'),
             document.getElementById('acm-settings-popup'),
-            { placement: 'top' },
+            { placement: 'top-end' },
         );
 
         // Store poppers for later use
@@ -384,10 +385,29 @@ export class ModalManager {
     }
 
     /**
+     * Marks the current display mode (and its parent entries) in the Switch UI menus.
+     */
+    updateUIMenuActiveState(): void {
+        const dropdownUI = Boolean(this.settings.getSetting('dropdownUI'));
+        const mode = this.settings.getSetting('dropdownMode');
+        const presetId = this.settings.getSetting('presetId');
+
+        $('#acm_switch_classic').toggleClass('active', !dropdownUI);
+        $('#acm_dropdown_sub').toggleClass('active', dropdownUI);
+        $('#acm_switch_alltags').toggleClass('active', dropdownUI && mode === 'allTags');
+        $('#acm_switch_creators').toggleClass('active', dropdownUI && mode === 'creators');
+        $('#acm_dropdown_cat').toggleClass('active', dropdownUI && mode === 'custom');
+        $('#preset-submenu [data-ui="preset"]').each((_, item) => {
+            $(item).toggleClass('active', dropdownUI && mode === 'custom' && $(item).data('preset') === presetId);
+        });
+    }
+
+    /**
      * Initializes UI menu events by binding click event handlers to various elements.
      */
     initializeUIMenuEvents(): void {
         $('#acm_switch_ui').on('click', () => {
+            this.updateUIMenuActiveState();
             this.toggleDropdownMenus({ menuToToggle: 'main' });
         });
         $('#acm_settings_button').on('click', () => {

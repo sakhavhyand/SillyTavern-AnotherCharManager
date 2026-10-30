@@ -71,13 +71,8 @@ export class CharCreationManager {
         });
 
         // Switch panel during character creation
-        $('#column-separator').on('click', () => {
-            if ($('#acm_left_panel').hasClass('panel-hidden')) {
-                this.updateLayout(false);
-            }
-            else {
-                this.updateLayout(true);
-            }
+        $('.acm-create-tab').on('click', (event: JQuery.TriggeredEvent) => {
+            this.updateLayout($(event.currentTarget).data('panel') === 'advanced');
         });
 
         // Add the avatar
@@ -160,13 +155,14 @@ export class CharCreationManager {
             // Show the main panel and hide the advanced panel
             $('#acm_left_panel').removeClass('panel-hidden');
             $('#acm_right_panel').addClass('panel-hidden');
-            $('#separator-label').text('Advanced Definitions');
         } else {
             // Show the advanced panel and hide the main panel
             $('#acm_right_panel').removeClass('panel-hidden');
             $('#acm_left_panel').addClass('panel-hidden');
-            $('#separator-label').text('Main Definitions');
         }
+        $('.acm-create-tab').each((_, tab) => {
+            $(tab).toggleClass('active', ($(tab).data('panel') === 'advanced') === showAdvanced);
+        });
     }
 
     /**

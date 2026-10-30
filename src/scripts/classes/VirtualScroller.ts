@@ -349,6 +349,15 @@ export class VirtualScroller {
             // Reconcile the virtual range after the CSS transition has ended.
             setTimeout(() => this.render(true), LAYOUT_ANIMATION_DURATION + 50);
         }
+
+        // Scrolling re-renders through the virtualizer, so this also tracks scroll.
+        this._updateScrollFade();
+    }
+
+    /** Fade the bottom edge only while more rows are hidden below it. */
+    private _updateScrollFade(): void {
+        const { scrollTop, scrollHeight, clientHeight } = this.container;
+        this.container.classList.toggle('acm_fade_bottom', scrollTop + clientHeight < scrollHeight - 2);
     }
 
     /** Smoothly move cards from their position in the previous grid layout. */

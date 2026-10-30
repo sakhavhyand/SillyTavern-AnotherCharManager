@@ -1,12 +1,19 @@
 /* ===== CHARACTER DETAILS COMPONENTS ===== */
+/* Clicking the separator closes the details panel */
 #char-sep {
     flex: 0 0 auto;
     padding: 3px;
+    border-radius: var(--acm-border-radius-sm);
+    /* A 2px line centered in the clickable band; ST dims every <hr> to 0.2 */
+    background: linear-gradient(90deg, transparent, var(--acm-accent), transparent) center / 100% 2px no-repeat;
+    opacity: 1;
+    transition: background-color 200ms, box-shadow 200ms;
 }
 
 #char-sep:hover {
     cursor: pointer;
-    background-color: white;
+    background-color: var(--acm-accent-strong);
+    box-shadow: 0 0 8px var(--acm-accent-medium);
 }
 
 #char-details {
@@ -176,12 +183,17 @@
 
 /* ===== DRAWER COMPONENTS ===== */
 .inline-drawer-design {
-    background-image: linear-gradient(348deg, var(--white30a)2%, var(--grey30a)10%, var(--black70a)95%, var(--SmartThemeQuoteColor)100%);
+    background-color: var(--black30a);
     margin-bottom: 5px;
     border-radius: var(--acm-border-radius-md);
     padding: 2px 5px;
     border: 1px solid var(--SmartThemeBorderColor);
-    transition: all 250ms;
+    transition: background-color 200ms, border-color 200ms;
+}
+
+.inline-drawer-design:hover {
+    background-color: var(--acm-accent-faint);
+    border-color: var(--acm-accent-medium);
 }
 
 .drawer-header-item {
@@ -258,7 +270,7 @@
     padding: 2px 4px;
     border: 1px solid var(--SmartThemeBorderColor);
     border-radius: var(--acm-border-radius-md);
-    background-image: linear-gradient(348deg, var(--white30a) 2%, var(--grey30a) 10%, var(--black70a) 95%, var(--SmartThemeQuoteColor) 100%);
+    background-color: var(--black30a);
 }
 
 /* Tab buttons container - hidden by default, shown in tab mode */
@@ -336,12 +348,12 @@
 }
 
 .acm-tab-button:hover {
-    background-color: var(--white30a);
+    background-color: var(--acm-accent-faint);
 }
 
 .acm-tab-button.active {
-    background-color: var(--white50a);
-    border-color: var(--SmartThemeBorderColor);
+    background-color: var(--acm-accent-soft);
+    border-color: var(--acm-accent);
 }
 
 /* ===== TAB MODE RULES ===== */
