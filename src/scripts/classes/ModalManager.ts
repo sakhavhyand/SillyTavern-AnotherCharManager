@@ -198,6 +198,8 @@ export class ModalManager {
      * Closes the modal and hides the popup.
      */
     closeModal(): void {
+        // Before closeDetails() clears the selection: the list remembers it for the next opening
+        this.eventManager.emit('modal:closing');
         this.closeDetails();
 
         document.querySelector('#acm_lock')!.classList.remove('is-active');
@@ -418,9 +420,9 @@ export class ModalManager {
 
     /**
      * The picker's panel always opens below it, off screen from the settings menu at the
-     * bottom of the popup. It has no option for that, so each panel it creates (in its open
-     * shadow DOM, on every opening) gets a style. Watched rather than on click: the picker
-     * stops its clicks from reaching outside.
+     * bottom of the popup, and its fields are hard-coded black on white. It has no option for
+     * either, so each panel it creates (in its open shadow DOM, on every opening) gets a style.
+     * Watched rather than on click: the picker stops its clicks from reaching outside.
      */
     openPickerPanelUpward(picker: HTMLElement): void {
         const pickerRoot = picker.shadowRoot;
@@ -428,10 +430,14 @@ export class ModalManager {
         const styleNewPanels = (): void => {
             pickerRoot.querySelectorAll('toolcool-color-picker-popup').forEach(panel => {
                 const panelRoot = panel.shadowRoot;
-                if (!panelRoot || panelRoot.getElementById('acm_panel_upward')) return;
+                if (!panelRoot || panelRoot.getElementById('acm_panel_style')) return;
                 const style = document.createElement('style');
-                style.id = 'acm_panel_upward';
-                style.textContent = '.popup { top: auto; bottom: calc(100% - 1px); }';
+                style.id = 'acm_panel_style';
+                // ST's theme variables reach the shadow DOM
+                style.textContent = `
+                    .popup { top: auto; bottom: calc(100% - 1px); }
+                    .fields input { background: var(--black30a); color: var(--SmartThemeBodyColor); }
+                `;
                 panelRoot.append(style);
             });
         };

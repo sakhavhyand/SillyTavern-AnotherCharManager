@@ -356,6 +356,64 @@
 #acm_accentColor_slot {
     flex: 1 1 auto;
     display: flex;
+    /* The picker's panel in the theme's colors instead of white (its CSS variables reach its shadow DOM) */
+    --tool-cool-color-picker-popup-bg: var(--SmartThemeBlurTintColor);
+    --tool-cool-color-picker-popup-border-color: var(--SmartThemeBorderColor);
+    --tool-cool-color-picker-field-border-color: var(--SmartThemeBorderColor);
+    --tool-cool-color-picker-field-label-color: var(--SmartThemeBodyColor);
+    color: var(--SmartThemeBodyColor);
+}
+
+#acm_emptyMessages_edit {
+    flex: 1 1 auto;
+    margin: 0;
+    gap: 6px;
+}
+
+/* Empty list messages editor */
+.acm_msgs_editor {
+    text-align: left;
+}
+
+.acm_msgs_hint {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    margin-bottom: 10px;
+    opacity: 0.8;
+    font-size: 0.9em;
+}
+
+.acm_msgs_hint i {
+    color: var(--acm-accent);
+}
+
+.acm_msgs_list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.acm_msgs_row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.acm_msgs_row .acm_msgs_input {
+    flex: 1 1 auto;
+    margin: 0;
+}
+
+.acm_msgs_row .acm_msgs_delete {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.acm_msgs_actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
 }
 
 #acm_accentColor_reset {

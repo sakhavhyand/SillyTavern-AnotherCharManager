@@ -202,6 +202,35 @@
     margin: 5px 0;
 }
 
+/* Tag filters applied: accent border and the number of filters as a badge */
+#acm_tags_filter {
+    position: relative;
+}
+
+#acm_tags_filter.acm_filter_active {
+    border-color: var(--acm-accent);
+    color: var(--acm-accent);
+}
+
+.acm_filter_badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    background-color: var(--acm-accent);
+    color: #fff;
+    font-family: var(--mainFontFamily, sans-serif);
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 15px;
+    text-align: center;
+    pointer-events: none;
+}
+
 .fav_on {
     color: var(--golden) !important;
 }

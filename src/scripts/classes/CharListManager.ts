@@ -19,6 +19,22 @@ export class CharListManager {
     modalOpen: boolean;
     charManager: CharacterManager;
     currentFilteredList: any[];
+    /** Message shown while the list is empty, picked once per empty stretch. */
+    emptyListMessage: string | null = null;
+    /** Selected character and scroll position when ACM was closed, restored when it's reopened. */
+    lastSession: { avatar: string | undefined; scrollTop: number } | null = null;
+    /** Set when ACM opens, so the first list refresh restores `lastSession`. */
+    restoreSessionPending: boolean = false;
+
+    /** Shown (one at random) when no character matches the search and filters. */
+    static EMPTY_LIST_MESSAGES: readonly string[] = [
+        'Hmm, it seems like the character you\'re looking for is hiding out in a secret lair. Try searching for someone else instead.',
+        'Nobody here but us chickens. Try another search or loosen your filters.',
+        'This character must have rolled a natural 20 on stealth. Try searching for someone else instead.',
+        'The search party came back empty-handed. Maybe try a different name or fewer tags?',
+        'Not a single soul matches. Your filters might be a little too picky today.',
+        'Looks like everyone went out for coffee. Try another search.',
+    ];
 
     constructor(eventManager: any, settings: any, st: any, presetManager: any) {
         this.eventManager = eventManager;
@@ -76,8 +92,16 @@ export class CharListManager {
             this.selectAndDisplay(data.avatar, data.scrollTo);
         });
 
+        this.eventManager.on('modal:closing', () => {
+            this.lastSession = {
+                avatar: this.settings.selectedChar,
+                scrollTop: document.getElementById('character-list')?.scrollTop ?? 0,
+            };
+        });
+
         this.eventManager.on('modal:opened', () => {
             this.modalOpen = true;
+            this.restoreSessionPending = this.lastSession !== null;
             this.refreshCharListDebounced(false);
         });
 
@@ -139,6 +163,15 @@ export class CharListManager {
         $(document).on('click', '.tag_acm_remove', (event: JQuery.TriggeredEvent) => {
             $(event.currentTarget).closest('[data-tagid]').remove();
             this.refreshCharListDebounced(true);
+        });
+
+        $('#acm_emptyMessages_edit')
+            .attr('title', 'Edit the messages shown when no character matches. Macros such as {{user}} can be used.')
+            .on('click', () => this.editEmptyListMessages());
+        this.initializeEmptyListMessagesEditor();
+
+        $('#acm_tagQuery_save').on('click', () => {
+            this.saveTagFiltersAsCategory();
         });
 
         $('#acm_tagQuery_reset').on('click', () => {
@@ -288,21 +321,17 @@ export class CharListManager {
                         includeScore: true,
                     };
                     break;
-                case 'tags': {
-                    // For tags, we'll search tag names first, then filter characters
-                    const tagFuseOptions = {
-                        keys: ['name'],
+                case 'tags':
+                    return this.findCharsByTagName(tagFilteredChars, searchValueTrimmed);
+                case 'all': {
+                    // Name, creator and creator's notes, plus the characters having a matching tag
+                    const fieldMatches = new Fuse(tagFilteredChars, {
+                        keys: ['data.name', 'data.creator', 'data.creator_notes'],
                         threshold: 0.3,
                         includeScore: true,
-                    };
-                    const tagFuse = new Fuse(this.st.tagList, tagFuseOptions);
-                    const matchingTags = tagFuse.search(searchValueTrimmed);
-                    const matchingTagIds = matchingTags.map((result: any) => result.item.id);
-
-                    filteredChars = tagFilteredChars.filter((item: any) => {
-                        return (this.st.tagMap[item.avatar] || []).some((tagId: string) => matchingTagIds.includes(tagId));
-                    });
-                    return filteredChars;
+                    }).search(searchValueTrimmed).map((result: any) => result.item);
+                    const tagMatches = this.findCharsByTagName(tagFilteredChars, searchValueTrimmed);
+                    return [...new Set([...fieldMatches, ...tagMatches])];
                 }
             }
 
@@ -315,6 +344,16 @@ export class CharListManager {
         else {
             return tagFilteredChars;
         }
+    }
+
+    /**
+     * Returns the characters having at least one tag whose name matches the search.
+     */
+    findCharsByTagName(chars: any[], search: string): any[] {
+        // Tag names are searched first, then characters are filtered by those tags
+        const tagFuse = new Fuse(this.st.tagList, { keys: ['name'], threshold: 0.3, includeScore: true });
+        const matchingTagIds = new Set(tagFuse.search(search).map((result: any) => result.item.id));
+        return chars.filter((item: any) => (this.st.tagMap[item.avatar] || []).some((tagId: string) => matchingTagIds.has(tagId)));
     }
 
     /**
@@ -581,9 +620,12 @@ export class CharListManager {
         if (filteredChars.length === 0) {
             this.currentFilteredList = [];
             this.destroyVirtualScroller();
-            $('#character-list').html('<span>Hmm, it seems like the character you\'re looking for is hiding out in a secret lair. Try searching for someone else instead.</span>');
+            // Picked when the list becomes empty, then kept while it stays empty (no change on every keystroke)
+            this.emptyListMessage ??= this.pickEmptyListMessage();
+            $('#character-list').empty().append($('<span class="acm_empty_list">').text(this.emptyListMessage));
         }
         else {
+            this.emptyListMessage = null;
             const dropdownUI = this.settings.getSetting('dropdownUI');
             const dropdownMode = this.settings.getSetting('dropdownMode');
             const sortedList = this.sortCharAR(filteredChars);
@@ -628,7 +670,190 @@ export class CharListManager {
             }
         }
         this.updateCharacterCount(filteredChars.length);
+        this.updateTagFilterBadge();
+        if (this.restoreSessionPending) {
+            this.restoreSessionPending = false;
+            this.restoreLastSession();
+        }
         this.eventManager.emit('character_list_refreshed');
+    }
+
+    /**
+     * Reopens ACM as it was left: the same character selected (if it still exists and is in
+     * the list) and the list scrolled to the same place.
+     */
+    restoreLastSession(): void {
+        const session = this.lastSession;
+        if (!session) return;
+        const { avatar, scrollTop } = session;
+        const isListed = avatar && (this.settings.getSetting('dropdownUI')
+            ? this.st.characters.some((c: any) => c.avatar === avatar)
+            : this.currentFilteredList.some((c: any) => c.avatar === avatar));
+        if (isListed) this.selectAndDisplay(avatar, false);
+        // After the scroller has laid out its rows (on the next frame) and the details opened
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            const list = document.getElementById('character-list');
+            if (list) list.scrollTop = scrollTop;
+        }));
+    }
+
+    /**
+     * The empty-list messages in use: the user's own, or the built-in ones if there are none.
+     */
+    getEmptyListMessages(): string[] {
+        const custom = this.settings.getSetting('emptyListMessages');
+        const messages = Array.isArray(custom) ? custom.filter((m: unknown) => typeof m === 'string' && m.trim() !== '') : [];
+        return messages.length ? messages : [...CharListManager.EMPTY_LIST_MESSAGES];
+    }
+
+    /**
+     * Picks one empty-list message at random, with its macros ({{user}}...) replaced.
+     */
+    pickEmptyListMessage(): string {
+        const messages = this.getEmptyListMessages();
+        return this.st.substituteParams(messages[Math.floor(Math.random() * messages.length)]);
+    }
+
+    /**
+     * One editable row of the empty-list messages editor.
+     */
+    static emptyListMessageRow(message: string = ''): string {
+        return `<div class="acm_msgs_row">
+                    <input class="text_pole acm_msgs_input" maxlength="300" value="${escapeHtml(message)}" placeholder="Message (macros such as {{user}} are replaced)" title="Macros such as {{user}} are replaced when the message is shown">
+                    <div class="menu_button fa-solid fa-trash-can acm_msgs_delete" title="Delete this message"></div>
+                </div>`;
+    }
+
+    /**
+     * Handlers of the empty-list messages editor. Delegated, and bound once: ST's popup shows
+     * a copy of the content it's given, so handlers bound to that content wouldn't run.
+     */
+    initializeEmptyListMessagesEditor(): void {
+        $(document).on('click', '#acm_msgs_editor .acm_msgs_add', () => {
+            $(CharListManager.emptyListMessageRow()).appendTo('#acm_msgs_editor .acm_msgs_list').find('input').trigger('focus');
+        });
+        $(document).on('click', '#acm_msgs_editor .acm_msgs_delete', (event: JQuery.TriggeredEvent) => {
+            $(event.currentTarget).closest('.acm_msgs_row').remove();
+        });
+        $(document).on('click', '#acm_msgs_editor .acm_msgs_defaults', () => {
+            $('#acm_msgs_editor .acm_msgs_list').html(CharListManager.EMPTY_LIST_MESSAGES.map(m => CharListManager.emptyListMessageRow(m)).join(''));
+        });
+    }
+
+    /**
+     * Opens the editor of the empty-list messages: one row per message, which can be added,
+     * edited and deleted. Saved in the extension settings (kept across ACM updates).
+     */
+    async editEmptyListMessages(): Promise<void> {
+        const rows = this.getEmptyListMessages().map(m => CharListManager.emptyListMessageRow(m)).join('');
+        const content = `
+            <div id="acm_msgs_editor" class="acm_msgs_editor">
+                <h3>Empty list messages</h3>
+                <div class="acm_msgs_hint">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>One of them is shown at random when no character matches. SillyTavern macros can be used, e.g. <code>{{user}}</code> (your persona's name).</span>
+                </div>
+                <div class="acm_msgs_list">${rows}</div>
+                <div class="acm_msgs_actions">
+                    <div class="menu_button menu_button_icon acm_msgs_add"><i class="fa-solid fa-plus"></i><span>Add message</span></div>
+                    <div class="menu_button menu_button_icon acm_msgs_defaults"><i class="fa-solid fa-rotate-left"></i><span>Restore defaults</span></div>
+                </div>
+            </div>`;
+
+        // Read from the popup itself while it closes (it shows a copy of `content`)
+        let messages: string[] = [];
+        const confirmed = await this.st.callGenericPopup(content, this.st.POPUP_TYPE.CONFIRM, '', {
+            okButton: 'Save',
+            cancelButton: 'Cancel',
+            wide: true,
+            allowVerticalScrolling: true,
+            onClose: () => {
+                messages = $('#acm_msgs_editor .acm_msgs_input').map((_: number, el: HTMLElement) => String($(el).val()).trim()).get().filter(Boolean);
+            },
+        });
+        if (!confirmed) return;
+
+        const isDefault = messages.length === CharListManager.EMPTY_LIST_MESSAGES.length
+            && messages.every((m: string, i: number) => m === CharListManager.EMPTY_LIST_MESSAGES[i]);
+        // Nothing left, or the built-in list as is: follow the built-in messages (and their future updates)
+        this.settings.updateSetting('emptyListMessages', messages.length && !isDefault ? messages : null);
+        if (!messages.length) toastr.info('No message left: the built-in messages will be used.');
+        // Show the new messages right away if the list is empty
+        this.emptyListMessage = null;
+        if (this.currentFilteredList.length === 0) this.refreshCharListDebounced(true);
+    }
+
+    /**
+     * Saves the tag filters (mandatory / at least one / excluded) as a custom category,
+     * in the preset the user picks (the active one by default).
+     */
+    async saveTagFiltersAsCategory(): Promise<void> {
+        const rules = {
+            mandatoryTags: this.getFilterTagIds('#acm_mandatoryTags'),
+            facultativeTags: this.getFilterTagIds('#acm_facultativeTags'),
+            excludedTags: this.getFilterTagIds('#acm_excludedTags'),
+        };
+        if (!rules.mandatoryTags.length && !rules.facultativeTags.length && !rules.excludedTags.length) {
+            toastr.warning('Add at least one tag filter first.');
+            return;
+        }
+
+        const presets: { name: string }[] = this.settings.getSetting('dropdownPresets') ?? [];
+        const activePreset = Number(this.settings.getSetting('presetId')) || 0;
+        const options = presets.map((preset, index) =>
+            `<option value="${index}"${index === activePreset ? ' selected' : ''}>${escapeHtml(preset.name)}</option>`).join('');
+
+        let name = '';
+        let presetIndex = activePreset;
+        const confirmed = await this.st.callGenericPopup(
+            `<h3>Save the tag filters as a category</h3>
+            <div class="acm_saveCat_form">
+                <label for="acm_saveCat_name">Name</label>
+                <input id="acm_saveCat_name" class="text_pole" maxlength="100">
+                <label for="acm_saveCat_preset">Preset</label>
+                <select id="acm_saveCat_preset">${options}</select>
+            </div>`,
+            this.st.POPUP_TYPE.CONFIRM,
+            '',
+            {
+                okButton: 'Save',
+                onClose: () => {
+                    name = String($('#acm_saveCat_name').val() ?? '').trim();
+                    presetIndex = Number($('#acm_saveCat_preset').val());
+                },
+            },
+        );
+        if (!confirmed) return;
+        if (!name) {
+            toastr.warning('The category needs a name.');
+            return;
+        }
+
+        this.presetManager.addPresetCategory(presetIndex, name, rules);
+        toastr.success(`Category "${name}" saved in ${presets[presetIndex]?.name ?? 'the preset'}.`);
+        // Show it right away if that preset's categories are on screen
+        if (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') === 'custom' && presetIndex === activePreset) {
+            this.refreshCharListDebounced(true);
+        }
+    }
+
+    /**
+     * Shows on the Tag Query Builder button how many tag filters are applied, since they
+     * stay active when its panel is closed (and when ACM is closed and reopened).
+     */
+    updateTagFilterBadge(): void {
+        const count = $('#acm_mandatoryTags, #acm_facultativeTags, #acm_excludedTags').children('span[data-tagid]').length;
+        const $button = $('#acm_tags_filter');
+        $button.toggleClass('acm_filter_active', count > 0);
+        let $badge = $button.children('.acm_filter_badge');
+        if (count === 0) {
+            $badge.remove();
+            $button.attr('title', 'Tag Query Builder');
+            return;
+        }
+        if (!$badge.length) $badge = $('<span class="acm_filter_badge"></span>').appendTo($button);
+        $badge.text(count);
+        $button.attr('title', `Tag Query Builder (${count} tag filter${count > 1 ? 's' : ''} active)`);
     }
 
     /**

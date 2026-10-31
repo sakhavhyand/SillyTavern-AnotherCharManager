@@ -29,6 +29,7 @@
                             <option value="creator">Creator</option>
                             <option value="creator_notes">Creator's Notes</option>
                             <option value="tags">Tags</option>
+                            <option value="all">All fields</option>
                         </select>
                         <input id="char_search_bar" class="text_pole width100p search-with-dropdown-input" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
                     </div>
@@ -46,6 +47,7 @@
                     <input id="acm_mandatoryInput" class="text_pole acm_tagQuery_input margin0 padding0">
                 </label>
                 <div id="acm_mandatoryTags" class="tags"></div>
+                <div id="acm_tagQuery_save" class="menu_button fa-solid fa-floppy-disk faSmallFontSquareFix" title="Save these tag filters as a custom category" data-i18n="[title]Save these tag filters as a custom category"></div>
                 <div id="acm_tagQuery_reset" class="menu_button fa-solid fa-eraser faSmallFontSquareFix" title="Clear all tag filters" data-i18n="[title]Clear all tag filters"></div>
             </div>
             <div class="acm_tagQuery_row">
@@ -279,6 +281,15 @@
         <!-- The color picker is added before the reset button by ModalManager -->
         <div id="acm_accentColor_slot"></div>
         <div id="acm_accentColor_reset" class="menu_button fa-solid fa-rotate-left faSmallFontSquareFix" title="Reset to the default color" data-i18n="[title]Reset to the default color"></div>
+    </div>
+    <hr class="dropdown-separator">
+    <div class="acm-settings-row">
+        <label>Empty list</label>
+        <!-- Its tooltip (which mentions macros) is set by CharListManager: this template goes through Handlebars -->
+        <div id="acm_emptyMessages_edit" class="menu_button menu_button_icon">
+            <i class="fa-solid fa-pen"></i>
+            <span>Edit messages</span>
+        </div>
     </div>
 </div>
 <div id="acm_character_popup" class="flex-container flexFlowColumn flexNoGap">

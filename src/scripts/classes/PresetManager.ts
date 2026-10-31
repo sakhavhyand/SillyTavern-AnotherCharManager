@@ -72,10 +72,16 @@ export class PresetManager {
         });
 
         // Trigger on a click on the delete category button
-        $(document).on('click', '.cat_delete', (event: JQuery.TriggeredEvent) => {
+        $(document).on('click', '.cat_delete', async (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const selectedCat = $element.closest('[data-catid]').data('catid');
+            const catName = this.getCategory(selectedPreset, selectedCat).name;
+            const confirmed = await this.st.callGenericPopup(
+                `<h3>Delete the category "${escapeHtml(catName)}"?</h3>Its tag rules will be lost. The characters and tags themselves are not affected.`,
+                this.st.POPUP_TYPE.CONFIRM,
+            );
+            if (!confirmed) return;
             this.removePresetCategory(selectedPreset, selectedCat);
             this.printCategoriesList(selectedPreset);
         });
@@ -219,15 +225,15 @@ export class PresetManager {
     }
 
     /**
-     * Adds a new category to a preset
+     * Adds a new category to a preset, empty or with the given tag rules
      */
-    addPresetCategory(presetIndex: number, name: string): void {
+    addPresetCategory(presetIndex: number, name: string, rules: Pick<Category, TagField> = {}): void {
         if (typeof name !== 'string' || name.trim() === '') {
             throw new Error('Category name must be a non-empty string');
         }
         this.updatePresets(presets => {
             this.assertPresetIndex(presets, presetIndex);
-            presets[presetIndex].categories.push(this.normalizeCategory({ name }));
+            presets[presetIndex].categories.push(this.normalizeCategory({ name, ...rules }));
         });
     }
 

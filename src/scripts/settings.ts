@@ -20,6 +20,8 @@ export interface ExtensionSettings {
     popupWidth: number;
     cardsPerRow: number;
     accentColor: string;
+    /** Custom empty-list messages, or null for the built-in ones. */
+    emptyListMessages: string[] | null;
     sortingField: string;
     sortingOrder: 'asc' | 'desc';
     favOnly: boolean;
@@ -59,6 +61,7 @@ export const defaultSettings: Readonly<ExtensionSettings> = Object.freeze({
     popupWidth: 50,
     cardsPerRow: 5,
     accentColor: DEFAULT_ACCENT_COLOR,
+    emptyListMessages: null,
     sortingField: 'name',
     sortingOrder: 'asc',
     favOnly: false,
