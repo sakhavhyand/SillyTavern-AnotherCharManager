@@ -143,24 +143,22 @@
     padding: 0 10px;
 }
 
-/* Close is the main action: accent instead of the red "destructive" look */
+/* Main actions (Close, Create) take the accent. Forced: themes and extensions often restyle
+   .menu_button with a full `background` or !important, which would hide the accent. */
 #acm_popup_close.menu_button {
     min-width: 120px;
     justify-content: center;
-    background-color: var(--acm-accent-medium);
 }
 
-#acm_popup_close.menu_button:hover {
-    background-color: var(--acm-accent-strong);
+/* Parent ID added so rules scoped to the popup (#acm_popup .menu_button) can't win either */
+#acm_popup #acm_popup_close.menu_button,
+#acm_create_popup #acm_create_popup_create.menu_button {
+    background: var(--acm-accent-medium) !important;
 }
 
-/* Creation popup: Create is the main action, Cancel stays neutral */
-#acm_create_popup_create.menu_button {
-    background-color: var(--acm-accent-medium);
-}
-
-#acm_create_popup_create.menu_button:hover {
-    background-color: var(--acm-accent-strong);
+#acm_popup #acm_popup_close.menu_button:hover,
+#acm_create_popup #acm_create_popup_create.menu_button:hover {
+    background: var(--acm-accent-strong) !important;
 }
 
 #acm_create_popup .acm-popup-controls {
