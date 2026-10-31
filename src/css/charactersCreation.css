@@ -1,0 +1,161 @@
+/* ===== CHARACTER CREATION COMPONENTS ===== */
+#acm_right_panel, #acm_left_panel {
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.avatar-and-name-block {
+    display: flex;
+    gap: 10px;
+    padding: 5px;
+}
+
+#acm_create_avatar_wrapper {
+    position: relative;
+}
+
+#acm_create_edit_icon {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.55);
+    color: white;
+    border-radius: 50%;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.3s ease, transform 0.3s ease, background 0.3s ease;
+}
+
+#acm_create_avatar_wrapper:hover #acm_create_edit_icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+#acm_create_edit_icon:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+#acm_create_edit_icon i {
+    font-size: 1.1rem;
+}
+
+/* Name field with its token count inline on the right */
+.acm-create-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.acm-create-name-row > label {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#acm_create_name {
+    width: 100%;
+    margin: 0;
+}
+
+.acm-create-name-tokens {
+    flex-shrink: 0;
+    font-size: 0.85em;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+#acmTagInput {
+    height: 26px;
+    margin-bottom: 0;
+}
+
+#acmDescription_div, #acmFirst_message_div {
+    display: flex;
+    align-items: center;
+}
+
+#acm_create_first, #acm_create_desc {
+    height: 25dvh;
+}
+
+/* Main / Advanced definitions tabs */
+.acm-create-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 10px 6px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+}
+
+.acm-create-tab {
+    flex: 1 1 0;
+    padding: 6px 10px;
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.7;
+    border: 1px solid transparent;
+    border-radius: var(--acm-border-radius-sm);
+    transition: background-color 200ms, border-color 200ms, opacity 200ms;
+}
+
+.acm-create-tab:hover {
+    opacity: 1;
+    background-color: var(--acm-accent-faint);
+}
+
+.acm-create-tab.active {
+    opacity: 1;
+    background-color: var(--acm-accent-soft);
+    border-color: var(--acm-accent);
+}
+
+/* Character's Note: depth and role on one line under the text area */
+.acm-create-depth-options {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+}
+
+.acm-create-depth-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: bold;
+}
+
+.acm-create-depth-field > input,
+.acm-create-depth-field > select {
+    width: auto;
+    margin: 0;
+}
+
+#acm_depth_prompt_depth2 {
+    width: 70px;
+}
+
+.acm-create-depth-options > .extension_token_counter {
+    width: auto;
+    margin-left: auto;
+}
+
+/* ===== SLIDE TRANSITION PANELS ===== */
+.panel-transition {
+    transition: all 0.5s ease;
+    overflow: hidden;
+    max-width: 100%;
+    flex: 1;
+}
+
+.panel-hidden {
+    flex: 0 !important;
+    max-width: 0 !important;
+    padding: 0 !important;
+    opacity: 0;
+    pointer-events: none;
+}

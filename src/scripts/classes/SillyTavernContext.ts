@@ -1,0 +1,102 @@
+// SillyTavernContext.ts
+export class SillyTavernContext {
+    private ctx: any;
+
+    constructor() {
+        this.ctx = SillyTavern.getContext();
+    }
+
+    // ---- data ----
+    get never_resize_avatars(): boolean { return this.ctx.powerUserSettings.never_resize_avatars; }
+    get tag_sort_mode(): string { return this.ctx.powerUserSettings.tag_sort_mode; }
+    get characters(): any[] { return this.ctx.characters; }
+    get tagMap(): Record<string, string[]> { return this.ctx.tagMap; }
+    get tagList(): any[] { return this.ctx.tags; }
+    // getContext() copies primitives by value, so these must be read from a fresh context every time
+    get characterId(): string | undefined { return SillyTavern.getContext().characterId; }
+    get groupId(): string | null { return SillyTavern.getContext().groupId; }
+    get menuType(): string { return SillyTavern.getContext().menuType; }
+    get groups(): any[] { return SillyTavern.getContext().groups; }
+    get accountStorage(): any { return this.ctx.accountStorage; }
+    get extensionSettings(): any { return this.ctx.extensionSettings; }
+    get event_types(): any { return this.ctx.event_types; }
+    get POPUP_TYPE(): any { return this.ctx.POPUP_TYPE; }
+    get saveSettingsDebounced(): (...args: any[]) => void { return this.ctx.saveSettingsDebounced; }
+    get eventSource(): any { return this.ctx.eventSource; }
+    get slashCommand(): any { return this.ctx.SlashCommand; }
+    get slashCommandParser(): any { return this.ctx.SlashCommandParser; }
+
+    // ---- functions ----
+    getCharacters(): Promise<any[]> {
+        return this.ctx.getCharacters();
+    }
+
+    /** Reloads a single character from the server and replaces it in `characters`. */
+    getOneCharacter(avatar: string): Promise<void> {
+        return this.ctx.getOneCharacter(avatar);
+    }
+
+    unshallowCharacter(char: any): Promise<any> {
+        return this.ctx.unshallowCharacter(char);
+    }
+
+    selectCharacterById(id: number | string): Promise<void> {
+        return this.ctx.selectCharacterById(id);
+    }
+
+    /** Reloads the open chat from the server. */
+    reloadCurrentChat(): Promise<void> {
+        return this.ctx.reloadCurrentChat();
+    }
+
+    timestampToMoment(timestamp: string | number): any {
+        return this.ctx.timestampToMoment(timestamp);
+    }
+
+    /** Past chats of a character, most recent first (same as ST's getPastCharacterChats). */
+    async getPastCharacterChats(avatar: string): Promise<Array<{ file_name: string }>> {
+        const response = await fetch('/api/characters/chats', {
+            method: 'POST',
+            headers: this.getRequestHeaders(),
+            body: JSON.stringify({ avatar_url: avatar }),
+        });
+        if (!response.ok) return [];
+
+        const data = await response.json();
+        if (typeof data === 'object' && data.error === true) return [];
+
+        const chats = Object.values(data) as Array<{ file_name: string }>;
+        return chats.sort((a, b) => a.file_name.localeCompare(b.file_name)).reverse();
+    }
+
+    getTokenCountAsync(...args: any[]): Promise<number> {
+        return this.ctx.getTokenCountAsync(...args);
+    }
+
+    getThumbnailUrl(...args: any[]): string {
+        return this.ctx.getThumbnailUrl(...args);
+    }
+
+    callGenericPopup(...args: any[]): Promise<any> {
+        // Marks ACM's popups so their main button can take the accent (see modal.css)
+        if (typeof args[0] === 'string') args[0] = `<div class="acm-st-popup">${args[0]}</div>`;
+        else if (args[0] instanceof jQuery) (args[0] as JQuery).addClass('acm-st-popup');
+        return this.ctx.callGenericPopup(...args);
+    }
+
+    renderExtensionTemplateAsync(...args: any[]): Promise<string> {
+        return this.ctx.renderExtensionTemplateAsync(...args);
+    }
+
+    t(key: string, params?: Record<string, any>): string {
+        return this.ctx.t(key, params);
+    }
+
+    substituteParams(...args: any[]): string {
+        return this.ctx.substituteParams(...args);
+    }
+
+    getRequestHeaders(...args: any[]): Record<string, string> {
+        return this.ctx.getRequestHeaders(...args);
+    }
+}

@@ -1,0 +1,500 @@
+/* ===== MODAL COMPONENTS ===== */
+/* Main popup and overlay */
+#acm_lock {
+    position: fixed;
+    margin: 0;
+    padding: 0;
+    top: 0;
+    left: 0;
+    z-index: 8999;
+    width: 100vw;
+    height: 100vh;
+    width: 100dvw;
+    height: 100dvh;
+    background: rgba(0,0,0,0.5);
+    pointer-events: all;
+    display: none;
+}
+
+#acm_lock.is-active {
+    display: block;
+}
+
+#acm_popup {
+    position: absolute;
+    z-index: 9000;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    text-align: center;
+    box-shadow: 0 0 14px var(--black70a);
+    border: 1px solid var(--SmartThemeBorderColor);
+    padding: 4px;
+    background-color: var(--SmartThemeBlurTintColor);
+    backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 2));
+    -webkit-backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 2));
+    border-radius: var(--acm-border-radius-md);
+    height: 96svh;
+    display: none;
+    opacity: 0.0;
+    flex-direction: column;
+    overflow-y: hidden;
+    transition: var(--acm-transition-fast);
+}
+
+#acm_popup_preview {
+    max-width: 90svw;
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    /* Width preview outline: drawn with the accent */
+    border: 2px solid var(--acm-accent);
+    border-radius: var(--acm-border-radius-lg);
+    box-shadow: 0 0 8px 6px var(--acm-accent-soft);
+    pointer-events: none;
+    z-index: 9001;
+    display: none;
+    transition: var(--acm-transition-fast);
+}
+
+/* Separators between the toolbar, the list and the footer: divs like #char-sep, so themes
+   styling <hr> can't change them */
+#acm_popup .acm-zone-sep {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    width: auto;
+    height: 2px;
+    min-height: 0;
+    margin: 5px 0;
+    padding: 0;
+    border: 0;
+    background: linear-gradient(90deg, transparent, var(--acm-accent), transparent);
+    opacity: 1;
+}
+
+/* Character popup */
+#acm_character_popup, #acm_create_popup {
+    display: none;
+    background-color: var(--SmartThemeBlurTintColor);
+    backdrop-filter: blur(calc(var(--SmartThemeBlurStrength)*2));
+    -webkit-backdrop-filter: blur(calc(var(--SmartThemeBlurStrength)*2));
+    min-width: 100px;
+    max-width: var(--sheldWidth);
+    height: calc(100svh - 84px);
+    min-height: calc(100svh - 84px);
+    max-height: calc(100svh - 84px);
+    position: absolute;
+    z-index: 9001;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    top: var(--topBarBlockSize);
+    box-shadow: 0 0 20px var(--black70a);
+    padding: 10px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 0 0 var(--acm-border-radius-md) var(--acm-border-radius-md);
+    overflow-y: auto;
+}
+
+/* Dim the main window behind the creation popup (a huge spread shadow,
+   so no extra overlay element is needed) */
+#acm_create_popup {
+    box-shadow: 0 0 20px var(--black70a), 0 0 0 100vmax var(--black50a);
+}
+
+/* "group chats!" is a hint, not an error: accent instead of ST's red warning */
+#acm_create_popup .warning,
+#acm_character_popup .warning {
+    color: var(--acm-accent);
+    font-weight: bold;
+}
+
+#acm_character_popup h5 {
+    color: var(--grey50);
+}
+
+#acm_character_popup h3 {
+    margin: 0 0 0 0;
+    display: inline;
+}
+
+#acm_character_popup_text {
+    align-items: center;
+}
+
+#acm_character_cross {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    cursor: pointer;
+    opacity: 0.6;
+    font-size: 24px;
+}
+
+#acm_character_popup_ok {
+    cursor: pointer;
+    display: none;
+    height: 40px;
+    margin-top: 15px;
+    margin-left: 36px;
+    backdrop-filter: blur(var(--SmartThemeBlurStrength));
+    background-color: var(--black70a);
+    -webkit-backdrop-filter: blur(var(--SmartThemeBlurStrength));
+    width: 110px;
+    text-align: center;
+}
+
+.acm-popup-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0 10px;
+}
+
+/* Main actions (Close, Create) take the accent. Forced: themes and extensions often restyle
+   .menu_button with a full `background` or !important, which would hide the accent. */
+#acm_popup_close.menu_button {
+    min-width: 120px;
+    justify-content: center;
+}
+
+/* Parent ID added so rules scoped to the popup (#acm_popup .menu_button) can't win either */
+#acm_popup #acm_popup_close.menu_button,
+#acm_create_popup #acm_create_popup_create.menu_button {
+    background: var(--acm-accent-medium) !important;
+}
+
+#acm_popup #acm_popup_close.menu_button:hover,
+#acm_create_popup #acm_create_popup_create.menu_button:hover {
+    background: var(--acm-accent-strong) !important;
+}
+
+/* Main button (Save, Yes, Close...) of the ST popups opened by ACM, marked by SillyTavernContext */
+.popup:has(.acm-st-popup) .popup-button-ok.menu_button {
+    background: var(--acm-accent-medium) !important;
+}
+
+.popup:has(.acm-st-popup) .popup-button-ok.menu_button:hover {
+    background: var(--acm-accent-strong) !important;
+}
+
+/* Help icons (links to the ST docs) in the accent instead of the theme's quote color */
+#acm_popup .note-link-span,
+#acm_create_popup .note-link-span,
+#acm_character_popup .note-link-span {
+    color: var(--acm-accent);
+}
+
+#acm_create_popup .acm-popup-controls {
+    justify-content: center;
+    gap: 10px;
+}
+
+.acm-popup-controls > .menu_button {
+    width: unset;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-font-smoothing: subpixel-antialiased;
+}
+
+#acm_widthSlider,
+#acm_cardsPerRowSlider {
+    width: 100px;
+}
+
+/* Export format popup */
+#acm_export_format_popup {
+    display: none;
+    z-index: 9100;
+}
+
+/* ===== DROPDOWN COMPONENTS ===== */
+.dropdown-ui-menu {
+    display: none;
+    position: absolute;
+    z-index: 9000;
+}
+
+.dropdown-ui-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.dropdown-ui-item:hover {
+    background-color: var(--acm-accent-soft);
+}
+
+.acm-menu-check {
+    width: 1em;
+    flex-shrink: 0;
+    text-align: center;
+    color: var(--acm-accent);
+    visibility: hidden;
+}
+
+.dropdown-ui-item.active > .acm-menu-check,
+.acm-menu-check.acm-menu-icon {
+    visibility: visible;
+}
+
+.acm-menu-icon {
+    color: inherit;
+    opacity: 0.7;
+}
+
+.acm-menu-label {
+    flex: 1 1 auto;
+}
+
+.acm-menu-chevron {
+    margin-left: 12px;
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+.dropdown-container {
+    width: 100%;
+    margin: 0 auto;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Scoped to beat .inline-drawer-design's padding (characters.css loads later) */
+.dropdown-container > .dropdown-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-weight: bold;
+    text-align: left;
+    position: relative;
+}
+
+.dropdown-title-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dropdown-title-tag {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    padding: 1px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    background-color: var(--black50a);
+}
+
+.dropdown-title-count {
+    flex-shrink: 0;
+    font-weight: normal;
+    opacity: 0.7;
+}
+
+.dropdown-chevron {
+    flex-shrink: 0;
+    transition: transform 200ms;
+}
+
+.dropdown-container.open > .dropdown-title {
+    background-color: var(--acm-accent-soft);
+    border-color: var(--acm-accent);
+}
+
+.dropdown-container.open .dropdown-chevron {
+    transform: rotate(180deg);
+}
+
+.dropdown-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease;
+    padding: 0 15px;
+}
+
+.dropdown-container.open .dropdown-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-content: flex-start;
+    gap: 5px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.dropdown-separator {
+    border: none;
+    border-top: 1px solid #ccc;
+    margin: 8px 0;
+}
+
+/* ===== SETTINGS POPUP ===== */
+
+/* Lets the accent color picker's panel extend past the menu */
+#acm-settings-popup {
+    overflow: visible;
+}
+
+.acm-settings-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    white-space: nowrap;
+}
+
+.acm-settings-row label {
+    font-size: 0.9em;
+    font-weight: bold;
+    flex-shrink: 0;
+    /* Same label width on every row so the sliders line up */
+    min-width: 7.5em;
+}
+
+.acm-settings-row input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 60px;
+}
+
+#acm_widthValue,
+#acm_cardsPerRowValue {
+    font-size: 0.85em;
+    flex-shrink: 0;
+    min-width: 36px;
+    text-align: right;
+}
+
+/* Accent color: the picker takes the slider's place, the reset button the value's */
+#acm_accentColor_slot {
+    flex: 1 1 auto;
+    display: flex;
+    /* The picker's panel in the theme's colors instead of white (its CSS variables reach its shadow DOM) */
+    --tool-cool-color-picker-popup-bg: var(--SmartThemeBlurTintColor);
+    --tool-cool-color-picker-popup-border-color: var(--SmartThemeBorderColor);
+    --tool-cool-color-picker-field-border-color: var(--SmartThemeBorderColor);
+    --tool-cool-color-picker-field-label-color: var(--SmartThemeBodyColor);
+    color: var(--SmartThemeBodyColor);
+}
+
+#acm_emptyMessages_edit {
+    flex: 1 1 auto;
+    margin: 0;
+    gap: 6px;
+}
+
+/* Empty list messages editor */
+.acm_msgs_editor {
+    text-align: left;
+}
+
+.acm_msgs_hint {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    margin-bottom: 10px;
+    opacity: 0.8;
+    font-size: 0.9em;
+}
+
+.acm_msgs_hint i {
+    color: var(--acm-accent);
+}
+
+.acm_msgs_list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.acm_msgs_row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.acm_msgs_row .acm_msgs_input {
+    flex: 1 1 auto;
+    margin: 0;
+}
+
+.acm_msgs_row .acm_msgs_delete {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.acm_msgs_actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+#acm_accentColor_reset {
+    flex-shrink: 0;
+    min-width: 36px;
+    margin: 0;
+}
+
+.acm-settings-label {
+    font-size: 0.9em;
+    flex: 1 1 auto;
+}
+
+/* ===== TOGGLE SWITCH ===== */
+
+.acm-toggle-switch {
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.acm-toggle-track {
+    width: 44px;
+    height: 22px;
+    border-radius: 11px;
+    background-color: var(--black50a);
+    border: 1px solid var(--SmartThemeBorderColor);
+    position: relative;
+    transition: background-color 200ms;
+}
+
+.acm-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: var(--white70a);
+    transition: transform 200ms;
+    box-shadow: 0 1px 3px var(--black50a);
+}
+
+/* Active state: track turns accent, thumb slides right */
+.acm-toggle-switch.active .acm-toggle-track {
+    background-color: var(--acm-accent-medium);
+}
+
+.acm-toggle-switch.active .acm-toggle-thumb {
+    transform: translateX(22px);
+}

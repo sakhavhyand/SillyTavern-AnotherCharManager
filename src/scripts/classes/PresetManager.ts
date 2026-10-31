@@ -1,23 +1,51 @@
-import { escapeHtml } from '../utils.js';
+import { escapeHtml } from '../acm-utils';
+
+interface Category {
+    name: string;
+    tags?: string[];
+    mandatoryTags?: string[];
+    facultativeTags?: string[];
+    excludedTags?: string[];
+}
+
+type TagField = 'mandatoryTags' | 'facultativeTags' | 'excludedTags';
+
+type NormalizedCategory = Category & Required<Pick<Category, TagField | 'tags'>>;
+
+const TAG_FIELDS: Record<string, TagField> = {
+    mandatory: 'mandatoryTags',
+    facultative: 'facultativeTags',
+    excluded: 'excludedTags',
+};
+
+interface Preset {
+    name: string;
+    categories: Category[];
+}
 
 export class PresetManager {
-    constructor(eventManager, settings, st, tagManager) {
+    eventManager: any;
+    settings: any;
+    st: any;
+    tagManager: any;
+
+    constructor(eventManager: any, settings: any, st: any, tagManager: any) {
         this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
         this.tagManager = tagManager;
     }
 
-    init(){
+    init(): void {
         this.registerListeners();
         this.updateDropdownPresetNames();
     }
 
-    registerListeners(){
-        $(document).on('change', '#preset_selector',  (event) => {
+    registerListeners(): void {
+        $(document).on('change', '#preset_selector', (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
             const newPreset = $element.find(':selected').data('preset');
-            $('#preset_name').html(this.getPreset(newPreset).name);
+            $('#preset_name').text(this.getPreset(newPreset).name);
             this.printCategoriesList(newPreset);
         });
 
@@ -27,8 +55,8 @@ export class PresetManager {
             const newPresetName = await this.st.callGenericPopup('<h3>New preset name:</h3>', this.st.POPUP_TYPE.INPUT, this.getPreset(selectedPreset).name);
             if (newPresetName && newPresetName.trim() !== '') {
                 this.updatePresetName(selectedPreset, newPresetName);
-                $('#preset_name').html(newPresetName);
-                $('#preset_selector option').filter((_, element) => $(element).data('preset') === selectedPreset).text(newPresetName);
+                $('#preset_name').text(newPresetName);
+                $('#preset_selector option').filter((_: number, element: HTMLElement) => $(element).data('preset') === selectedPreset).text(newPresetName);
                 this.updateDropdownPresetNames();
             }
         });
@@ -44,16 +72,22 @@ export class PresetManager {
         });
 
         // Trigger on a click on the delete category button
-        $(document).on('click', '.cat_delete',  (event) => {
+        $(document).on('click', '.cat_delete', async (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const selectedCat = $element.closest('[data-catid]').data('catid');
+            const catName = this.getCategory(selectedPreset, selectedCat).name;
+            const confirmed = await this.st.callGenericPopup(
+                `<h3>Delete the category "${escapeHtml(catName)}"?</h3>Its tag rules will be lost. The characters and tags themselves are not affected.`,
+                this.st.POPUP_TYPE.CONFIRM,
+            );
+            if (!confirmed) return;
             this.removePresetCategory(selectedPreset, selectedCat);
             this.printCategoriesList(selectedPreset);
         });
 
         // Trigger on a click on the rename category button
-        $(document).on('click', '.cat_rename', async (event) => {
+        $(document).on('click', '.cat_rename', async (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const selectedCat = $element.closest('[data-catid]').data('catid');
@@ -65,24 +99,23 @@ export class PresetManager {
         });
 
         // Trigger on a click on the add tag button in a category
-        $(document).on('click', '.addCatTag',  (event) => {
+        $(document).on('click', '.addCatTag', (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
-            const selectedCat = $element.closest('[data-catid]').data('catid');
             this.toggleTagButton($element);
         });
 
         // Trigger on a click on the minus tag button in a category
-        $(document).on('click', '.cancelCatTag',  (event) => {
+        $(document).on('click', '.cancelCatTag', (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
-            const selectedCat = $element.closest('[data-catid]').data('catid');
             this.toggleTagButton($element);
         });
 
-        $(document).on('click', '.tag_cat_remove',  (event) => {
+        $(document).on('click', '.tag_cat_remove', (event: JQuery.TriggeredEvent) => {
             const $element = $(event.currentTarget);
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const selectedCat = $element.closest('[data-catid]').data('catid');
-            const selectedTag = $element.closest('[data-tagid]').data('tagid');
+            // attr(), not data(): data() turns numeric-looking legacy IDs into numbers
+            const selectedTag = $element.closest('[data-tagid]').attr('data-tagid');
 
             // Determine tag type from the parent section
             const tagSection = $element.closest('[data-tagtype]');
@@ -92,274 +125,213 @@ export class PresetManager {
             $element.closest('[data-tagid]').remove();
         });
 
-        this.eventManager.on('tag:addTagToCat',  (data) => {
+        this.eventManager.on('tag:addTagToCat', (data: any) => {
             const tagType = data.tagType || 'mandatory';
             this.addTagToCategory(data.presetId, data.categoryId, data.tagId, tagType);
         });
 
-        this.eventManager.on('modal:openPresetManager', () => {
-            this.manageCustomCategories();
+        this.eventManager.on('modal:openPresetManager', async () => {
+            const closed = this.manageCustomCategories();
             const selectedPreset = $('#preset_selector option:selected').data('preset');
-            if (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') === 'custom') {
-                $('.popup-button-ok').on('click', this.eventManager.emit('charList:refresh'));
-            }
             this.printCategoriesList(selectedPreset, true);
+            // However the popup is closed (Close, Escape, the cross...)
+            await closed;
+            if (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') === 'custom') {
+                this.eventManager.emit('charList:refresh');
+            }
         });
 
         // Toggle category collapse
-        $(document).on('click', '.acm_catList', (event) => {
+        $(document).on('click', '.acm_catList', (event: JQuery.TriggeredEvent) => {
             if ($(event.target).closest('.drag-handle, .menu_button').length) return;
             $(event.currentTarget).siblings('.acm_catTagSections').stop().slideToggle();
         });
     }
 
     /**
-     * Gets a specific preset by index
-     * @param {number} presetIndex - The index of the preset
-     * @returns {Object} - The preset object
+     * Returns a deep copy of all presets, safe to modify.
      */
-    getPreset(presetIndex) {
-        if (presetIndex < 0 || presetIndex >= this.settings.getSetting('dropdownPresets').length) {
-            throw new Error('Invalid preset index');
-        }
-        return { ...this.settings.getSetting('dropdownPresets')[presetIndex] };
+    private clonePresets(): Preset[] {
+        return structuredClone(this.settings.getSetting('dropdownPresets') ?? []);
     }
 
     /**
-     * Gets a specific category from a preset
-     * @param {number} presetIndex - The index of the preset
-     * @param {number} categoryIndex - The index of the category
-     * @returns {Object} - The category object
+     * Applies a change to a deep copy of the presets, then saves the copy.
+     * The stored settings are never modified in place.
      */
-    getCategory(presetIndex, categoryIndex) {
-        const preset = this.getPreset(presetIndex);
-        if (categoryIndex < 0 || categoryIndex >= preset.categories.length) {
+    private updatePresets(change: (presets: Preset[]) => void): void {
+        const presets = this.clonePresets();
+        change(presets);
+        this.settings.updateSetting('dropdownPresets', presets);
+    }
+
+    private assertPresetIndex(presets: Preset[], presetIndex: number): void {
+        if (!(presetIndex >= 0 && presetIndex < presets.length)) {
+            throw new Error('Invalid preset index');
+        }
+    }
+
+    private assertCategoryIndex(preset: Preset, categoryIndex: number): void {
+        if (!(categoryIndex >= 0 && categoryIndex < preset.categories.length)) {
             throw new Error('Invalid category index');
         }
-        return { ...preset.categories[categoryIndex] };
+    }
+
+    /**
+     * Gets a copy of a specific preset by index
+     */
+    getPreset(presetIndex: number): Preset {
+        const presets = this.clonePresets();
+        this.assertPresetIndex(presets, presetIndex);
+        return presets[presetIndex];
+    }
+
+    /**
+     * Gets a copy of a specific category from a preset
+     */
+    getCategory(presetIndex: number, categoryIndex: number): Category {
+        const preset = this.getPreset(presetIndex);
+        this.assertCategoryIndex(preset, categoryIndex);
+        return preset.categories[categoryIndex];
     }
 
     /**
      * Updates a specific preset name
-     * @param {number} presetIndex - The index of the preset to update
-     * @param {string} name - The new name for the preset
      */
-    updatePresetName(presetIndex, name) {
-        if (presetIndex < 0 || presetIndex >= this.settings.getSetting('dropdownPresets').length) {
-            throw new Error('Invalid preset index');
-        }
+    updatePresetName(presetIndex: number, name: string): void {
         if (typeof name !== 'string' || name.trim() === '') {
             throw new Error('Preset name must be a non-empty string');
         }
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex] = {
-            ...updatedPresets[presetIndex],
-            name: name,
-        };
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            presets[presetIndex].name = name;
+        });
     }
 
     /**
      * Updates all categories of a specific preset
-     * @param {number} presetIndex - The index of the preset
-     * @param {Array} categories - The new array of categories
      */
-    updatePresetCategories(presetIndex, categories) {
-        if (presetIndex < 0 || presetIndex >= this.settings.getSetting('dropdownPresets').length) {
-            throw new Error('Invalid preset index');
-        }
+    updatePresetCategories(presetIndex: number, categories: Category[]): void {
         if (!Array.isArray(categories)) {
             throw new Error('Categories must be an array');
         }
-        if (!categories.every(category =>
-            typeof category === 'object' &&
-            typeof category.name === 'string' &&
-            Array.isArray(category.tags),
-        )) {
-            throw new Error('Invalid category format. Each category must have a name (string) and tags (array)');
+        if (!categories.every(category => typeof category === 'object' && typeof category?.name === 'string')) {
+            throw new Error('Invalid category format. Each category must have a name (string)');
         }
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex] = {
-            ...updatedPresets[presetIndex],
-            categories: [...categories],
-        };
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            presets[presetIndex].categories = structuredClone(categories);
+        });
     }
 
     /**
-     * Adds a new category to a preset
-     * @param {number} presetIndex - The index of the preset
-     * @param {string} name - The name of the new category
+     * Adds a new category to a preset, empty or with the given tag rules
      */
-    addPresetCategory(presetIndex, name) {
+    addPresetCategory(presetIndex: number, name: string, rules: Pick<Category, TagField> = {}): void {
         if (typeof name !== 'string' || name.trim() === '') {
             throw new Error('Category name must be a non-empty string');
         }
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex] = {
-            ...updatedPresets[presetIndex],
-            categories: [...updatedPresets[presetIndex].categories, { name, tags: [] }],
-        };
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            presets[presetIndex].categories.push(this.normalizeCategory({ name, ...rules }));
+        });
     }
 
     /**
-     * Updates a specific category in a preset
-     * @param {number} presetIndex - The index of the preset
-     * @param {number} categoryIndex - The index of the category
-     * @param {string} name - The new name for the category
+     * Renames a specific category in a preset
      */
-    updateCategoryName(presetIndex, categoryIndex, name) {
-        const preset = this.getPreset(presetIndex);
-        if (categoryIndex < 0 || categoryIndex >= preset.categories.length) {
-            throw new Error('Invalid category index');
-        }
+    updateCategoryName(presetIndex: number, categoryIndex: number, name: string): void {
         if (typeof name !== 'string' || name.trim() === '') {
             throw new Error('Category name must be a non-empty string');
         }
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex].categories[categoryIndex] = {
-            ...updatedPresets[presetIndex].categories[categoryIndex],
-            name,
-        };
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            this.assertCategoryIndex(presets[presetIndex], categoryIndex);
+            presets[presetIndex].categories[categoryIndex].name = name;
+        });
     }
 
     /**
      * Removes a category from a preset
-     * @param {number} presetIndex - The index of the preset
-     * @param {number} categoryIndex - The index of the category to remove
      */
-    removePresetCategory(presetIndex, categoryIndex) {
-        const preset = this.getPreset(presetIndex);
-        if (categoryIndex < 0 || categoryIndex >= preset.categories.length) {
-            throw new Error('Invalid category index');
-        }
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex].categories = updatedPresets[presetIndex].categories
-            .filter((_, index) => index !== categoryIndex);
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+    removePresetCategory(presetIndex: number, categoryIndex: number): void {
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            this.assertCategoryIndex(presets[presetIndex], categoryIndex);
+            presets[presetIndex].categories.splice(categoryIndex, 1);
+        });
     }
 
     /**
      * Adds a tag to a category
-     * @param {number} presetIndex - The index of the preset
-     * @param {number} categoryIndex - The index of the category
-     * @param {number} tagId - The ID of the tag to add
-     * @param {string} tagType - The type of tag ('mandatory', 'facultative', 'excluded')
      */
-    addTagToCategory(presetIndex, categoryIndex, tagId, tagType = 'mandatory') {
-        const category = this.getCategory(presetIndex, categoryIndex);
-        const fieldMap = {
-            'mandatory': 'mandatoryTags',
-            'facultative': 'facultativeTags',
-            'excluded': 'excludedTags'
-        };
-        const fieldName = fieldMap[tagType] || 'mandatoryTags';
-
-        // Ensure the field exists
-        if (!category[fieldName]) {
-            category[fieldName] = [];
-        }
-
-        if (category[fieldName].includes(tagId)) {
-            return; // Tag already exists in the category
-        }
-
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        updatedPresets[presetIndex].categories[categoryIndex][fieldName].push(tagId);
-
-        // Maintain backwards compatibility: keep 'tags' pointing to mandatoryTags
-        if (fieldName === 'mandatoryTags') {
-            updatedPresets[presetIndex].categories[categoryIndex].tags =
-                updatedPresets[presetIndex].categories[categoryIndex].mandatoryTags;
-        }
-
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+    addTagToCategory(presetIndex: number, categoryIndex: number, tagId: string, tagType: string = 'mandatory'): void {
+        const fieldName = TAG_FIELDS[tagType] ?? 'mandatoryTags';
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            this.assertCategoryIndex(presets[presetIndex], categoryIndex);
+            // Normalizing guarantees every tag list exists (older categories only have `tags`)
+            const category = this.normalizeCategory(presets[presetIndex].categories[categoryIndex]);
+            const list = category[fieldName];
+            if (!list.some(id => String(id) === String(tagId))) {
+                list.push(String(tagId));
+            }
+            presets[presetIndex].categories[categoryIndex] = category;
+        });
     }
 
     /**
      * Removes a tag from a category
-     * @param {number} presetIndex - The index of the preset
-     * @param {number} categoryIndex - The index of the category
-     * @param {number} tagId - The ID of the tag to remove
-     * @param {string} tagType - The type of tag ('mandatory', 'facultative', 'excluded')
      */
-    removeTagFromCategory(presetIndex, categoryIndex, tagId, tagType = 'mandatory') {
-        const fieldMap = {
-            'mandatory': 'mandatoryTags',
-            'facultative': 'facultativeTags',
-            'excluded': 'excludedTags'
-        };
-        const fieldName = fieldMap[tagType] || 'mandatoryTags';
-
-        const updatedPresets = [...this.settings.getSetting('dropdownPresets')];
-        const category = updatedPresets[presetIndex].categories[categoryIndex];
-
-        if (category[fieldName]) {
-            category[fieldName] = category[fieldName].filter(id => id !== tagId);
-        }
-
-        // Maintain backwards compatibility: keep 'tags' pointing to mandatoryTags
-        if (fieldName === 'mandatoryTags') {
+    removeTagFromCategory(presetIndex: number, categoryIndex: number, tagId: string, tagType: string = 'mandatory'): void {
+        const fieldName = TAG_FIELDS[tagType] ?? 'mandatoryTags';
+        this.updatePresets(presets => {
+            this.assertPresetIndex(presets, presetIndex);
+            this.assertCategoryIndex(presets[presetIndex], categoryIndex);
+            const category = this.normalizeCategory(presets[presetIndex].categories[categoryIndex]);
+            // Compare as strings: legacy tag IDs are numeric strings
+            category[fieldName] = category[fieldName].filter(id => String(id) !== String(tagId));
             category.tags = category.mandatoryTags;
-        }
-
-        this.settings.updateSetting('dropdownPresets', updatedPresets);
+            presets[presetIndex].categories[categoryIndex] = category;
+        });
     }
 
     /**
-     * Normalizes a category structure for backwards compatibility.
-     * Ensures that mandatoryTags, facultativeTags, and excludedTags exist.
-     * Migrates old 'tags' array to 'mandatoryTags' if needed.
-     *
-     * @param {Object} category - The category object to normalize
-     * @return {Object} The normalized category
+     * Returns a normalized copy of a category (the input is not modified):
+     * every tag list exists, older categories with only `tags` get them as
+     * mandatory tags, and `tags` mirrors `mandatoryTags` for backwards compatibility.
      */
-    normalizeCategory(category) {
-        // If category doesn't have the new structure but has old 'tags', migrate it
-        if (!category.mandatoryTags && category.tags) {
-            category.mandatoryTags = [...category.tags];
-        }
-
-        // Ensure all tag type arrays exist
-        if (!category.mandatoryTags) category.mandatoryTags = [];
-        if (!category.facultativeTags) category.facultativeTags = [];
-        if (!category.excludedTags) category.excludedTags = [];
-
-        // Maintain backwards compatibility: keep 'tags' as reference to mandatoryTags
-        category.tags = category.mandatoryTags;
-
-        return category;
+    normalizeCategory(category: Category): NormalizedCategory {
+        const mandatoryTags = [...(category.mandatoryTags ?? category.tags ?? [])];
+        return {
+            ...category,
+            mandatoryTags,
+            facultativeTags: [...(category.facultativeTags ?? [])],
+            excludedTags: [...(category.excludedTags ?? [])],
+            tags: mandatoryTags,
+        };
     }
 
     /**
-     * Updates the names of the preset items in a dropdown menu by iterating through each dropdown item,
-     * fetching the associated preset using its index, and setting its name as the item's text content.
-     *
-     * @return {void} This function does not return a value.
+     * Updates the names of the preset items in a dropdown menu.
      */
-    updateDropdownPresetNames() {
-        $('#preset-submenu .dropdown-ui-item').each((index, element) => {
+    updateDropdownPresetNames(): void {
+        $('#preset-submenu .dropdown-ui-item').each((index: number, element: HTMLElement) => {
             const $element = $(element);
             const presetIndex = $element.data('preset');
             const newName = this.getPreset(presetIndex).name;
-            if (newName) { $element.text(newName); }
+            if (newName) { $element.find('.acm-menu-label').text(newName); }
         });
     }
 
     /**
      * Manages the custom categories interface in the application.
-     * This method creates and displays a popup allowing users to view, select, rename, or create custom categories.
-     * It initializes a dropdown for preset categories, renders category controls,
-     * and provides drag-and-drop reordering functionality.
-     *.
      */
-    manageCustomCategories(){
+    manageCustomCategories(): Promise<unknown> {
         const html = $(document.createElement('div'));
         html.attr('id', 'acm_custom_categories');
         const selectElement = $(`<select id="preset_selector" title="Preset Selector"></select>`);
-        this.settings.getSetting('dropdownPresets').forEach((preset, index) => {
+        this.settings.getSetting('dropdownPresets').forEach((preset: Preset, index: number) => {
             selectElement.append(`<option data-preset="${index}">${escapeHtml(preset.name)}</option>`);
         });
         html.append(`
@@ -385,30 +357,25 @@ export class PresetManager {
                 </div>
              </div>
         `);
-        this.st.callGenericPopup(html, this.st.POPUP_TYPE.TEXT, '', { okButton: 'Close', allowVerticalScrolling: true });
+        // Resolves when the popup closes
+        return this.st.callGenericPopup(html, this.st.POPUP_TYPE.TEXT, '', { okButton: 'Close', allowVerticalScrolling: true });
     }
 
     /**
      * Displays the list of categories for a specified preset ID in the user interface.
-     * Handles initialization of category container, population of existing categories,
-     * and rendering of components such as tags, drag handles, and action buttons.
-     *
-     * @param {number} presetID - The ID of the selected preset whose categories are to be displayed.
-     * @param {boolean} [init=false] - Indicates whether the category container is being initialized for the first time. Defaults to `false`.
-     * @return {void} This method does not return a value.
      */
-    printCategoriesList(presetID, init = false){
+    printCategoriesList(presetID: number, init: boolean = false): void {
         const catContainer = init
             ? $('<div id="catContainer"></div>')
             : $('#catContainer').empty() && $('#catContainer');
 
         const preset = this.getPreset(presetID);
-        if(!preset.categories?.length){
+        if (!preset.categories?.length) {
             catContainer.append('No category defined');
             $('#acm_custom_categories').append(catContainer);
         }
         else {
-            preset.categories.forEach((cat,index) => {
+            preset.categories.forEach((cat: Category, index: number) => {
                 // Normalize category for backwards compatibility
                 cat = this.normalizeCategory(cat);
 
@@ -489,21 +456,16 @@ export class PresetManager {
 
     /**
      * Makes the categories draggable and sortable within the specified container.
-     * Enables drag-and-drop functionality to change the order of categories, updating
-     * the configuration and saving the new order on drop.
-     *
-     * @param {string} containerSelector - The selector for the container element where categories should be made draggable.
-     * @return {void} No return value.
      */
-    makeCategoryDraggable(containerSelector) {
+    makeCategoryDraggable(containerSelector: string): void {
         $(containerSelector).sortable({
             handle: '.drag-handle',
             items: '> div',
             tolerance: 'pointer',
             placeholder: 'sortable-placeholder',
-            update: ()=> {
-                const newOrder = [];
-                $(containerSelector).children('div').each(function () {
+            update: () => {
+                const newOrder: number[] = [];
+                $(containerSelector).children('div').each(function (this: HTMLElement) {
                     newOrder.push($(this).data('catid'));
                 });
                 const presetID = $('#preset_selector option:selected').data('preset');
@@ -513,18 +475,14 @@ export class PresetManager {
         });
 
         $('.drag-handle')
-            .on('mousedown',function () { $(this).css('cursor', 'grabbing'); })
-            .on('mouseup', function () { $(this).css('cursor', 'grab'); },
-            );
+            .on('mousedown', function (this: HTMLElement) { $(this).css('cursor', 'grabbing'); })
+            .on('mouseup', function (this: HTMLElement) { $(this).css('cursor', 'grab'); });
     }
 
     /**
-     * Toggles the state of a tag button between "add" and "cancel" styles
-     * and shows or hides the associated category tag input field.
-     *
-     * @param {object} button The button element to be toggled.
+     * Toggles the state of a tag button between "add" and "cancel" styles.
      */
-    toggleTagButton(button) {
+    toggleTagButton(button: JQuery<HTMLElement>): void {
         // Find the input within the same tag section
         const tagSection = button.closest('.acm_catTagList');
         const input = tagSection.find('input.tag_input');

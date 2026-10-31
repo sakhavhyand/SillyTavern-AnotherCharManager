@@ -18,6 +18,9 @@
     align-content: flex-start;
     overflow-y: auto;
     overflow-x: hidden;
+    /* Reserve the scrollbar's space so it appearing/disappearing doesn't change
+       the width, which would re-fit the cards and could toggle it back. */
+    scrollbar-gutter: stable;
     padding-right: 10px;
     gap: 5px;
     flex-direction: row;
@@ -25,6 +28,12 @@
     min-height: 0;
     height: auto;
     padding-top: 5px;
+}
+
+/* Hint that more rows are hidden below (class toggled by VirtualScroller) */
+.acm_fade_bottom {
+    -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 40px), transparent);
+    mask-image: linear-gradient(to bottom, black calc(100% - 40px), transparent);
 }
 
 .character_item {
@@ -47,57 +56,21 @@
     font-size: calc(1em * var(--acm-card-width, 110) / 110);
     border-radius: 8px;
     background-color: var(--SmartThemeBlurTintColor);
-    backdrop-filter: blur(20px);
+    /* backdrop-filter: blur(20px);*/
     transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border 0.2s ease, width 0.15s ease, padding 0.15s ease;
     contain: layout style paint;
     margin: calc(5px * var(--acm-card-width, 110) / 110);
+    /* The border stays 1px in every state; thicker accents are drawn with
+       box-shadow so selecting a card never shifts the grid. */
     border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow:
-        0 8px 32px rgba(119, 110, 110, 0.18),
-        inset 0 1px 0 rgba(28, 19, 72, 0.77),
-        inset 0 -1px 0 rgba(61, 79, 63, 0.84),
-        inset 0 0 10px 3px rgba(70, 85, 180, 0.7);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     cursor: pointer;
     overflow: hidden;
 }
-.card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.4),
-        transparent
-    );
-}
-.card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 1px;
-    height: 100%;
-    background: linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.4),
-        transparent,
-        rgba(255, 255, 255, 0.15)
-    );
-}
 .card:hover {
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.05),
-        inset 0 0 22px 11px rgba(255, 255, 255, 0.05),
-        0 0 20px rgba(102, 126, 234, 0.8);
     transform: scale(1.1);
-    background-color: rgba(255, 255, 255, 0.15);
-    border: 2px solid rgba(102, 126, 234, 1);
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.45);
 }
 
 .card__media {
@@ -107,6 +80,27 @@
     overflow: hidden;
     border-radius: 4px;
     transition: height 0.15s ease;
+    position: relative;
+}
+
+.card__badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: max(0.75em, 9px);
+    line-height: 1.4;
+    pointer-events: none;
+}
+
+.card__badge i {
+    font-size: 0.85em;
 }
 
 .card__media img {
@@ -124,50 +118,33 @@
 .card__header-title {
     margin: 0 0 .25em;
     color: white;
-    font-size: 0.9em;
+    font-size: max(1.05em, 11px);
+    line-height: 1.2;
+    text-align: center;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     overflow: hidden;
     word-break: break-word;
 }
 
-.card__header-meta {
-    margin: 0;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.8em;
-}
-
 .card.char_selected {
-    background-color: rgba(102, 126, 234, 0.3);
-    border: 2px solid rgba(102, 126, 234, 1);
+    background-color: var(--acm-accent-soft);
+    border-color: var(--acm-accent);
     box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.05),
-        inset 0 0 22px 11px rgba(255, 255, 255, 0.05),
-        0 0 20px rgba(102, 126, 234, 0.8);
+        0 0 0 1px var(--acm-accent),
+        0 0 14px var(--acm-accent-medium);
 }
 
 .card.fav {
-    border: 2px solid var(--golden);
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.05),
-        inset 0 0 22px 11px rgba(255, 255, 255, 0.05),
-        0 0 20px var(--golden);
+    border-color: var(--golden);
 }
 
 .card.fav.char_selected {
-    border: 2px solid var(--golden);
+    background-color: rgba(255, 215, 0, 0.15);
     box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.05),
-        inset 0 0 22px 11px rgba(255, 255, 255, 0.05),
-        0 0 20px var(--golden),
-        0 0 30px var(--golden);
+        0 0 0 1px var(--golden),
+        0 0 14px var(--golden);
 }
 
 /* ===== SEARCH AND FILTER COMPONENTS ===== */
@@ -186,6 +163,14 @@
 #acm_character_import_button,
 #acm_external_import_button {
     margin: 5px 0 5px 2px;
+}
+
+.acm_toolbar_separator {
+    flex-shrink: 0;
+    align-self: stretch;
+    width: 1px;
+    margin: 9px 3px;
+    background-color: var(--acm-accent-strong);
 }
 
 .sortText {
@@ -215,6 +200,35 @@
 
 .acm_toolbar_button {
     margin: 5px 0;
+}
+
+/* Tag filters applied: accent border and the number of filters as a badge */
+#acm_tags_filter {
+    position: relative;
+}
+
+#acm_tags_filter.acm_filter_active {
+    border-color: var(--acm-accent);
+    color: var(--acm-accent);
+}
+
+.acm_filter_badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    background-color: var(--acm-accent);
+    color: #fff;
+    font-family: var(--mainFontFamily, sans-serif);
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 15px;
+    text-align: center;
+    pointer-events: none;
 }
 
 .fav_on {

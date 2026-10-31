@@ -9,13 +9,19 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: baseline;
-    background-image: linear-gradient(348deg, var(--white30a)2%, var(--grey30a)10%, var(--black70a)95%, var(--SmartThemeQuoteColor)100%);
+    background-color: var(--black30a);
     margin-bottom: 5px;
     border-radius: var(--acm-border-radius-md);
     padding: 0 5px;
     border: 1px solid var(--SmartThemeBorderColor);
     cursor: pointer;
     user-select: none;
+    transition: background-color 200ms, border-color 200ms;
+}
+
+.acm_catList:hover {
+    background-color: var(--acm-accent-faint);
+    border-color: var(--acm-accent-medium);
 }
 
 .acm_catTagSections {
