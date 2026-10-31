@@ -124,13 +124,15 @@ export class PresetManager {
             this.addTagToCategory(data.presetId, data.categoryId, data.tagId, tagType);
         });
 
-        this.eventManager.on('modal:openPresetManager', () => {
-            this.manageCustomCategories();
+        this.eventManager.on('modal:openPresetManager', async () => {
+            const closed = this.manageCustomCategories();
             const selectedPreset = $('#preset_selector option:selected').data('preset');
-            if (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') === 'custom') {
-                $('.popup-button-ok').one('click', () => this.eventManager.emit('charList:refresh'));
-            }
             this.printCategoriesList(selectedPreset, true);
+            // However the popup is closed (Close, Escape, the cross...)
+            await closed;
+            if (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') === 'custom') {
+                this.eventManager.emit('charList:refresh');
+            }
         });
 
         // Toggle category collapse
@@ -319,7 +321,7 @@ export class PresetManager {
     /**
      * Manages the custom categories interface in the application.
      */
-    manageCustomCategories(): void {
+    manageCustomCategories(): Promise<unknown> {
         const html = $(document.createElement('div'));
         html.attr('id', 'acm_custom_categories');
         const selectElement = $(`<select id="preset_selector" title="Preset Selector"></select>`);
@@ -349,7 +351,8 @@ export class PresetManager {
                 </div>
              </div>
         `);
-        this.st.callGenericPopup(html, this.st.POPUP_TYPE.TEXT, '', { okButton: 'Close', allowVerticalScrolling: true });
+        // Resolves when the popup closes
+        return this.st.callGenericPopup(html, this.st.POPUP_TYPE.TEXT, '', { okButton: 'Close', allowVerticalScrolling: true });
     }
 
     /**

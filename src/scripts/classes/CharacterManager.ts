@@ -600,16 +600,16 @@ export class CharacterManager {
         if (input.files && input.files[0]) {
             let crop_data: any = undefined;
             const file = input.files[0];
+            // Lets the same file be picked again after a cancelled crop
+            input.value = '';
             const fileData = await getBase64Async(file);
 
             if (!this.st.never_resize_avatars) {
                 // Display a cropping dialog to the user
                 const dlg = await this.st.callGenericPopup('Set the crop position of the avatar image', this.st.POPUP_TYPE.CROP, '', { cropImage: fileData });
 
-                if (!dlg) {
-                    console.error('The popup object is invalid:', dlg);
-                    return; // Exit if the user cancels the cropping dialog
-                }
+                // Cancelled: the avatar stays as it is
+                if (!dlg) return;
                 crop_data = dlg.cropData;
 
                 try {

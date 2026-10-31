@@ -1,16 +1,23 @@
 /* ===== CHARACTER DETAILS COMPONENTS ===== */
-/* Clicking the separator closes the details panel */
-#char-sep {
+/* Clicking the separator closes the details panel. A div, not an <hr>, so themes and
+   extensions styling <hr> can't change it: the whole box is defined here. */
+#acm_popup #char-sep {
     flex: 0 0 auto;
-    padding: 3px;
+    box-sizing: border-box;
+    width: auto;
+    height: 7px;
+    min-height: 0;
+    margin: 5px 0;
+    padding: 0;
+    border: 0;
     border-radius: var(--acm-border-radius-sm);
-    /* A 2px line centered in the clickable band; ST dims every <hr> to 0.2 */
+    /* A 2px accent line centered in the clickable band */
     background: linear-gradient(90deg, transparent, var(--acm-accent), transparent) center / 100% 2px no-repeat;
     opacity: 1;
     transition: background-color 200ms, box-shadow 200ms;
 }
 
-#char-sep:hover {
+#acm_popup #char-sep:hover {
     cursor: pointer;
     background-color: var(--acm-accent-strong);
     box-shadow: 0 0 8px var(--acm-accent-medium);

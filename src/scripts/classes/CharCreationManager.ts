@@ -5,6 +5,8 @@ export class CharCreationManager {
     eventManager: any;
     settings: any;
     st: any;
+    /** True while a creation request is running. */
+    isCreating: boolean = false;
 
     constructor(eventManager: any, settings: any, st: any) {
         this.eventManager = eventManager;
@@ -61,8 +63,15 @@ export class CharCreationManager {
         });
 
         // Create the character
-        $('#acm_create_popup_create').on('click', () => {
-            this.initiateCharacterCreation();
+        $('#acm_create_popup_create').on('click', async () => {
+            // A second click while the first one is still saving would create the character twice
+            if (this.isCreating) return;
+            this.isCreating = true;
+            try {
+                await this.initiateCharacterCreation();
+            } finally {
+                this.isCreating = false;
+            }
         });
 
         // Close character creation popup

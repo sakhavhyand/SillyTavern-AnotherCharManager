@@ -108,6 +108,11 @@ export class CharListManager {
             this.refreshCharListDebounced(false);
         });
 
+        // Searching another field applies to the text already typed
+        $(document).on('change', '#search_filter_dropdown', () => {
+            if (this.settings.searchValue.trim() !== '') this.refreshCharListDebounced(false);
+        });
+
         $('#acm_fav_filter_button').on('click', () => {
             const isEnabled = !this.settings.getSetting('favOnly');
             this.settings.updateSetting('favOnly', isEnabled);
@@ -254,8 +259,9 @@ export class CharListManager {
         // Filtering based on tags
         const tagFilteredChars = charactersCopy.filter((item: any) => matchesTagRules(this.st.tagMap[item.avatar] || [], tagRules));
 
-        if (this.settings.searchValue !== '') {
-            const searchValueTrimmed = this.settings.searchValue.trim();
+        const searchValueTrimmed = this.settings.searchValue.trim();
+        // Blank search: no filter (as the counter shows), not an empty list
+        if (searchValueTrimmed !== '') {
             const searchField = $('#search_filter_dropdown').val() as string;
 
             let fuseOptions: any;

@@ -1,6 +1,13 @@
 import { equalsIgnoreCaseAndAccents, escapeHtml, includesIgnoreCaseAndAccents, withCharacterContext } from '../acm-utils';
 import { applyCharacterTagsToMessageDivs, createTagInput, removeTagFromEntity } from '/scripts/tags.js';
 
+/** An autocomplete suggestion for an existing tag. */
+interface TagSuggestion {
+    label: string;
+    value: string;
+    tagId?: string;
+}
+
 export class TagManager {
     eventManager: any;
     settings: any;
@@ -147,7 +154,31 @@ export class TagManager {
                     // @ts-ignore
                     $(this).autocomplete('search', $(this).val() as string);
                 });
+            // Draw suggestions as the tags themselves, so tags sharing a name can be told apart
+            // @ts-ignore
+            $(selector).autocomplete('instance')._renderItem = (ul: JQuery, item: TagSuggestion) => this.renderTagSuggestion(ul, item);
         });
+    }
+
+    /**
+     * Renders one autocomplete suggestion: the tag in its own colors, or plain text for a typed term.
+     */
+    renderTagSuggestion(ul: JQuery, item: TagSuggestion): JQuery {
+        const tag = item.tagId ? this.st.tagList.find((t: any) => t.id === item.tagId) : undefined;
+        const $content = $('<div>');
+        if (tag) {
+            $('<span class="tag">').text(tag.name).css({ backgroundColor: tag.color || '', color: tag.color2 || '' }).appendTo($content);
+        } else {
+            $content.text(item.label);
+        }
+        return $('<li>').append($content).appendTo(ul);
+    }
+
+    /**
+     * Turns tags into autocomplete suggestions. They carry the tag ID, since names aren't unique.
+     */
+    toSuggestions(tags: any[]): TagSuggestion[] {
+        return tags.map((t: any) => ({ label: t.name, value: t.name, tagId: t.id }));
     }
 
     /**
@@ -163,8 +194,12 @@ export class TagManager {
             allLists?: string[];
         } = {},
     ): boolean {
+        // By ID when the suggestion has one: several tags can share a name
+        const tagId = ui.item.tagId;
         const tagName = ui.item.value;
-        const tag = this.st.tagList.find((t: any) => equalsIgnoreCaseAndAccents(t.name, tagName));
+        const tag = tagId
+            ? this.st.tagList.find((t: any) => t.id === tagId)
+            : this.st.tagList.find((t: any) => equalsIgnoreCaseAndAccents(t.name, tagName));
 
         if (!tag) {
             toastr.error('You can\'t create tag from this interface. Please use the tag editor instead.');
@@ -183,6 +218,8 @@ export class TagManager {
                 const tagSection = $(listSelector).closest('[data-tagtype]');
                 const tagType = tagSection.length > 0 ? tagSection.data('tagtype') : 'mandatory';
 
+                // Already in this list: the saved category ignores it, so don't show it twice either
+                if ($(listSelector).find('[data-tagid]').filter((_: number, el: HTMLElement) => $(el).attr('data-tagid') === tag.id).length) break;
                 $(listSelector).find('label').before(this.displayTag(tag.id, 'category'));
                 this.eventManager.emit('tag:addTagToCat', {
                     presetId: selectedPreset,
@@ -195,7 +232,8 @@ export class TagManager {
             case 'multiple': {
                 // Check if tag is already present in ANY of the associated lists
                 const isDuplicate = allLists.some(selector => {
-                    return $(selector).find(`[data-tagid="${tag.id}"]`).length > 0;
+                    // attr(), not a selector: IDs are compared as plain strings
+                    return $(selector).find('[data-tagid]').filter((_: number, el: HTMLElement) => $(el).attr('data-tagid') === tag.id).length > 0;
                 });
 
                 if (!isDuplicate) {
@@ -233,16 +271,15 @@ export class TagManager {
     /**
      * Finds tags based on the provided request, resolving the result with filtered and sorted tags.
      */
-    findTag(request: any, resolve: (result: string[]) => void, listSelector: string): void {
+    findTag(request: any, resolve: (result: (TagSuggestion | string)[]) => void, listSelector: string): void {
         // attr(), not data(): data() turns numeric-looking legacy IDs into numbers
         const skipIds = $(listSelector).find('.tag').map((_: number, el: HTMLElement) => $(el).attr('data-tagid')).get();
         const haystack = this.st.tagList
             .filter((t: any) => !skipIds.includes(t.id))
-            .sort((a: any, b: any) => this.compareTagsForSort(a, b))
-            .map((t: any) => t.name);
+            .sort((a: any, b: any) => this.compareTagsForSort(a, b));
         const needle = request.term;
-        const hasExactMatch = haystack.findIndex((x: string) => equalsIgnoreCaseAndAccents(x, needle)) !== -1;
-        const result = haystack.filter((x: string) => includesIgnoreCaseAndAccents(x, needle));
+        const hasExactMatch = haystack.some((t: any) => equalsIgnoreCaseAndAccents(t.name, needle));
+        const result: (TagSuggestion | string)[] = this.toSuggestions(haystack.filter((t: any) => includesIgnoreCaseAndAccents(t.name, needle)));
 
         if (needle && !hasExactMatch) {
             result.unshift(request.term);
@@ -253,7 +290,7 @@ export class TagManager {
     /**
      * Filters suggestions by checking multiple list selectors for existing tags.
      */
-    acmFindTagMulti(request: any, resolve: (result: string[]) => void, listSelectors: string | string[]): void {
+    acmFindTagMulti(request: any, resolve: (result: TagSuggestion[]) => void, listSelectors: string | string[]): void {
         const selectors = Array.isArray(listSelectors) ? listSelectors : [listSelectors];
         const skipIds: string[] = [];
 
@@ -266,12 +303,10 @@ export class TagManager {
 
         const haystack = this.st.tagList
             .filter((t: any) => !skipIds.includes(t.id))
-            .sort((a: any, b: any) => this.compareTagsForSort(a, b))
-            .map((t: any) => t.name);
+            .sort((a: any, b: any) => this.compareTagsForSort(a, b));
 
         const needle = request.term;
-        const result = haystack.filter((x: string) => includesIgnoreCaseAndAccents(x, needle));
-        resolve(result);
+        resolve(this.toSuggestions(haystack.filter((t: any) => includesIgnoreCaseAndAccents(t.name, needle))));
     }
 
     /**
