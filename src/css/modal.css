@@ -161,6 +161,17 @@
     background: var(--acm-accent-strong) !important;
 }
 
+/* Save buttons of ACM's own ST popups (empty list messages, save as category) */
+.popup:has(#acm_msgs_editor) .popup-button-ok.menu_button,
+.popup:has(.acm_saveCat_form) .popup-button-ok.menu_button {
+    background: var(--acm-accent-medium) !important;
+}
+
+.popup:has(#acm_msgs_editor) .popup-button-ok.menu_button:hover,
+.popup:has(.acm_saveCat_form) .popup-button-ok.menu_button:hover {
+    background: var(--acm-accent-strong) !important;
+}
+
 #acm_create_popup .acm-popup-controls {
     justify-content: center;
     gap: 10px;
