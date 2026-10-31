@@ -62,6 +62,21 @@
     transition: var(--acm-transition-fast);
 }
 
+/* Separators between the toolbar, the list and the footer: divs like #char-sep, so themes
+   styling <hr> can't change them */
+#acm_popup .acm-zone-sep {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    width: auto;
+    height: 2px;
+    min-height: 0;
+    margin: 5px 0;
+    padding: 0;
+    border: 0;
+    background: linear-gradient(90deg, transparent, var(--acm-accent), transparent);
+    opacity: 1;
+}
+
 /* Character popup */
 #acm_character_popup, #acm_create_popup {
     display: none;
@@ -161,15 +176,20 @@
     background: var(--acm-accent-strong) !important;
 }
 
-/* Save buttons of ACM's own ST popups (empty list messages, save as category) */
-.popup:has(#acm_msgs_editor) .popup-button-ok.menu_button,
-.popup:has(.acm_saveCat_form) .popup-button-ok.menu_button {
+/* Main button (Save, Yes, Close...) of the ST popups opened by ACM, marked by SillyTavernContext */
+.popup:has(.acm-st-popup) .popup-button-ok.menu_button {
     background: var(--acm-accent-medium) !important;
 }
 
-.popup:has(#acm_msgs_editor) .popup-button-ok.menu_button:hover,
-.popup:has(.acm_saveCat_form) .popup-button-ok.menu_button:hover {
+.popup:has(.acm-st-popup) .popup-button-ok.menu_button:hover {
     background: var(--acm-accent-strong) !important;
+}
+
+/* Help icons (links to the ST docs) in the accent instead of the theme's quote color */
+#acm_popup .note-link-span,
+#acm_create_popup .note-link-span,
+#acm_character_popup .note-link-span {
+    color: var(--acm-accent);
 }
 
 #acm_create_popup .acm-popup-controls {

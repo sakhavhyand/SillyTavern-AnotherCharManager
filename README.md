@@ -45,7 +45,7 @@ You can also open it with the `/another-char-manager` slash command.
 
 Clicking on these buttons will open a pop-up window showing your characters. The badge on each card shows how many tags the character has.
 
-<img width="1706" height="450" alt="Image" src="https://github.com/user-attachments/assets/3b6eeaa1-197b-4eed-9dae-6de5b8cd32d2" />
+<img width="1023" height="271" alt="Image" src="https://github.com/user-attachments/assets/dd3ffde4-4739-4153-a564-c44387ad14ad" />
 
 * Sort alphabetically, by number of tags, recent chat, date added or number of tokens.
 * Search by name, creator, Creator's notes, tags, or all of them at once.
@@ -64,7 +64,7 @@ The tag button opens the tag query builder, to filter your characters by their t
 
 The filters stay active when the builder is closed: the badge on the tag button tells you how many are applied. The eraser clears them all, and the floppy disk saves them as a custom category in the preset of your choice.
 
-<img width="504" height="442" alt="Image" src="https://github.com/user-attachments/assets/22db2321-7354-4a88-aa1e-bc186e83680d" />
+<img width="457" height="337" alt="Image" src="https://github.com/user-attachments/assets/98b8e94e-8ac5-44c8-8587-ab0734298932" />
 
 ### Character details
 
@@ -72,11 +72,11 @@ When you select a character, its details are displayed at the bottom: avatar, in
 
 From there you can also add it to your favorites, open its chat, rename, export, duplicate or delete it, open its advanced definitions and replace its avatar (click on it). Click on the line above the details to close them.
 
-<img width="1153" height="630" alt="Image" src="https://github.com/user-attachments/assets/030761d4-e658-4d17-befc-cd6d100eaa9f" />
+<img width="1037" height="618" alt="Image" src="https://github.com/user-attachments/assets/3cb3392f-81d0-4fb8-ac94-3b8a66983f53" />
 
 The sections can be displayed stacked or as tabs (see Settings).
 
-<img width="1174" height="640" alt="Image" src="https://github.com/user-attachments/assets/6766045f-8d6a-4a86-88bf-53b11c816b50" />
+<img width="1044" height="627" alt="Image" src="https://github.com/user-attachments/assets/d4d2f872-e418-4932-b6fa-15c758eeffa8" />
 
 When you close and reopen ACM, it comes back where you left it: same character selected, same place in the list.
 
@@ -84,13 +84,14 @@ When you close and reopen ACM, it comes back where you left it: same character s
 
 The + button opens the creation window, with the main definitions and the advanced ones in two tabs.
 
-<img width="1148" height="1291" alt="Image" src="https://github.com/user-attachments/assets/d75052e2-1b7e-4b7c-97f2-ef4e147f4529" />
+<img width="935" height="1296" alt="Image" src="https://github.com/user-attachments/assets/e18b626a-5355-48ad-a8b8-e27e8f9da5ed" />
+
 
 ## Dropdown UI
 
 A secondary UI is available, allowing you to display your characters grouped in sections. Switch between both with the Switch UI button.
 
-<img width="421" height="191" alt="Image" src="https://github.com/user-attachments/assets/bb651d12-863e-4a5e-94bb-34e08fb609c9" />
+<img width="511" height="632" alt="Image" src="https://github.com/user-attachments/assets/8ad7b246-faf6-428e-ae5e-be454fcc8e3b" />
 
 * **All Tags**: one section per tag, drawn in the tag's colors.
 * **Creators**: one section per creator.
@@ -102,7 +103,7 @@ A secondary UI is available, allowing you to display your characters grouped in 
 
 Each category is defined by a tag query (mandatory / at least one / excluded tags). Create, rename, reorder and delete them from Manage Categories, or save your current tag query as a category from the tag query builder.
 
-<img width="502" height="617" alt="Image" src="https://github.com/user-attachments/assets/6a4495ad-6c9b-4b5a-bc74-1e2aa5c63430" />
+<img width="511" height="632" alt="Image" src="https://github.com/user-attachments/assets/8ad7b246-faf6-428e-ae5e-be454fcc8e3b" />
 
 ## Settings
 
@@ -116,9 +117,9 @@ The Settings button gives access to:
 
 <img width="308" height="276" alt="Image" src="https://github.com/user-attachments/assets/b26fe25a-2756-47b1-b3d8-dfc5b40ef2f0" />
 
-<img width="644" height="354" alt="Image" src="https://github.com/user-attachments/assets/eed5c181-2986-4651-8285-225df11d19fd" />
+<img width="606" height="358" alt="Image" src="https://github.com/user-attachments/assets/919437a3-f27a-483d-ab84-71de6d9ce4ec" />
 
-<img width="1145" height="379" alt="Image" src="https://github.com/user-attachments/assets/d5980636-1896-407f-aabf-ef13a547b617" />
+<img width="859" height="400" alt="Image" src="https://github.com/user-attachments/assets/b27c292c-e318-4b97-a40a-8fe9ed7198b8" />
 
 ## Support and Contributions
 

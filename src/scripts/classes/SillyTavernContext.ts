@@ -78,6 +78,9 @@ export class SillyTavernContext {
     }
 
     callGenericPopup(...args: any[]): Promise<any> {
+        // Marks ACM's popups so their main button can take the accent (see modal.css)
+        if (typeof args[0] === 'string') args[0] = `<div class="acm-st-popup">${args[0]}</div>`;
+        else if (args[0] instanceof jQuery) (args[0] as JQuery).addClass('acm-st-popup');
         return this.ctx.callGenericPopup(...args);
     }
 
