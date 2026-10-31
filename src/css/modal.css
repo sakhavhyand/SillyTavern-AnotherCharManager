@@ -52,10 +52,10 @@
     right: 0;
     top: 50%;
     transform: translateY(-50%);
-    border: 2px solid var(--SmartThemeBorderColor);
+    /* Width preview outline: drawn with the accent */
+    border: 2px solid var(--acm-accent);
     border-radius: var(--acm-border-radius-lg);
-    background-color: rgba(var(--SmartThemeBorderColor));
-    box-shadow: 0 0 8px 6px rgba(80, 255, 240, 0.3);
+    box-shadow: 0 0 8px 6px var(--acm-accent-soft);
     pointer-events: none;
     z-index: 9001;
     display: none;
@@ -318,6 +318,11 @@
 
 /* ===== SETTINGS POPUP ===== */
 
+/* Lets the accent color picker's panel extend past the menu */
+#acm-settings-popup {
+    overflow: visible;
+}
+
 .acm-settings-row {
     display: flex;
     align-items: center;
@@ -345,6 +350,18 @@
     flex-shrink: 0;
     min-width: 36px;
     text-align: right;
+}
+
+/* Accent color: the picker takes the slider's place, the reset button the value's */
+#acm_accentColor_slot {
+    flex: 1 1 auto;
+    display: flex;
+}
+
+#acm_accentColor_reset {
+    flex-shrink: 0;
+    min-width: 36px;
+    margin: 0;
 }
 
 .acm-settings-label {

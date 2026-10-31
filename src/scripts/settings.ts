@@ -13,9 +13,13 @@ export interface DropdownPreset {
     categories: string[];
 }
 
+/** Default accent color, same as --acm-accent in utils.css. */
+export const DEFAULT_ACCENT_COLOR = '#667eea';
+
 export interface ExtensionSettings {
     popupWidth: number;
     cardsPerRow: number;
+    accentColor: string;
     sortingField: string;
     sortingOrder: 'asc' | 'desc';
     favOnly: boolean;
@@ -54,6 +58,7 @@ export interface CreateData {
 export const defaultSettings: Readonly<ExtensionSettings> = Object.freeze({
     popupWidth: 50,
     cardsPerRow: 5,
+    accentColor: DEFAULT_ACCENT_COLOR,
     sortingField: 'name',
     sortingOrder: 'asc',
     favOnly: false,

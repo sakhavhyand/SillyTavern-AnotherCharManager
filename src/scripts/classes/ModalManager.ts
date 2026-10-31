@@ -3,6 +3,7 @@ import { CharCreationManager } from './CharCreationManager';
 import { PresetManager } from './PresetManager';
 import { TagManager } from './TagManager';
 import { CharListManager } from './CharListManager';
+import { DEFAULT_ACCENT_COLOR } from '../settings';
 const { Popper } = SillyTavern.libs;
 
 export class ModalManager {
@@ -64,6 +65,15 @@ export class ModalManager {
         const initialWidth = this.settings.getSetting('popupWidth');
         $('#acm_popup').css('width', initialWidth + '%');
         $('#acm_widthSlider').val(initialWidth);
+
+        // ST's color picker (as in its tag manager), with transparency. Created here:
+        // the template is sanitized, which strips custom elements.
+        const accentColor = this.getAccentColor();
+        this.applyAccentColor(accentColor);
+        const $picker = $('<toolcool-color-picker id="acm_accentColor"></toolcool-color-picker>')
+            .attr({ color: accentColor, title: 'Color of the selection, active states and main buttons', 'popup-position': 'right' })
+            .appendTo('#acm_accentColor_slot');
+        this.openPickerPanelUpward($picker[0]);
 
 
         // Put the button before rm_button_group_chats in the form_character_search_form
@@ -375,6 +385,20 @@ export class ModalManager {
             this.eventManager.emit('charList:setCardsPerRow', { cols, persist: true });
         });
 
+        // Accent color: ST's picker fires 'change' continuously while picking, so the UI
+        // follows live; the save itself is debounced by ST
+        $('#acm_accentColor').on('change', (event: any) => {
+            const color = event.detail?.rgba;
+            if (!this.isValidColor(color)) return;
+            this.applyAccentColor(color);
+            if (color !== this.settings.getSetting('accentColor')) this.settings.updateSetting('accentColor', color);
+        });
+
+        // Setting the picker's color fires its 'change', which applies and saves it
+        $('#acm_accentColor_reset').on('click', () => {
+            ($('#acm_accentColor')[0] as any).color = DEFAULT_ACCENT_COLOR;
+        });
+
         this.eventManager.on('modal:closeDetails', () => {
             this.closeDetails();
         });
@@ -382,6 +406,52 @@ export class ModalManager {
         this.eventManager.on('modal:close', () => {
             this.closeModal();
         });
+    }
+
+    /**
+     * Returns the saved accent color, or the default one if it's missing or not a valid color.
+     */
+    getAccentColor(): string {
+        const color = this.settings.getSetting('accentColor');
+        return this.isValidColor(color) ? color : DEFAULT_ACCENT_COLOR;
+    }
+
+    /**
+     * The picker's panel always opens below it, off screen from the settings menu at the
+     * bottom of the popup. It has no option for that, so each panel it creates (in its open
+     * shadow DOM, on every opening) gets a style. Watched rather than on click: the picker
+     * stops its clicks from reaching outside.
+     */
+    openPickerPanelUpward(picker: HTMLElement): void {
+        const pickerRoot = picker.shadowRoot;
+        if (!pickerRoot) return;
+        const styleNewPanels = (): void => {
+            pickerRoot.querySelectorAll('toolcool-color-picker-popup').forEach(panel => {
+                const panelRoot = panel.shadowRoot;
+                if (!panelRoot || panelRoot.getElementById('acm_panel_upward')) return;
+                const style = document.createElement('style');
+                style.id = 'acm_panel_upward';
+                style.textContent = '.popup { top: auto; bottom: calc(100% - 1px); }';
+                panelRoot.append(style);
+            });
+        };
+        new MutationObserver(styleNewPanels).observe(pickerRoot, { childList: true, subtree: true });
+        styleNewPanels();
+    }
+
+    /**
+     * Whether the value is a single CSS color (hex, rgb(a)...), safe to put in --acm-accent.
+     */
+    isValidColor(color: unknown): color is string {
+        return typeof color === 'string' && color.trim() !== '' && CSS.supports('color', color);
+    }
+
+    /**
+     * Sets --acm-accent on the root element. Its shades (--acm-accent-strong...) are derived
+     * from it on :root with color-mix(), so they follow.
+     */
+    applyAccentColor(color: string): void {
+        document.documentElement.style.setProperty('--acm-accent', color);
     }
 
     /**
