@@ -118,8 +118,7 @@ The Settings button gives access to:
 
 <img width="644" height="354" alt="Image" src="https://github.com/user-attachments/assets/eed5c181-2986-4651-8285-225df11d19fd" />
 
-<!-- SCREENSHOT 11: the Empty list messages editor -->
-> 📷 *Screenshot 11: the empty list messages editor (TODO)*
+<img width="1145" height="379" alt="Image" src="https://github.com/user-attachments/assets/d5980636-1896-407f-aabf-ef13a547b617" />
 
 ## Support and Contributions
 
