@@ -11,12 +11,13 @@ SillyTavern ACM is an extension which provides a different way to manage your ch
 I've decided to work on it to have something that better suits my needs, because I have way too many characters and most of them are not/poorly tagged.
 
 * With ACM, you can sort by the number of tags characters have, for example, to find those without tags.
-* Editing tags on a character does not load their chat, so it won't change the chat recent history.
-* You can edit the description, first message, alternative greetings and Creator's notes.
+* Browsing and editing characters never changes the character of your open chat, so it won't change the chat recent history.
+* You can edit the description, first message, alternative greetings, Creator's notes and the advanced definitions.
 * You can create, rename, duplicate, delete, export and import characters.
-* Access the advanced definitions window.
-* Open a character chat.
-* Replace the avatar (check prerequisites)
+* Replace the avatar (check prerequisites).
+* Filter characters with a tag query (mandatory / at least one / excluded tags) and save it as a custom category.
+* Browse your characters by tags, by creators or by your own custom categories.
+* Make it yours: cards per row, window width, details layout, accent color and even the messages shown when nothing matches.
 
 ## Prerequisites
 
@@ -38,38 +39,87 @@ But also in the extension menu next to the chat.
 
 <img width="327" height="116" alt="image" src="https://github.com/user-attachments/assets/12f77921-d702-457b-a7c6-d78220f626f1" />
 
-Clicking on these buttons will open a pop-up window showing your characters and the number of tags they currently have.
+You can also open it with the `/another-char-manager` slash command.
 
-<img width="948" height="304" alt="ST1" src="https://github.com/user-attachments/assets/d03acc85-762a-4097-99bc-de1f2d9f7f89" />
+### The character list
 
-* You can sort alphabetically, number of tags, recent chat or date added.<br/>
-* You also have access to a search bar, the Manage Tags menu and import buttons (file and URL).
-* Favorites are also highlighted, and you can filter to only display them.
+Clicking on these buttons will open a pop-up window showing your characters. The badge on each card shows how many tags the character has.
 
-When you select a character, basic information about the character is displayed at the bottom, including its tags, description and greetings(Alternative greetings are read-only).
-You can also rename, export, duplicate, delete the selected character among other functionalities.
+<img width="1706" height="450" alt="Image" src="https://github.com/user-attachments/assets/3b6eeaa1-197b-4eed-9dae-6de5b8cd32d2" />
 
-<img width="971" height="345" alt="ST2" src="https://github.com/user-attachments/assets/fd6859ae-b3f1-4337-81ae-28761cf76c83" />
+* Sort alphabetically, by number of tags, recent chat, date added or number of tokens.
+* Search by name, creator, Creator's notes, tags, or all of them at once.
+* Favorites are highlighted with a golden border, and you can filter to only display them.
+* The dice picks a random character among the ones listed.
+* The toolbar also gives access to the Manage Tags menu and the import buttons (file and URL).
+* The fade at the bottom of the list tells you there are more characters below.
 
-## Slash command
+### Tag query
 
-You can also invok the windows using the `/another-char-manager` slash command.
+The tag button opens the tag query builder, to filter your characters by their tags:
 
-## Unique Features
+* **Mandatory tags**: the character must have all of them.
+* **At least one tag**: the character must have one of them.
+* **Excluded tags**: the character must have none of them.
 
-A secondary UI is available, allowing you to display your characters groups by custom categories.
+The filters stay active when the builder is closed: the badge on the tag button tells you how many are applied. The eraser clears them all, and the floppy disk saves them as a custom category in the preset of your choice.
 
-<img width="430" height="201" alt="image" src="https://github.com/user-attachments/assets/31bfac4c-5903-47fc-a9fe-225f9701689d" />
+<img width="504" height="442" alt="Image" src="https://github.com/user-attachments/assets/22db2321-7354-4a88-aa1e-bc186e83680d" />
 
-* Two defined presets: By Tags and by Author
-* Up to five custom presets
+### Character details
 
-<img width="494" height="315" alt="image" src="https://github.com/user-attachments/assets/66be41c2-b0bd-4d4b-a599-df44daf73967" />
+When you select a character, its details are displayed at the bottom: avatar, information, tags, description, first message, alternative greetings and Creator's notes. Everything can be edited directly, changes are saved automatically.
 
-You can also resize the window, useful if you have a widescreen monitor.
+From there you can also add it to your favorites, open its chat, rename, export, duplicate or delete it, open its advanced definitions and replace its avatar (click on it). Click on the line above the details to close them.
 
-<img width="221" height="60" alt="image" src="https://github.com/user-attachments/assets/2d9b2b1b-2ce1-4dcb-8c5c-815b56f0add4" />
+<img width="1153" height="630" alt="Image" src="https://github.com/user-attachments/assets/030761d4-e658-4d17-befc-cd6d100eaa9f" />
 
+The sections can be displayed stacked or as tabs (see Settings).
+
+<img width="1174" height="640" alt="Image" src="https://github.com/user-attachments/assets/6766045f-8d6a-4a86-88bf-53b11c816b50" />
+
+When you close and reopen ACM, it comes back where you left it: same character selected, same place in the list.
+
+### Character creation
+
+The + button opens the creation window, with the main definitions and the advanced ones in two tabs.
+
+<img width="1148" height="1291" alt="Image" src="https://github.com/user-attachments/assets/d75052e2-1b7e-4b7c-97f2-ef4e147f4529" />
+
+## Dropdown UI
+
+A secondary UI is available, allowing you to display your characters grouped in sections. Switch between both with the Switch UI button.
+
+<img width="421" height="191" alt="Image" src="https://github.com/user-attachments/assets/bb651d12-863e-4a5e-94bb-34e08fb609c9" />
+
+* **All Tags**: one section per tag, drawn in the tag's colors.
+* **Creators**: one section per creator.
+* **Custom Categories**: your own sections, up to five presets.
+
+<img width="1148" height="652" alt="Image" src="https://github.com/user-attachments/assets/a4a6f89b-e352-41a0-96a7-044c18813b9f" />
+
+### Custom categories
+
+Each category is defined by a tag query (mandatory / at least one / excluded tags). Create, rename, reorder and delete them from Manage Categories, or save your current tag query as a category from the tag query builder.
+
+<img width="502" height="617" alt="Image" src="https://github.com/user-attachments/assets/6a4495ad-6c9b-4b5a-bc74-1e2aa5c63430" />
+
+## Settings
+
+The Settings button gives access to:
+
+* **Width**: the width of the window, useful if you have a widescreen monitor.
+* **Cards per row**: how many characters are displayed on each row.
+* **Details panel**: stacked sections or tabs.
+* **Accent color**: the color of the selection, active states and main buttons. Transparency is supported.
+* **Empty list**: the messages shown when no character matches. One is picked at random, and SillyTavern macros such as `{{user}}` can be used.
+
+<img width="308" height="276" alt="Image" src="https://github.com/user-attachments/assets/b26fe25a-2756-47b1-b3d8-dfc5b40ef2f0" />
+
+<img width="644" height="354" alt="Image" src="https://github.com/user-attachments/assets/eed5c181-2986-4651-8285-225df11d19fd" />
+
+<!-- SCREENSHOT 11: the Empty list messages editor -->
+> 📷 *Screenshot 11: the empty list messages editor (TODO)*
 
 ## Support and Contributions
 
