@@ -312,7 +312,7 @@ export class ModalManager {
             const drawer = this.parentElement;
             if (drawer?.parentElement !== descElement) return;
             // Let the expand / add greeting buttons do their own thing
-            if ($(event.target).closest('.editor_maximize, .fa-circle-plus').length) return;
+            if ($(event.target).closest('.editor_maximize, .acm-add-alt-greeting').length) return;
             event.stopPropagation();
 
             const expand = !$(this).find('.idit').hasClass('up');

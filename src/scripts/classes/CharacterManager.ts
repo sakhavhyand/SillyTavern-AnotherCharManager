@@ -203,14 +203,16 @@ export class CharacterManager {
             this.saveAltGreetings(event);
         });
 
+        // ACM's own classes, listened to inside the popup only: generic icon classes
+        // (fa-circle-plus...) would also catch clicks in other extensions
         // Add a new alternative greetings
-        $(document).on('click', '.fa-circle-plus, .acm-add-alt-greeting', async (event: JQuery.TriggeredEvent) => {
+        $('#acm_popup').on('click', '.acm-add-alt-greeting', async (event: JQuery.TriggeredEvent) => {
             event.stopPropagation();
             this.addAltGreeting();
         });
 
         // Delete an alternative greetings
-        $(document).on('click', '.fa-circle-minus', (event: JQuery.TriggeredEvent) => {
+        $('#acm_popup').on('click', '.acm-del-alt-greeting', (event: JQuery.TriggeredEvent) => {
             event.stopPropagation();
             const element = event.currentTarget;
             const inlineDrawer = (element as HTMLElement).closest('.inline-drawer');
@@ -830,7 +832,7 @@ export class CharacterManager {
                         <span class="tokens_count drawer-header-item">Tokens: ${await this.st.getTokenCountAsync(this.st.substituteParams(item[i]))}</span>
                     </div>
                     <div class="altGreetings_buttons">
-                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
+                        <i class="inline-drawer-icon fa-solid fa-circle-minus acm-del-alt-greeting" title="Delete this greeting"></i>
                         <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
                     </div>
                 </div>
@@ -868,7 +870,7 @@ export class CharacterManager {
                         <span class="tokens_count drawer-header-item">Tokens: 0</span>
                     </div>
                     <div class="altGreetings_buttons">
-                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
+                        <i class="inline-drawer-icon fa-solid fa-circle-minus acm-del-alt-greeting" title="Delete this greeting"></i>
                         <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
                     </div>
                 </div>
