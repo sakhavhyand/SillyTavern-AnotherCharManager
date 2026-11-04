@@ -33,6 +33,7 @@ interface Window {
         UISub: any;
         UIPreset: any;
         Settings: any;
+        Tools: any;
     };
     acmIsUpdatingDetails: boolean;
 }

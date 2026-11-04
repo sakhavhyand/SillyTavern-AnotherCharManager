@@ -1,0 +1,155 @@
+/* ===== SMALL SCREENS =====
+   ModalManager.initializeResponsiveMode() puts one class on #acm_popup:
+   - .acm-mobile:  phone in portrait (width <= 600px)
+   - .acm-compact: tablet or phone in landscape (width <= 1024px or height <= 500px)
+   Neither class: desktop, nothing here applies. */
+
+/* ----- Popup width ----- */
+
+/* Phone: full screen, the width setting is ignored (but kept for the desktop) */
+#acm_popup.acm-mobile {
+    width: 100% !important;
+    height: 100dvh;
+    top: 0;
+    box-sizing: border-box;
+    padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+#acm_popup.acm-mobile .list-character-wrapper {
+    padding: 0 6px;
+}
+
+/* The width setting has no effect on a phone: hide it and its separator */
+body:has(#acm_popup.acm-mobile) #acm_popup_width_row,
+body:has(#acm_popup.acm-mobile) #acm_popup_width_row + .dropdown-separator {
+    display: none;
+}
+
+/* ----- Toolbar -----
+   Desktop: a single row. Small screens: two rows
+     1. search (filter + text) | more actions
+     2. character count | sort | tag filters | favourites | random | create
+   Import from file / URL and Manage tags move to the "more actions" menu. */
+
+#acm_popup:not(.acm-mobile, .acm-compact) #acm_toolbar_more {
+    display: none;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .sortAndFilter {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 0;
+}
+
+/* The form's children become items of the toolbar, so #charNumber can join row 2 */
+#acm_popup:is(.acm-mobile, .acm-compact) .form_sort_filter {
+    display: contents;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) :is(
+    #acm_character_import_button,
+    #acm_external_import_button,
+    #acm_tags_view,
+    .acm_toolbar_separator,
+    .sortText) {
+    display: none;
+}
+
+/* Buttons: square, finger-sized, spaced by the gap instead of their own margins */
+#acm_popup:is(.acm-mobile, .acm-compact) .sortAndFilter .menu_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: 38px;
+    height: 38px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Row 1: the search takes all the width left by the "more" button, which pushes row 2 down */
+#acm_popup:is(.acm-mobile, .acm-compact) label[for="char_search_bar"] {
+    order: 1;
+    flex: 1 1 calc(100% - 48px);
+    min-width: 0;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_toolbar_more {
+    order: 2;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #charNumber {
+    order: 3;
+    flex-shrink: 0;
+    min-width: 0;
+    margin: 0;
+    padding: 0 2px;
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+/* "12/12" instead of "Characters: 12/12" (the full text stays in the tooltip) */
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_charNumber_label {
+    display: none;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #char_sort_order {
+    order: 4;
+    flex: 1 1 0;
+    min-width: 70px;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_tags_filter { order: 5; }
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_fav_filter_button { order: 6; }
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_random_button { order: 7; }
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_character_create_button { order: 8; }
+
+#acm_popup:is(.acm-mobile, .acm-compact) :is(#char_sort_order, #char_search_bar, #search_filter_dropdown) {
+    box-sizing: border-box;
+    height: 38px;
+    margin: 0;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .search-with-dropdown {
+    width: 100%;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #search_filter_dropdown {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 40%;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #char_search_bar {
+    min-width: 0;
+}
+
+/* Landscape phone: height is what's missing, so one row when the width allows it:
+     count | sort | search | tag filters | favourites | random | create | more
+   The toolbar still wraps if the popup is too narrow. */
+@media (max-height: 500px) {
+    #acm_popup.acm-compact #charNumber { order: 1; }
+    /* Bases sized so the row fits a ~480px popup (default width on an 844px wide phone) */
+    #acm_popup.acm-compact #char_sort_order { order: 2; flex: 0 1 90px; }
+
+    #acm_popup.acm-compact label[for="char_search_bar"] {
+        order: 3;
+        flex: 1 1 0;
+        min-width: 120px;
+    }
+
+    #acm_popup.acm-compact #acm_tags_filter { order: 4; }
+    #acm_popup.acm-compact #acm_fav_filter_button { order: 5; }
+    #acm_popup.acm-compact #acm_random_button { order: 6; }
+    #acm_popup.acm-compact #acm_character_create_button { order: 7; }
+    #acm_popup.acm-compact #acm_toolbar_more { order: 8; }
+
+    #acm_popup.acm-compact #search_filter_dropdown {
+        max-width: 35%;
+    }
+}

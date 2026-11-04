@@ -202,7 +202,11 @@ export class CharListManager {
         // Same in both UIs: the dropdown views are built from the same filtered list
         const count = this.hasActiveFilters() ? visibleCount : total;
 
-        $('#charNumber').empty().append(`Characters: ${count}/${total}`);
+        // The label is in its own span so small screens can hide it (responsive.css)
+        $('#charNumber')
+            .attr('title', `Characters: ${count}/${total}`)
+            .empty()
+            .append('<span class="acm_charNumber_label">Characters: </span>', `${count}/${total}`);
     }
 
     /**

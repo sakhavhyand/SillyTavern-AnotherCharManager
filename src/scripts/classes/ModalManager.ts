@@ -6,6 +6,10 @@ import { CharListManager } from './CharListManager';
 import { DEFAULT_ACCENT_COLOR } from '../settings';
 const { Popper } = SillyTavern.libs;
 
+// Screen modes, see applyResponsiveMode() and css/responsive.css
+const MOBILE_QUERY = '(max-width: 600px)';
+const COMPACT_QUERY = '(max-width: 1024px), (max-height: 500px)';
+
 export class ModalManager {
     eventManager: any;
     settings: any;
@@ -79,6 +83,8 @@ export class ModalManager {
         // Put the button before rm_button_group_chats in the form_character_search_form
         $('#rm_button_group_chats').before('<button id="acm-manager" class="menu_button fa-solid fa-users faSmallFontSquareFix" title="Open Char Manager"></button>');
 
+        this.initializeResponsiveMode();
+
         // Initialize popper.js for dropdowns
         this.initializePoppers();
         this.initializeModalEvents();
@@ -88,6 +94,29 @@ export class ModalManager {
         this.tagManager.init();
         this.presetManager.init();
         this.charListManager.init();
+    }
+
+    /**
+     * Tags the popup with the screen mode so the CSS (responsive.css) and the code share
+     * one set of breakpoints: acm-mobile (phone, portrait) or acm-compact (tablet, landscape phone).
+     */
+    initializeResponsiveMode(): void {
+        const apply = () => this.applyResponsiveMode();
+        window.matchMedia(MOBILE_QUERY).addEventListener('change', apply);
+        window.matchMedia(COMPACT_QUERY).addEventListener('change', apply);
+        // Some resizes (device emulation, a width and a height changing together) don't fire 'change'
+        window.addEventListener('resize', apply);
+        apply();
+    }
+
+    /**
+     * Sets acm-mobile / acm-compact on the popup from the current screen size.
+     */
+    applyResponsiveMode(): void {
+        const isMobile = window.matchMedia(MOBILE_QUERY).matches;
+        $('#acm_popup')
+            .toggleClass('acm-mobile', isMobile)
+            .toggleClass('acm-compact', !isMobile && window.matchMedia(COMPACT_QUERY).matches);
     }
 
     /**
@@ -126,6 +155,13 @@ export class ModalManager {
             { placement: 'top-end' },
         );
 
+        // Small screens: the toolbar actions that don't fit go in this menu
+        const Tools = Popper.createPopper(
+            document.getElementById('acm_toolbar_more')!,
+            document.getElementById('acm-toolbar-menu')!,
+            { placement: 'bottom-end' },
+        );
+
         // Store poppers for later use
         window.acmPoppers = {
             Export,
@@ -133,6 +169,7 @@ export class ModalManager {
             UISub,
             UIPreset,
             Settings,
+            Tools,
         };
     }
 
@@ -140,6 +177,8 @@ export class ModalManager {
      * Opens a modal window and initializes its contents and settings.
      */
     openModal(): void {
+        // The screen may have changed while the popup was closed without a resize reaching us
+        this.applyResponsiveMode();
         document.querySelector('#acm_lock')!.classList.add('is-active');
 
         // Display the modal with our list layout
@@ -252,6 +291,10 @@ export class ModalManager {
                 element: '#acm-settings-popup',
                 popper: 'Settings',
             },
+            tools: {
+                element: '#acm-toolbar-menu',
+                popper: 'Tools',
+            },
         };
 
         if (closeAll) {
@@ -286,7 +329,9 @@ export class ModalManager {
             'acm_export_format_popup',
             'acm_export_button',
             'acm-settings-popup',
-            'acm_settings_button']
+            'acm_settings_button',
+            'acm-toolbar-menu',
+            'acm_toolbar_more']
             .map(id => document.getElementById(id));
 
         return (event: MouseEvent) => {
@@ -488,6 +533,15 @@ export class ModalManager {
         });
         $('#acm_settings_button').on('click', () => {
             this.toggleDropdownMenus({ menuToToggle: 'settings' });
+        });
+        $('#acm_toolbar_more').on('click', () => {
+            this.toggleDropdownMenus({ menuToToggle: 'tools' });
+        });
+        // Each entry of the toolbar menu runs the toolbar button it stands for (hidden on small screens)
+        $('#acm-toolbar-menu').on('click', '.dropdown-ui-item[data-acm-target]', (event: JQuery.TriggeredEvent) => {
+            const target = $(event.currentTarget).data('acm-target') as string;
+            this.toggleDropdownMenus({ closeAll: true });
+            $(`#${target}`).trigger('click');
         });
         $('#acm_dropdown_sub').on('click', () => {
             this.toggleDropdownMenus({ menuToToggle: 'sub' });

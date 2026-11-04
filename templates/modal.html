@@ -37,6 +37,7 @@
                 <div class="acm_toolbar_separator"></div>
                 <div id="acm_fav_filter_button" class="menu_button fa-solid fa-star fav_off faSmallFontSquareFix acm_toolbar_button" title="Show favourites only" data-i18n="[title]Show favourites only" aria-pressed="false"></div>
                 <div id="acm_random_button" class="menu_button fa-solid fa-dice faSmallFontSquareFix acm_toolbar_button" title="Random character" data-i18n="[title]Random character"></div>
+                <div id="acm_toolbar_more" class="menu_button fa-solid fa-ellipsis-vertical faSmallFontSquareFix acm_toolbar_button" title="More actions" data-i18n="[title]More actions"></div>
             </form>
             <span id="charNumber"></span>
         </div>
@@ -252,10 +253,15 @@
     <div class="dropdown-ui-item" data-ui="preset" data-preset="3"><i class="acm-menu-check fa-solid fa-check"></i><span class="acm-menu-label">Preset 4</span></div>
     <div class="dropdown-ui-item" data-ui="preset" data-preset="4"><i class="acm-menu-check fa-solid fa-check"></i><span class="acm-menu-label">Preset 5</span></div>
 </div>
+<div id="acm-toolbar-menu" class="dropdown-ui-menu list-group">
+    <div class="dropdown-ui-item" data-acm-target="acm_character_import_button"><i class="acm-menu-check acm-menu-icon fa-solid fa-file-import"></i><span class="acm-menu-label">Import from file</span></div>
+    <div class="dropdown-ui-item" data-acm-target="acm_external_import_button"><i class="acm-menu-check acm-menu-icon fa-solid fa-cloud-arrow-down"></i><span class="acm-menu-label">Import from URL</span></div>
+    <div class="dropdown-ui-item" data-acm-target="acm_tags_view"><i class="acm-menu-check acm-menu-icon fa-solid fa-gear"></i><span class="acm-menu-label">Manage tags</span></div>
+</div>
 <div id="acm-settings-popup" class="dropdown-ui-menu list-group">
-    <div class="acm-settings-row">
+    <div id="acm_popup_width_row" class="acm-settings-row">
         <label for="acm_widthSlider">Width</label>
-        <input id="acm_widthSlider" max="90" min="50" type="range" value="50">
+        <input id="acm_widthSlider" max="100" min="50" type="range" value="50">
         <span id="acm_widthValue">50%</span>
     </div>
     <hr class="dropdown-separator">
