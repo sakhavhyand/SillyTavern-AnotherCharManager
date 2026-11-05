@@ -1,7 +1,7 @@
 /* ===== SMALL SCREENS =====
    ModalManager.initializeResponsiveMode() puts one class on #acm_popup:
    - .acm-mobile:  phone, in portrait (width <= 600px) or landscape (height <= 500px)
-   - .acm-compact: tablet (width <= 1024px)
+   - .acm-compact: tablet (width <= 1024px, or a touch screen up to 1366px wide)
    Neither class: desktop, nothing here applies. */
 
 /* ----- Popup width ----- */
@@ -101,8 +101,9 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
 #acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_link { order: 8; }
 
 /* Landscape phone: too short to stack them, the summary and the sections sit side by side,
-   each scrolling on its own, under the back button */
-@media (max-height: 500px) and (min-width: 601px) {
+   each scrolling on its own, under the back button (by orientation, not width: small
+   phones are under 600px wide even in landscape) */
+@media (max-height: 500px) and (orientation: landscape) {
     #acm_popup.acm-mobile #char-details.open {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -346,20 +347,40 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
 
 /* Details action buttons: finger-sized, spread over the row */
 #acm_popup:is(.acm-mobile, .acm-compact) #acm_details_buttons_block {
+    flex-wrap: nowrap;
     justify-content: space-between;
     gap: 4px;
 }
 
+/* 40px wide, narrower (down to 32px) rather than wrapping on the smallest phones */
 #acm_popup:is(.acm-mobile, .acm-compact) #acm_details_buttons_block .menu_button {
     display: flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
-    width: 40px;
+    flex: 0 1 40px;
+    min-width: 32px;
+    width: auto;
     height: 40px;
     margin: 0;
     padding: 0;
     font-size: 1.1em;
+}
+
+/* Narrow tab bar, whatever the mode (tablet details column, narrow desktop popup):
+   the short labels, as the full ones would be cut */
+#char-details-desc {
+    container: acm-desc / inline-size;
+}
+
+@container acm-desc (max-width: 440px) {
+    .acm-tab-label {
+        display: none;
+    }
+
+    .acm-tab-label-short {
+        display: inline;
+    }
 }
 
 /* Phone tabs: short labels, so each title holds on one line and the tabs stay low */

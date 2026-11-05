@@ -9,7 +9,9 @@ const { Popper } = SillyTavern.libs;
 // Screen modes, see applyResponsiveMode() and css/responsive.css
 // Mobile: phone in portrait (narrow) or in landscape (short)
 const MOBILE_QUERY = '(max-width: 600px), (max-height: 500px)';
-const COMPACT_QUERY = '(max-width: 1024px)';
+// Tablet: narrow, or a touch screen (primary pointer, so not a touch laptop used with its
+// touchpad) up to 1366px wide, i.e. tablets in landscape
+const COMPACT_QUERY = '(max-width: 1024px), (pointer: coarse) and (max-width: 1366px)';
 
 export class ModalManager {
     eventManager: any;
