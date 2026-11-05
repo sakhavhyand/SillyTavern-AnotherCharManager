@@ -8,6 +8,8 @@ const { Fuse } = SillyTavern.libs;
 const CARD_GAP_RATIO = 0.19;
 /** Default --acm-card-width (see charactersList.css). */
 const DEFAULT_CARD_WIDTH = 110;
+/** Cards per row on a phone (popup tagged acm-mobile), whatever the cards-per-row setting. */
+const MOBILE_CARDS_PER_ROW = 3;
 
 export class CharListManager {
     eventManager: any;
@@ -491,7 +493,7 @@ export class CharListManager {
                 renderItem: (item: any) => this.createCharacterBlock(item),
                 getItemVersion: (item: any) => this.getCardVersion(item),
                 itemHeight: 180, // Height of a line of cards
-                itemsPerRow: this.clampCardsPerRow(this.settings.getSetting('cardsPerRow')),
+                itemsPerRow: this.getDisplayedCardsPerRow(),
                 buffer: 3, // Preload 3 lines before/after
                 // Card width is derived from the container width, so re-solve
                 // it whenever the list is resized (window, popup width, details panel...)
@@ -524,6 +526,17 @@ export class CharListManager {
     }
 
     /**
+     * Cards per row actually displayed: the setting (or `cols`), except on a phone where
+     * the screen is too narrow for it and MOBILE_CARDS_PER_ROW is used. The setting is kept.
+     */
+    getDisplayedCardsPerRow(cols?: number): number {
+        if (document.getElementById('acm_popup')?.classList.contains('acm-mobile')) {
+            return MOBILE_CARDS_PER_ROW;
+        }
+        return this.clampCardsPerRow(cols ?? this.settings.getSetting('cardsPerRow'));
+    }
+
+    /**
      * Sets the --acm-card-width value that fits exactly `cols` cards per row,
      * then refreshes the virtual scroller so it re-measures against the new size.
      *
@@ -534,7 +547,7 @@ export class CharListManager {
         const container = document.getElementById('character-list');
         if (!container) return;
 
-        const cardsPerRow = this.clampCardsPerRow(cols ?? this.settings.getSetting('cardsPerRow'));
+        const cardsPerRow = this.getDisplayedCardsPerRow(cols);
         const width = this.computeCardWidthForColumns(container, cardsPerRow);
         if (width !== null) {
             container.style.setProperty('--acm-card-width', String(width));

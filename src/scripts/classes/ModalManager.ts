@@ -114,9 +114,15 @@ export class ModalManager {
      */
     applyResponsiveMode(): void {
         const isMobile = window.matchMedia(MOBILE_QUERY).matches;
-        $('#acm_popup')
+        const $popup = $('#acm_popup');
+        const wasMobile = $popup.hasClass('acm-mobile');
+        $popup
             .toggleClass('acm-mobile', isMobile)
             .toggleClass('acm-compact', !isMobile && window.matchMedia(COMPACT_QUERY).matches);
+        // The number of cards per row depends on the mode (fixed on a phone)
+        if (wasMobile !== isMobile) {
+            this.charListManager?.applyCardWidthForColumns();
+        }
     }
 
     /**

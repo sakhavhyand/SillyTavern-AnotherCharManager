@@ -22,10 +22,40 @@
     padding: 0 6px;
 }
 
-/* The width setting has no effect on a phone: hide it and its separator */
-body:has(#acm_popup.acm-mobile) #acm_popup_width_row,
-body:has(#acm_popup.acm-mobile) #acm_popup_width_row + .dropdown-separator {
+/* The width and cards per row settings have no effect on a phone (full screen,
+   MOBILE_CARDS_PER_ROW in CharListManager): hide them and their separators */
+body:has(#acm_popup.acm-mobile) :is(#acm_popup_width_row, #acm_popup_cardsize),
+body:has(#acm_popup.acm-mobile) :is(#acm_popup_width_row, #acm_popup_cardsize) + .dropdown-separator {
     display: none;
+}
+
+/* ----- Character cards ----- */
+
+/* Names are clamped to 2 lines: always reserve both, so every row of the grid has the
+   same height whether its names wrap or not */
+#acm_popup:is(.acm-mobile, .acm-compact) .card__header-title {
+    min-height: 2.4em;
+}
+
+/* Touch screens: no hover, so a tapped card doesn't stay enlarged and highlighted */
+@media (hover: none) {
+    .card:hover {
+        transform: none;
+    }
+
+    /* Back to the resting colors, without touching the selected and favourite styles */
+    .card:not(.char_selected):hover {
+        background-color: var(--SmartThemeBlurTintColor);
+    }
+
+    .card:not(.char_selected, .fav):hover {
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .acm_avatarList:hover {
+        transform: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
 }
 
 /* ----- Toolbar -----
