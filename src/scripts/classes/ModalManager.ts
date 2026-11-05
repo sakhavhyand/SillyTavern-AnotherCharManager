@@ -256,6 +256,9 @@ export class ModalManager {
     closeDetails(): void {
         $('#acm_export_format_popup').hide();
         getCardElement(this.settings.selectedChar)?.classList.replace('char_selected', 'char_select');
+        // Phone: the details scroll as a whole (the summary in landscape), so the next
+        // opening must start at the top instead of where this one was left
+        $('#char-details, #char-details-block').scrollTop(0);
         document.getElementById('char-details')!.classList.remove('open');
         document.getElementById('char-sep')!.style.display = 'none';
         this.settings.setSelectedChar(undefined);
