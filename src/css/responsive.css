@@ -557,3 +557,11 @@ body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#acm_character_popup, #ac
 body:has(#acm_popup:is(.acm-mobile, .acm-compact)) #acm_character_cross {
     top: calc(4px + env(safe-area-inset-top));
 }
+
+/* Typing (ModalManager.initializeEditingState): the virtual keyboard takes half the screen,
+   so the footer and the separator above it give their room to the text */
+#acm_popup.acm-editing:is(.acm-mobile, .acm-compact) > .acm-popup-controls,
+#acm_popup.acm-editing:is(.acm-mobile, .acm-compact) .list-character-wrapper > .acm-zone-sep:last-child,
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) #acm_create_popup.acm-editing .acm-popup-controls {
+    display: none;
+}

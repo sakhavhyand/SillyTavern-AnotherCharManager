@@ -34,6 +34,8 @@ export class CharListManager {
     lastSession: { avatar: string | undefined; scrollTop: number } | null = null;
     /** Set when ACM opens, so the first list refresh restores `lastSession`. */
     restoreSessionPending: boolean = false;
+    /** Small screens: list height the cards are fitted to, kept while typing (see fitCardsPerRow). */
+    private smallScreenListHeight: number | null = null;
 
     /** Shown (one at random) when no character matches the search and filters. */
     static EMPTY_LIST_MESSAGES: readonly string[] = [
@@ -600,8 +602,14 @@ export class CharListManager {
      * (landscape phones) so that more than one row of cards is visible.
      */
     private fitCardsPerRow(container: HTMLElement): number {
-        // The list is the screen minus the toolbar and the footer
-        const listHeight = window.innerHeight - SMALL_SCREEN_CHROME_HEIGHT;
+        // The list is the screen minus the toolbar and the footer. While typing, the virtual
+        // keyboard shrinks the screen: keep the height from before, so the cards don't re-fit
+        // under the finger at each search
+        const typing = document.getElementById('acm_popup')?.classList.contains('acm-editing');
+        if (!typing || this.smallScreenListHeight === null) {
+            this.smallScreenListHeight = window.innerHeight - SMALL_SCREEN_CHROME_HEIGHT;
+        }
+        const listHeight = this.smallScreenListHeight;
         const target = Math.max(MIN_SMALL_CARD_WIDTH, Math.min(DEFAULT_CARD_WIDTH, listHeight / ROWS_HEIGHT_PER_CARD_WIDTH));
         const fitting = Math.floor(this.getContentWidth(container) / (target * (1 + CARD_GAP_RATIO)));
         return Math.max(MOBILE_MIN_CARDS_PER_ROW, fitting);

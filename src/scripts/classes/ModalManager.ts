@@ -13,6 +13,12 @@ const MOBILE_QUERY = '(max-width: 600px), (max-height: 500px)';
 // touchpad) up to 1366px wide, i.e. tablets in landscape
 const COMPACT_QUERY = '(max-width: 1024px), (pointer: coarse) and (max-width: 1366px)';
 
+// Swipe between the details tabs (initializeTabSwipe): minimum horizontal distance and
+// maximum duration, and the screen edges left to the system back gesture (px, ms, px)
+const SWIPE_MIN_DISTANCE = 60;
+const SWIPE_MAX_DURATION = 600;
+const SWIPE_EDGE_MARGIN = 24;
+
 export class ModalManager {
     eventManager: any;
     settings: any;
@@ -283,6 +289,67 @@ export class ModalManager {
     }
 
     /**
+     * Tags the popups with acm-editing while one of their text fields has the focus: on small
+     * screens the virtual keyboard then takes half the screen, so the CSS hides their footer.
+     * Reacting to the focus rather than detecting the keyboard also fits a physical keyboard.
+     */
+    initializeEditingState(): void {
+        const popups = '#acm_popup, #acm_character_popup, #acm_create_popup';
+        const isTextField = (el: Element | null) => !!el?.matches(
+            'textarea, [contenteditable="true"], input:not([type="range"], [type="checkbox"], [type="radio"], [type="file"], [type="color"], [type="button"])',
+        );
+        const update = () => {
+            const active = document.activeElement;
+            $(popups).each(function (this: HTMLElement) {
+                $(this).toggleClass('acm-editing', isTextField(active) && this.contains(active));
+            });
+        };
+        // focusout before the next focusin: wait for the new focus, so moving from one field
+        // to another doesn't show and hide the footer again
+        $(document).on('focusin', popups, update);
+        $(document).on('focusout', popups, () => setTimeout(update, 0));
+    }
+
+    /**
+     * Touch: a horizontal swipe on the details sections goes to the previous / next tab
+     * (tab view only). Kept clear of the screen edges (the system back gesture), of text
+     * selection and of vertical scrolling.
+     */
+    initializeTabSwipe(): void {
+        const desc = document.getElementById('char-details-desc');
+        if (!desc) return;
+        let start: { x: number; y: number; time: number } | null = null;
+
+        desc.addEventListener('touchstart', (event: TouchEvent) => {
+            const touch = event.touches[0];
+            const edge = SWIPE_EDGE_MARGIN;
+            start = event.touches.length === 1 && touch.clientX > edge && touch.clientX < window.innerWidth - edge
+                ? { x: touch.clientX, y: touch.clientY, time: Date.now() }
+                : null;
+        }, { passive: true });
+
+        desc.addEventListener('touchend', (event: TouchEvent) => {
+            if (!start || !desc.classList.contains('acm-tab-mode')) return;
+            const touch = event.changedTouches[0];
+            const dx = touch.clientX - start.x;
+            const dy = touch.clientY - start.y;
+            const quick = Date.now() - start.time < SWIPE_MAX_DURATION;
+            start = null;
+            if (!quick || Math.abs(dx) < SWIPE_MIN_DISTANCE || Math.abs(dx) < 2 * Math.abs(dy)) return;
+            // Selecting text with the finger moves horizontally too
+            if (window.getSelection()?.toString()) return;
+
+            const $tabs = $('#acm-desc-tab-bar .acm-tab-button');
+            const current = $tabs.index($tabs.filter('.active'));
+            // Swipe left: content comes from the right, so the next tab
+            const next = current + (dx < 0 ? 1 : -1);
+            if (next >= 0 && next < $tabs.length) $tabs.eq(next).trigger('click');
+        }, { passive: true });
+
+        desc.addEventListener('touchcancel', () => { start = null; }, { passive: true });
+    }
+
+    /**
      * Phone: the details and the advanced definitions / creation popups cover the screen,
      * so the system back button (Android) closes the top one instead of leaving the page.
      *
@@ -525,6 +592,8 @@ export class ModalManager {
         });
 
         this.initializeBackButton();
+        this.initializeEditingState();
+        this.initializeTabSwipe();
 
         const $slider = $('#acm_widthSlider');
         const $popup = $('#acm_popup');
