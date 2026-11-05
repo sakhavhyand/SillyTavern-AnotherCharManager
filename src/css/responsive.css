@@ -1,7 +1,7 @@
 /* ===== SMALL SCREENS =====
    ModalManager.initializeResponsiveMode() puts one class on #acm_popup:
-   - .acm-mobile:  phone in portrait (width <= 600px)
-   - .acm-compact: tablet or phone in landscape (width <= 1024px or height <= 500px)
+   - .acm-mobile:  phone, in portrait (width <= 600px) or landscape (height <= 500px)
+   - .acm-compact: tablet (width <= 1024px)
    Neither class: desktop, nothing here applies. */
 
 /* ----- Popup width ----- */
@@ -23,7 +23,7 @@
 }
 
 /* The width and cards per row settings have no effect on a phone (full screen,
-   MOBILE_CARDS_PER_ROW in CharListManager): hide them and their separators */
+   cards per row from the width, see CharListManager): hide them and their separators */
 body:has(#acm_popup.acm-mobile) :is(#acm_popup_width_row, #acm_popup_cardsize),
 body:has(#acm_popup.acm-mobile) :is(#acm_popup_width_row, #acm_popup_cardsize) + .dropdown-separator {
     display: none;
@@ -163,23 +163,23 @@ body:has(#acm_popup.acm-mobile) :is(#acm_popup_width_row, #acm_popup_cardsize) +
      count | sort | search | tag filters | favourites | random | create | more
    The toolbar still wraps if the popup is too narrow. */
 @media (max-height: 500px) {
-    #acm_popup.acm-compact #charNumber { order: 1; }
-    /* Bases sized so the row fits a ~480px popup (default width on an 844px wide phone) */
-    #acm_popup.acm-compact #char_sort_order { order: 2; flex: 0 1 90px; }
+    #acm_popup.acm-mobile #charNumber { order: 1; }
+    /* Bases kept small so the row also fits a narrow landscape phone (~480px) */
+    #acm_popup.acm-mobile #char_sort_order { order: 2; flex: 0 1 90px; }
 
-    #acm_popup.acm-compact label[for="char_search_bar"] {
+    #acm_popup.acm-mobile label[for="char_search_bar"] {
         order: 3;
         flex: 1 1 0;
         min-width: 120px;
     }
 
-    #acm_popup.acm-compact #acm_tags_filter { order: 4; }
-    #acm_popup.acm-compact #acm_fav_filter_button { order: 5; }
-    #acm_popup.acm-compact #acm_random_button { order: 6; }
-    #acm_popup.acm-compact #acm_character_create_button { order: 7; }
-    #acm_popup.acm-compact #acm_toolbar_more { order: 8; }
+    #acm_popup.acm-mobile #acm_tags_filter { order: 4; }
+    #acm_popup.acm-mobile #acm_fav_filter_button { order: 5; }
+    #acm_popup.acm-mobile #acm_random_button { order: 6; }
+    #acm_popup.acm-mobile #acm_character_create_button { order: 7; }
+    #acm_popup.acm-mobile #acm_toolbar_more { order: 8; }
 
-    #acm_popup.acm-compact #search_filter_dropdown {
+    #acm_popup.acm-mobile #search_filter_dropdown {
         max-width: 35%;
     }
 }

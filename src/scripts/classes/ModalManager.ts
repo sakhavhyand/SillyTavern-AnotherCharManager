@@ -7,8 +7,9 @@ import { DEFAULT_ACCENT_COLOR } from '../settings';
 const { Popper } = SillyTavern.libs;
 
 // Screen modes, see applyResponsiveMode() and css/responsive.css
-const MOBILE_QUERY = '(max-width: 600px)';
-const COMPACT_QUERY = '(max-width: 1024px), (max-height: 500px)';
+// Mobile: phone in portrait (narrow) or in landscape (short)
+const MOBILE_QUERY = '(max-width: 600px), (max-height: 500px)';
+const COMPACT_QUERY = '(max-width: 1024px)';
 
 export class ModalManager {
     eventManager: any;
@@ -98,7 +99,7 @@ export class ModalManager {
 
     /**
      * Tags the popup with the screen mode so the CSS (responsive.css) and the code share
-     * one set of breakpoints: acm-mobile (phone, portrait) or acm-compact (tablet, landscape phone).
+     * one set of breakpoints: acm-mobile (phone, portrait or landscape) or acm-compact (tablet).
      */
     initializeResponsiveMode(): void {
         const apply = () => this.applyResponsiveMode();

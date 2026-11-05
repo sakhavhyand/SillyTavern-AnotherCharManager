@@ -8,8 +8,8 @@ const { Fuse } = SillyTavern.libs;
 const CARD_GAP_RATIO = 0.19;
 /** Default --acm-card-width (see charactersList.css). */
 const DEFAULT_CARD_WIDTH = 110;
-/** Cards per row on a phone (popup tagged acm-mobile), whatever the cards-per-row setting. */
-const MOBILE_CARDS_PER_ROW = 3;
+/** Minimum cards per row on a phone (popup tagged acm-mobile), see getDisplayedCardsPerRow(). */
+const MOBILE_MIN_CARDS_PER_ROW = 3;
 
 export class CharListManager {
     eventManager: any;
@@ -526,12 +526,15 @@ export class CharListManager {
     }
 
     /**
-     * Cards per row actually displayed: the setting (or `cols`), except on a phone where
-     * the screen is too narrow for it and MOBILE_CARDS_PER_ROW is used. The setting is kept.
+     * Cards per row actually displayed: the setting (or `cols`), except on a phone where it's
+     * derived from the screen width instead: as many default-width cards as fit, at least
+     * MOBILE_MIN_CARDS_PER_ROW (3 in portrait, more in landscape). The setting is kept.
      */
     getDisplayedCardsPerRow(cols?: number): number {
-        if (document.getElementById('acm_popup')?.classList.contains('acm-mobile')) {
-            return MOBILE_CARDS_PER_ROW;
+        const container = document.getElementById('character-list');
+        if (container && document.getElementById('acm_popup')?.classList.contains('acm-mobile')) {
+            const fitting = Math.floor(this.getContentWidth(container) / (DEFAULT_CARD_WIDTH * (1 + CARD_GAP_RATIO)));
+            return Math.max(MOBILE_MIN_CARDS_PER_ROW, fitting);
         }
         return this.clampCardsPerRow(cols ?? this.settings.getSetting('cardsPerRow'));
     }
