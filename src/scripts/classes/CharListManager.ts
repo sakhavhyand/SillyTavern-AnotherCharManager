@@ -629,7 +629,6 @@ export class CharListManager {
 
         document.getElementById('char-sep')!.style.display = 'block';
         document.getElementById('char-details')!.classList.add('open');
-        this.eventManager.emit('details:opened');
     }
 
     /**

@@ -84,14 +84,21 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
     min-height: 240px;
 }
 
-/* One column of infos: two don't fit next to the avatar */
-#acm_popup.acm-mobile .ch_infos_container {
-    flex-direction: column;
+/* One column of infos (two don't fit next to the avatar), in this order:
+   creator, version, created, added, tokens, perm. tokens, last chat, link.
+   The two columns are dissolved so their items can be reordered with the creator. */
+#acm_popup.acm-mobile :is(.ch_infos_container, .ch_infos_column) {
+    display: contents;
 }
 
-#acm_popup.acm-mobile .ch_infos_column {
-    width: 100%;
-}
+#acm_popup.acm-mobile #ch_infos_creator { order: 1; }
+#acm_popup.acm-mobile #ch_infos_version { order: 2; }
+#acm_popup.acm-mobile #ch_infos_date { order: 3; }
+#acm_popup.acm-mobile #ch_infos_adddate { order: 4; }
+#acm_popup.acm-mobile #ch_infos_tok { order: 5; }
+#acm_popup.acm-mobile #ch_infos_permtok { order: 6; }
+#acm_popup.acm-mobile #ch_infos_lastchat { order: 7; }
+#acm_popup.acm-mobile #ch_infos_link { order: 8; }
 
 /* Landscape phone: too short to stack them, the summary and the sections sit side by side,
    each scrolling on its own, under the back button */
@@ -274,4 +281,109 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
     #acm_popup.acm-mobile #search_filter_dropdown {
         max-width: 35%;
     }
+}
+
+/* ----- Touch finishes (phone) ----- */
+
+/* Details action buttons: finger-sized, spread over the row */
+#acm_popup.acm-mobile #acm_details_buttons_block {
+    justify-content: space-between;
+    gap: 4px;
+}
+
+#acm_popup.acm-mobile #acm_details_buttons_block .menu_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    font-size: 1.1em;
+}
+
+/* Tabs: short labels, so each title holds on one line and the tabs stay low */
+#acm_popup.acm-mobile .acm-tab-label {
+    display: none;
+}
+
+#acm_popup.acm-mobile .acm-tab-label-short {
+    display: inline;
+}
+
+#acm_popup.acm-mobile .acm-tab-button {
+    gap: 0;
+    padding: 2px;
+}
+
+/* Not clipped (short labels fit): the enlarged touch area of the icons below can overflow */
+#acm_popup.acm-mobile :is(.acm-tab-title, .acm-tab-subtext) {
+    overflow: visible;
+}
+
+/* Expand and add greeting: finger-sized (the negative margins keep the tab low) */
+#acm_popup.acm-mobile .acm-tab-button :is(.editor_maximize, .acm-add-alt-greeting) {
+    font-size: 15px;
+    padding: 6px 8px;
+    margin: -5px -4px;
+    opacity: 0.85;
+}
+
+/* Footer: finger-sized buttons */
+#acm_popup.acm-mobile .acm-popup-controls {
+    padding: 0 6px;
+    gap: 6px;
+}
+
+#acm_popup.acm-mobile .acm-popup-controls > .menu_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-sizing: border-box;
+    min-height: 38px;
+    margin: 0;
+}
+
+#acm_popup.acm-mobile #acm_popup_close.menu_button {
+    flex: 1 1 auto;
+    max-width: 160px;
+}
+
+/* Touch screens: no hover to reveal the avatar edit button, so it's always shown */
+@media (hover: none) {
+    #edit_icon {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Advanced definitions and character creation: full screen over the full screen popup,
+   instead of the width of SillyTavern's chat (--sheldWidth) under its top bar */
+body:has(#acm_popup.acm-mobile) :is(#acm_character_popup, #acm_create_popup) {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    top: 0;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+}
+
+body:has(#acm_popup.acm-mobile) #acm_create_popup .acm-popup-controls > .menu_button {
+    display: flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 20px;
+}
+
+/* Bigger target for the close cross of the advanced definitions */
+body:has(#acm_popup.acm-mobile) #acm_character_cross {
+    top: 4px;
+    right: 4px;
+    padding: 8px;
 }
