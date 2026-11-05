@@ -29,6 +29,98 @@ body:has(#acm_popup.acm-mobile) :is(#acm_popup_width_row, #acm_popup_cardsize) +
     display: none;
 }
 
+/* Tabs are forced on a phone (ModalManager.applyDetailsViewMode): the toggle has no effect there */
+body:has(#acm_popup.acm-mobile) #acm_details_view_row,
+body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
+    display: none;
+}
+
+/* ----- Character details -----
+   Phone: the details cover the list (instead of the bottom panel), with a back button.
+   The list is only made invisible, so it keeps its scroll position for the way back. */
+
+#acm_popup:not(.acm-mobile) #acm_details_back {
+    display: none;
+}
+
+#acm_popup.acm-mobile .list-character-wrapper:has(> #char-details.open) > :not(#char-details) {
+    visibility: hidden;
+}
+
+#acm_popup.acm-mobile #char-details.open {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    height: auto;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 6px 5px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    transform: none;
+}
+
+#acm_popup.acm-mobile #acm_details_back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    align-self: flex-start;
+    width: auto;
+    height: 38px;
+    margin: 5px 0 0;
+    padding: 0 14px;
+}
+
+#acm_popup.acm-mobile #char-details-block {
+    flex: 0 0 auto;
+}
+
+/* The sections take the screen height (minus the back button and the footer): scroll past
+   the summary, then the text fills the screen */
+#acm_popup.acm-mobile #char-details-desc {
+    flex: 0 0 auto;
+    height: calc(100dvh - 120px);
+    min-height: 240px;
+}
+
+/* One column of infos: two don't fit next to the avatar */
+#acm_popup.acm-mobile .ch_infos_container {
+    flex-direction: column;
+}
+
+#acm_popup.acm-mobile .ch_infos_column {
+    width: 100%;
+}
+
+/* Landscape phone: too short to stack them, the summary and the sections sit side by side,
+   each scrolling on its own, under the back button */
+@media (max-height: 500px) and (min-width: 601px) {
+    #acm_popup.acm-mobile #char-details.open {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        column-gap: 8px;
+        row-gap: 5px;
+        overflow: hidden;
+    }
+
+    #acm_popup.acm-mobile #acm_details_back {
+        grid-column: 1 / -1;
+        justify-self: start;
+    }
+
+    #acm_popup.acm-mobile #char-details-block {
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    #acm_popup.acm-mobile #char-details-desc {
+        height: auto;
+        min-height: 0;
+    }
+}
+
 /* ----- Character cards ----- */
 
 /* Names are clamped to 2 lines: always reserve both, so every row of the grid has the

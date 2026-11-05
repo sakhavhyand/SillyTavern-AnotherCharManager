@@ -19,6 +19,8 @@ export class ModalManager {
     tagManager: TagManager;
     presetManager: PresetManager;
     charListManager: CharListManager;
+    /** Phone: an history entry was added when the details opened (see initializeModalEvents). */
+    private detailsHistoryEntry = false;
 
     constructor(eventManager: any, settings: any, st: any) {
         this.eventManager = eventManager;
@@ -120,9 +122,10 @@ export class ModalManager {
         $popup
             .toggleClass('acm-mobile', isMobile)
             .toggleClass('acm-compact', !isMobile && window.matchMedia(COMPACT_QUERY).matches);
-        // The number of cards per row depends on the mode (fixed on a phone)
+        // Cards per row and the details view (tabs forced) depend on the phone mode
         if (wasMobile !== isMobile) {
             this.charListManager?.applyCardWidthForColumns();
+            this.applyDetailsViewMode();
         }
     }
 
@@ -213,20 +216,38 @@ export class ModalManager {
         this.eventManager.emit('modal:opened');
 
         // Apply persisted tab/dropdown view mode for char-details-desc
+        this.applyDetailsViewMode(true);
+    }
+
+    /**
+     * Shows the details sections as tabs or stacked: the detailsTabMode setting, except on
+     * a phone where tabs are always used (the setting is kept for the other screens).
+     *
+     * @param {boolean} [resetTab=false] - Go back to the first tab even if tabs were already shown.
+     */
+    applyDetailsViewMode(resetTab: boolean = false): void {
+        const setting = !!this.settings.getSetting('detailsTabMode');
+        const tabMode = setting || $('#acm_popup').hasClass('acm-mobile');
         const $desc = $('#char-details-desc');
-        const $toggle = $('#acm-desc-view-toggle');
-        if (this.settings.getSetting('detailsTabMode')) {
-            $desc.addClass('acm-tab-mode');
-            $toggle.addClass('active');
-            const firstTab = $('#acm-desc-tab-bar .acm-tab-button').first().data('acm-tab');
-            $('#acm-desc-tab-bar .acm-tab-button').removeClass('active').first().addClass('active');
-            $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
-            $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"]`).addClass('acm-section-active');
-        } else {
+        $('#acm-desc-view-toggle').toggleClass('active', setting);
+
+        if (!tabMode) {
             $desc.removeClass('acm-tab-mode');
-            $toggle.removeClass('active');
             $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+            return;
         }
+        if ($desc.hasClass('acm-tab-mode') && !resetTab) return;
+
+        $desc.addClass('acm-tab-mode');
+        // Activate the first tab
+        const firstTab = $('#acm-desc-tab-bar .acm-tab-button').first().data('acm-tab');
+        $('#acm-desc-tab-bar .acm-tab-button').removeClass('active').first().addClass('active');
+        $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+        const $section = $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"]`).addClass('acm-section-active');
+        // Reset textarea heights for the active section
+        $section.children('.inline-drawer-content').find('textarea.autoSetHeight').each(function () {
+            resetScrollHeight(this);
+        });
     }
 
     /**
@@ -238,6 +259,11 @@ export class ModalManager {
         document.getElementById('char-details')!.classList.remove('open');
         document.getElementById('char-sep')!.style.display = 'none';
         this.settings.setSelectedChar(undefined);
+        // Closed by the UI: drop the history entry added at opening (its popstate is then ignored)
+        if (this.detailsHistoryEntry) {
+            this.detailsHistoryEntry = false;
+            history.back();
+        }
     }
 
     /**
@@ -394,8 +420,22 @@ export class ModalManager {
             this.closeModal();
         });
 
-        // Trigger when clicking on the separator to close the character details
-        $(document).on('click', '#char-sep', () => {
+        // Trigger when clicking on the separator (or, on a phone, the back button) to close the character details
+        $(document).on('click', '#char-sep, #acm_details_back', () => {
+            this.closeDetails();
+        });
+
+        // Phone: the details cover the list, so the system back button (Android) closes them
+        // instead of leaving the page. An history entry is added when they open.
+        this.eventManager.on('details:opened', () => {
+            if (!this.detailsHistoryEntry && $('#acm_popup').hasClass('acm-mobile')) {
+                history.pushState({ acmDetails: true }, '');
+                this.detailsHistoryEntry = true;
+            }
+        });
+        window.addEventListener('popstate', () => {
+            if (!this.detailsHistoryEntry) return;
+            this.detailsHistoryEntry = false;
             this.closeDetails();
         });
 
@@ -632,32 +672,9 @@ export class ModalManager {
 
         // Toggle switch: switch between dropdown and tab view
         $(document).on('click', '#acm-desc-view-toggle', () => {
-            const $toggle = $('#acm-desc-view-toggle');
-            const $desc = $('#char-details-desc');
-            const isNowActive = !$toggle.hasClass('active');
-            $toggle.toggleClass('active', isNowActive);
-
-            if (!isNowActive) {
-                // Switch to dropdown mode
-                $desc.removeClass('acm-tab-mode');
-                $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
-                this.settings.updateSetting('detailsTabMode', false);
-            } else {
-                // Switch to tab mode
-                $desc.addClass('acm-tab-mode');
-                // Activate the first tab by default
-                const firstTab = $('#acm-desc-tab-bar .acm-tab-button').first().data('acm-tab');
-                $('#acm-desc-tab-bar .acm-tab-button').removeClass('active').first().addClass('active');
-                $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
-                $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"]`).addClass('acm-section-active');
-                this.settings.updateSetting('detailsTabMode', true);
-
-                // Reset textarea heights for the active section
-                const $activeContent = $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"] > .inline-drawer-content`);
-                $activeContent.find('textarea.autoSetHeight').each(function () {
-                    resetScrollHeight(this);
-                });
-            }
+            const isNowActive = !$('#acm-desc-view-toggle').hasClass('active');
+            this.settings.updateSetting('detailsTabMode', isNowActive);
+            this.applyDetailsViewMode(true);
         });
     }
 }

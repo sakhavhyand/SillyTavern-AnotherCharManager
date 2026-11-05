@@ -70,6 +70,11 @@
         <div id="character-list"> </div>
         <div id="char-sep" role="separator" title="Close the details" style="display:none"></div>
         <div id="char-details">
+            <!-- Phone only (responsive.css): the details cover the list, this goes back to it -->
+            <div id="acm_details_back" class="menu_button" title="Back to the list" data-i18n="[title]Back to the list">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span data-i18n="Back">Back</span>
+            </div>
             <div id="char-details-block">
                 <div class="char-details-summary">
                     <div class="acm_avatar" id="avatar_title">
@@ -271,7 +276,7 @@
         <span id="acm_cardsPerRowValue">5</span>
     </div>
     <hr class="dropdown-separator">
-    <div class="acm-settings-row">
+    <div id="acm_details_view_row" class="acm-settings-row">
         <label for="acm-desc-view-toggle">Details panel</label>
         <div id="acm-desc-view-toggle" class="acm-toggle-switch" title="Show the details panel sections stacked or as tabs" data-i18n="[title]Show the details panel sections stacked or as tabs">
             <span class="acm-settings-label">Stacked</span>
