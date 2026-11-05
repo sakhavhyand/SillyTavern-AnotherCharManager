@@ -128,10 +128,21 @@ export class ModalManager {
         if (wasMobile !== isMobile || wasCompact !== isCompact) {
             this.charListManager?.applyCardWidthForColumns();
         }
-        // The details view too (tabs forced on phones)
+        // The details view too (tabs forced on phones), and the submenus placement
         if (wasMobile !== isMobile) {
             this.applyDetailsViewMode();
+            this.applyMenusPlacement();
         }
+    }
+
+    /**
+     * Switch UI submenus: to the right of their item, or on a phone (no room on the right)
+     * over it and the items above, each submenu stacking upward on its parent menu.
+     */
+    applyMenusPlacement(): void {
+        const placement = $('#acm_popup').hasClass('acm-mobile') ? 'top-start' : 'right-end';
+        window.acmPoppers?.UISub?.setOptions({ placement });
+        window.acmPoppers?.UIPreset?.setOptions({ placement });
     }
 
     /**
@@ -186,6 +197,8 @@ export class ModalManager {
             Settings,
             Tools,
         };
+        // The screen mode was set before the poppers existed
+        this.applyMenusPlacement();
     }
 
     /**

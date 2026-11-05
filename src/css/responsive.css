@@ -467,3 +467,93 @@ body:has(#acm_popup:is(.acm-mobile, .acm-compact)) #acm_character_cross {
     right: 4px;
     padding: 8px;
 }
+
+/* Menus (Switch UI and its submenus, more actions, settings rows, export format):
+   finger-sized items on phones and tablets */
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(.dropdown-ui-item, .acm_export_format) {
+    box-sizing: border-box;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+/* ----- Tag query builder (phone and tablet) -----
+   One row per rule: label | input | save | reset, its tags on the line below */
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_container {
+    gap: 6px;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row {
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_label {
+    min-width: 0;
+    width: 7.5em;
+    flex-shrink: 0;
+    text-align: left;
+    white-space: normal;
+    font-size: 0.85em;
+    line-height: 1.15;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row > label {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row .acm_tagQuery_input {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    height: 36px;
+    padding: 0 6px !important;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) :is(#acm_tagQuery_save, #acm_tagQuery_reset) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 38px;
+    height: 36px;
+    margin: 0;
+    padding: 0;
+}
+
+/* The rule's tags: a full line under it, none when there are none */
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row > .tags {
+    order: 10;
+    flex: 1 1 100%;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row > .tags:empty {
+    display: none;
+}
+
+/* ----- Scrolling and screen edges (phone and tablet) ----- */
+
+/* Reaching the end of the list or the details doesn't scroll the page behind,
+   nor starts the browser's pull-to-refresh */
+#acm_popup:is(.acm-mobile, .acm-compact) :is(#character-list, #char-details, #char-details-block, #char-details-desc, .dropdown-content),
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#acm_character_popup, #acm_create_popup) {
+    overscroll-behavior: contain;
+}
+
+/* Notch / status bar (SillyTavern installed as an app, viewport-fit=cover): the full screen
+   popups keep clear of it, as they already do of the bottom one */
+#acm_popup:is(.acm-mobile, .acm-compact) {
+    padding-top: calc(4px + env(safe-area-inset-top));
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#acm_character_popup, #acm_create_popup) {
+    padding-top: calc(10px + env(safe-area-inset-top));
+}
+
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) #acm_character_cross {
+    top: calc(4px + env(safe-area-inset-top));
+}
