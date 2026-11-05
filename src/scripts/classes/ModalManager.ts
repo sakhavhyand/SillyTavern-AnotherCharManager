@@ -115,14 +115,19 @@ export class ModalManager {
      */
     applyResponsiveMode(): void {
         const isMobile = window.matchMedia(MOBILE_QUERY).matches;
+        const isCompact = !isMobile && window.matchMedia(COMPACT_QUERY).matches;
         const $popup = $('#acm_popup');
         const wasMobile = $popup.hasClass('acm-mobile');
+        const wasCompact = $popup.hasClass('acm-compact');
         $popup
             .toggleClass('acm-mobile', isMobile)
-            .toggleClass('acm-compact', !isMobile && window.matchMedia(COMPACT_QUERY).matches);
-        // Cards per row and the details view (tabs forced) depend on the phone mode
-        if (wasMobile !== isMobile) {
+            .toggleClass('acm-compact', isCompact);
+        // Cards per row depend on the mode (from the width on phones and tablets)
+        if (wasMobile !== isMobile || wasCompact !== isCompact) {
             this.charListManager?.applyCardWidthForColumns();
+        }
+        // The details view too (tabs forced on phones)
+        if (wasMobile !== isMobile) {
             this.applyDetailsViewMode();
         }
     }

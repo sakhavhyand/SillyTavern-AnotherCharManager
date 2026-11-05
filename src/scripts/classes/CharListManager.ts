@@ -526,13 +526,15 @@ export class CharListManager {
     }
 
     /**
-     * Cards per row actually displayed: the setting (or `cols`), except on a phone where it's
-     * derived from the screen width instead: as many default-width cards as fit, at least
-     * MOBILE_MIN_CARDS_PER_ROW (3 in portrait, more in landscape). The setting is kept.
+     * Cards per row actually displayed: the setting (or `cols`), except on a phone or tablet
+     * where it's derived from the list width instead: as many default-width cards as fit, at
+     * least MOBILE_MIN_CARDS_PER_ROW (3 on a portrait phone, more on wider screens, fewer
+     * when the tablet details take half the screen). The setting is kept.
      */
     getDisplayedCardsPerRow(cols?: number): number {
         const container = document.getElementById('character-list');
-        if (container && document.getElementById('acm_popup')?.classList.contains('acm-mobile')) {
+        const popup = document.getElementById('acm_popup');
+        if (container && (popup?.classList.contains('acm-mobile') || popup?.classList.contains('acm-compact'))) {
             const fitting = Math.floor(this.getContentWidth(container) / (DEFAULT_CARD_WIDTH * (1 + CARD_GAP_RATIO)));
             return Math.max(MOBILE_MIN_CARDS_PER_ROW, fitting);
         }

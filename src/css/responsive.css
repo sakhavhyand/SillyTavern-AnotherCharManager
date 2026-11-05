@@ -6,8 +6,8 @@
 
 /* ----- Popup width ----- */
 
-/* Phone: full screen, the width setting is ignored (but kept for the desktop) */
-#acm_popup.acm-mobile {
+/* Phone and tablet: full screen, the width setting is ignored (but kept for the desktop) */
+#acm_popup:is(.acm-mobile, .acm-compact) {
     width: 100% !important;
     height: 100dvh;
     top: 0;
@@ -18,14 +18,14 @@
     box-shadow: none;
 }
 
-#acm_popup.acm-mobile .list-character-wrapper {
+#acm_popup:is(.acm-mobile, .acm-compact) .list-character-wrapper {
     padding: 0 6px;
 }
 
-/* The width and cards per row settings have no effect on a phone (full screen,
+/* The width and cards per row settings have no effect on a phone or tablet (full screen,
    cards per row from the width, see CharListManager): hide them and their separators */
-body:has(#acm_popup.acm-mobile) :is(#acm_popup_width_row, #acm_popup_cardsize),
-body:has(#acm_popup.acm-mobile) :is(#acm_popup_width_row, #acm_popup_cardsize) + .dropdown-separator {
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#acm_popup_width_row, #acm_popup_cardsize),
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#acm_popup_width_row, #acm_popup_cardsize) + .dropdown-separator {
     display: none;
 }
 
@@ -87,18 +87,18 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
 /* One column of infos (two don't fit next to the avatar), in this order:
    creator, version, created, added, tokens, perm. tokens, last chat, link.
    The two columns are dissolved so their items can be reordered with the creator. */
-#acm_popup.acm-mobile :is(.ch_infos_container, .ch_infos_column) {
+#acm_popup:is(.acm-mobile, .acm-compact) :is(.ch_infos_container, .ch_infos_column) {
     display: contents;
 }
 
-#acm_popup.acm-mobile #ch_infos_creator { order: 1; }
-#acm_popup.acm-mobile #ch_infos_version { order: 2; }
-#acm_popup.acm-mobile #ch_infos_date { order: 3; }
-#acm_popup.acm-mobile #ch_infos_adddate { order: 4; }
-#acm_popup.acm-mobile #ch_infos_tok { order: 5; }
-#acm_popup.acm-mobile #ch_infos_permtok { order: 6; }
-#acm_popup.acm-mobile #ch_infos_lastchat { order: 7; }
-#acm_popup.acm-mobile #ch_infos_link { order: 8; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_creator { order: 1; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_version { order: 2; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_date { order: 3; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_adddate { order: 4; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_tok { order: 5; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_permtok { order: 6; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_lastchat { order: 7; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_link { order: 8; }
 
 /* Landscape phone: too short to stack them, the summary and the sections sit side by side,
    each scrolling on its own, under the back button */
@@ -126,6 +126,65 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
         height: auto;
         min-height: 0;
     }
+}
+
+/* Tablet: the list on the left, the details on the right, the separator between them
+   (still closes the details) instead of the bottom panel. The cards re-fit the narrower
+   list (cards per row from the width, see CharListManager). */
+#acm_popup.acm-compact .list-character-wrapper:has(> #char-details.open) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 7px minmax(0, 1.25fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    column-gap: 6px;
+}
+
+#acm_popup.acm-compact .list-character-wrapper:has(> #char-details.open) > :is(.sortAndFilter, #acm_tagQuery, #acm_tagQuery + .acm-zone-sep) {
+    grid-column: 1;
+}
+
+#acm_popup.acm-compact .list-character-wrapper:has(> #char-details.open) > #character-list {
+    grid-column: 1;
+    grid-row: 4;
+}
+
+/* The separator above the footer spans both columns */
+#acm_popup.acm-compact #char-details.open + .acm-zone-sep {
+    grid-column: 1 / -1;
+    grid-row: 5;
+}
+
+/* Vertical: a 2px accent line centered in the clickable band */
+#acm_popup.acm-compact .list-character-wrapper:has(> #char-details.open) > #char-sep {
+    grid-column: 2;
+    grid-row: 1 / 5;
+    width: 7px;
+    height: auto;
+    margin: 5px 0;
+    background: linear-gradient(180deg, transparent, var(--acm-accent), transparent) center / 2px 100% no-repeat;
+}
+
+#acm_popup.acm-compact #char-details.open {
+    grid-column: 3;
+    grid-row: 1 / 5;
+    height: auto;
+    min-height: 0;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 5px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    transform: none;
+}
+
+#acm_popup.acm-compact #char-details-block {
+    flex: 0 0 auto;
+}
+
+/* Same as on a phone: scroll past the summary, then the sections fill the column */
+#acm_popup.acm-compact #char-details-desc {
+    flex: 0 0 auto;
+    height: calc(100dvh - 80px);
+    min-height: 240px;
 }
 
 /* ----- Character cards ----- */
@@ -283,15 +342,15 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
     }
 }
 
-/* ----- Touch finishes (phone) ----- */
+/* ----- Touch finishes (phone and tablet, unless said otherwise) ----- */
 
 /* Details action buttons: finger-sized, spread over the row */
-#acm_popup.acm-mobile #acm_details_buttons_block {
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_details_buttons_block {
     justify-content: space-between;
     gap: 4px;
 }
 
-#acm_popup.acm-mobile #acm_details_buttons_block .menu_button {
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_details_buttons_block .menu_button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -303,7 +362,7 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
     font-size: 1.1em;
 }
 
-/* Tabs: short labels, so each title holds on one line and the tabs stay low */
+/* Phone tabs: short labels, so each title holds on one line and the tabs stay low */
 #acm_popup.acm-mobile .acm-tab-label {
     display: none;
 }
@@ -323,7 +382,7 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
 }
 
 /* Expand and add greeting: finger-sized (the negative margins keep the tab low) */
-#acm_popup.acm-mobile .acm-tab-button :is(.editor_maximize, .acm-add-alt-greeting) {
+#acm_popup:is(.acm-mobile, .acm-compact) .acm-tab-button :is(.editor_maximize, .acm-add-alt-greeting) {
     font-size: 15px;
     padding: 6px 8px;
     margin: -5px -4px;
@@ -331,12 +390,12 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
 }
 
 /* Footer: finger-sized buttons */
-#acm_popup.acm-mobile .acm-popup-controls {
+#acm_popup:is(.acm-mobile, .acm-compact) .acm-popup-controls {
     padding: 0 6px;
     gap: 6px;
 }
 
-#acm_popup.acm-mobile .acm-popup-controls > .menu_button {
+#acm_popup:is(.acm-mobile, .acm-compact) .acm-popup-controls > .menu_button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -346,7 +405,7 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
     margin: 0;
 }
 
-#acm_popup.acm-mobile #acm_popup_close.menu_button {
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_popup_close.menu_button {
     flex: 1 1 auto;
     max-width: 160px;
 }
@@ -361,7 +420,7 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
 
 /* Advanced definitions and character creation: full screen over the full screen popup,
    instead of the width of SillyTavern's chat (--sheldWidth) under its top bar */
-body:has(#acm_popup.acm-mobile) :is(#acm_character_popup, #acm_create_popup) {
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#acm_character_popup, #acm_create_popup) {
     box-sizing: border-box;
     width: 100%;
     max-width: none;
@@ -374,7 +433,7 @@ body:has(#acm_popup.acm-mobile) :is(#acm_character_popup, #acm_create_popup) {
     border-radius: 0;
 }
 
-body:has(#acm_popup.acm-mobile) #acm_create_popup .acm-popup-controls > .menu_button {
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) #acm_create_popup .acm-popup-controls > .menu_button {
     display: flex;
     align-items: center;
     min-height: 38px;
@@ -382,7 +441,7 @@ body:has(#acm_popup.acm-mobile) #acm_create_popup .acm-popup-controls > .menu_bu
 }
 
 /* Bigger target for the close cross of the advanced definitions */
-body:has(#acm_popup.acm-mobile) #acm_character_cross {
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) #acm_character_cross {
     top: 4px;
     right: 4px;
     padding: 8px;
