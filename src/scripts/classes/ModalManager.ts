@@ -311,25 +311,40 @@ export class ModalManager {
     }
 
     /**
-     * Touch: a horizontal swipe on the details sections goes to the previous / next tab
-     * (tab view only). Kept clear of the screen edges (the system back gesture), of text
-     * selection and of vertical scrolling.
+     * Touch: a horizontal swipe goes to the previous / next tab, on the details sections
+     * (tab view only) and in the character creation popup (main / advanced definitions).
      */
     initializeTabSwipe(): void {
         const desc = document.getElementById('char-details-desc');
-        if (!desc) return;
+        if (desc) {
+            this.attachTabSwipe(desc, '#acm-desc-tab-bar .acm-tab-button', () => desc.classList.contains('acm-tab-mode'));
+        }
+        const create = document.getElementById('acm_create_popup');
+        if (create) {
+            this.attachTabSwipe(create, '#acm_create_popup .acm-create-tab');
+        }
+    }
+
+    /**
+     * Swiping horizontally on `area` clicks the tab (among `tabsSelector`, the current one
+     * having the `active` class) next to the current one: swipe left, the next one.
+     * Kept clear of the screen edges (the system back gesture), of text selection, of
+     * vertical scrolling and of the sliders (dragged horizontally).
+     */
+    attachTabSwipe(area: HTMLElement, tabsSelector: string, isEnabled: () => boolean = () => true): void {
         let start: { x: number; y: number; time: number } | null = null;
 
-        desc.addEventListener('touchstart', (event: TouchEvent) => {
+        area.addEventListener('touchstart', (event: TouchEvent) => {
             const touch = event.touches[0];
             const edge = SWIPE_EDGE_MARGIN;
-            start = event.touches.length === 1 && touch.clientX > edge && touch.clientX < window.innerWidth - edge
+            const onSlider = (event.target as Element | null)?.closest?.('input[type="range"]');
+            start = event.touches.length === 1 && !onSlider && touch.clientX > edge && touch.clientX < window.innerWidth - edge
                 ? { x: touch.clientX, y: touch.clientY, time: Date.now() }
                 : null;
         }, { passive: true });
 
-        desc.addEventListener('touchend', (event: TouchEvent) => {
-            if (!start || !desc.classList.contains('acm-tab-mode')) return;
+        area.addEventListener('touchend', (event: TouchEvent) => {
+            if (!start || !isEnabled()) return;
             const touch = event.changedTouches[0];
             const dx = touch.clientX - start.x;
             const dy = touch.clientY - start.y;
@@ -339,14 +354,14 @@ export class ModalManager {
             // Selecting text with the finger moves horizontally too
             if (window.getSelection()?.toString()) return;
 
-            const $tabs = $('#acm-desc-tab-bar .acm-tab-button');
+            const $tabs = $(tabsSelector);
             const current = $tabs.index($tabs.filter('.active'));
             // Swipe left: content comes from the right, so the next tab
             const next = current + (dx < 0 ? 1 : -1);
             if (next >= 0 && next < $tabs.length) $tabs.eq(next).trigger('click');
         }, { passive: true });
 
-        desc.addEventListener('touchcancel', () => { start = null; }, { passive: true });
+        area.addEventListener('touchcancel', () => { start = null; }, { passive: true });
     }
 
     /**
