@@ -6,6 +6,19 @@ import { CharListManager } from './CharListManager';
 import { DEFAULT_ACCENT_COLOR } from '../settings';
 const { Popper } = SillyTavern.libs;
 
+// Screen modes, see applyResponsiveMode() and css/responsive.css
+// Mobile: phone in portrait (narrow) or in landscape (short)
+const MOBILE_QUERY = '(max-width: 600px), (max-height: 500px)';
+// Tablet: narrow, or a touch screen (primary pointer, so not a touch laptop used with its
+// touchpad) up to 1366px wide, i.e. tablets in landscape
+const COMPACT_QUERY = '(max-width: 1024px), (pointer: coarse) and (max-width: 1366px)';
+
+// Swipe between the details tabs (initializeTabSwipe): minimum horizontal distance and
+// maximum duration, and the screen edges left to the system back gesture (px, ms, px)
+const SWIPE_MIN_DISTANCE = 60;
+const SWIPE_MAX_DURATION = 600;
+const SWIPE_EDGE_MARGIN = 24;
+
 export class ModalManager {
     eventManager: any;
     settings: any;
@@ -79,6 +92,8 @@ export class ModalManager {
         // Put the button before rm_button_group_chats in the form_character_search_form
         $('#rm_button_group_chats').before('<button id="acm-manager" class="menu_button fa-solid fa-users faSmallFontSquareFix" title="Open Char Manager"></button>');
 
+        this.initializeResponsiveMode();
+
         // Initialize popper.js for dropdowns
         this.initializePoppers();
         this.initializeModalEvents();
@@ -88,6 +103,52 @@ export class ModalManager {
         this.tagManager.init();
         this.presetManager.init();
         this.charListManager.init();
+    }
+
+    /**
+     * Tags the popup with the screen mode so the CSS (responsive.css) and the code share
+     * one set of breakpoints: acm-mobile (phone, portrait or landscape) or acm-compact (tablet).
+     */
+    initializeResponsiveMode(): void {
+        const apply = () => this.applyResponsiveMode();
+        window.matchMedia(MOBILE_QUERY).addEventListener('change', apply);
+        window.matchMedia(COMPACT_QUERY).addEventListener('change', apply);
+        // Some resizes (device emulation, a width and a height changing together) don't fire 'change'
+        window.addEventListener('resize', apply);
+        apply();
+    }
+
+    /**
+     * Sets acm-mobile / acm-compact on the popup from the current screen size.
+     */
+    applyResponsiveMode(): void {
+        const isMobile = window.matchMedia(MOBILE_QUERY).matches;
+        const isCompact = !isMobile && window.matchMedia(COMPACT_QUERY).matches;
+        const $popup = $('#acm_popup');
+        const wasMobile = $popup.hasClass('acm-mobile');
+        const wasCompact = $popup.hasClass('acm-compact');
+        $popup
+            .toggleClass('acm-mobile', isMobile)
+            .toggleClass('acm-compact', isCompact);
+        // Cards per row depend on the mode (from the width on phones and tablets)
+        if (wasMobile !== isMobile || wasCompact !== isCompact) {
+            this.charListManager?.applyCardWidthForColumns();
+        }
+        // The details view too (tabs forced on phones), and the submenus placement
+        if (wasMobile !== isMobile) {
+            this.applyDetailsViewMode();
+            this.applyMenusPlacement();
+        }
+    }
+
+    /**
+     * Switch UI submenus: to the right of their item, or on a phone (no room on the right)
+     * over it and the items above, each submenu stacking upward on its parent menu.
+     */
+    applyMenusPlacement(): void {
+        const placement = $('#acm_popup').hasClass('acm-mobile') ? 'top-start' : 'right-end';
+        window.acmPoppers?.UISub?.setOptions({ placement });
+        window.acmPoppers?.UIPreset?.setOptions({ placement });
     }
 
     /**
@@ -126,6 +187,13 @@ export class ModalManager {
             { placement: 'top-end' },
         );
 
+        // Small screens: the toolbar actions that don't fit go in this menu
+        const Tools = Popper.createPopper(
+            document.getElementById('acm_toolbar_more')!,
+            document.getElementById('acm-toolbar-menu')!,
+            { placement: 'bottom-end' },
+        );
+
         // Store poppers for later use
         window.acmPoppers = {
             Export,
@@ -133,13 +201,18 @@ export class ModalManager {
             UISub,
             UIPreset,
             Settings,
+            Tools,
         };
+        // The screen mode was set before the poppers existed
+        this.applyMenusPlacement();
     }
 
     /**
      * Opens a modal window and initializes its contents and settings.
      */
     openModal(): void {
+        // The screen may have changed while the popup was closed without a resize reaching us
+        this.applyResponsiveMode();
         document.querySelector('#acm_lock')!.classList.add('is-active');
 
         // Display the modal with our list layout
@@ -167,20 +240,38 @@ export class ModalManager {
         this.eventManager.emit('modal:opened');
 
         // Apply persisted tab/dropdown view mode for char-details-desc
+        this.applyDetailsViewMode(true);
+    }
+
+    /**
+     * Shows the details sections as tabs or stacked: the detailsTabMode setting, except on
+     * a phone where tabs are always used (the setting is kept for the other screens).
+     *
+     * @param {boolean} [resetTab=false] - Go back to the first tab even if tabs were already shown.
+     */
+    applyDetailsViewMode(resetTab: boolean = false): void {
+        const setting = !!this.settings.getSetting('detailsTabMode');
+        const tabMode = setting || $('#acm_popup').hasClass('acm-mobile');
         const $desc = $('#char-details-desc');
-        const $toggle = $('#acm-desc-view-toggle');
-        if (this.settings.getSetting('detailsTabMode')) {
-            $desc.addClass('acm-tab-mode');
-            $toggle.addClass('active');
-            const firstTab = $('#acm-desc-tab-bar .acm-tab-button').first().data('acm-tab');
-            $('#acm-desc-tab-bar .acm-tab-button').removeClass('active').first().addClass('active');
-            $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
-            $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"]`).addClass('acm-section-active');
-        } else {
+        $('#acm-desc-view-toggle').toggleClass('active', setting);
+
+        if (!tabMode) {
             $desc.removeClass('acm-tab-mode');
-            $toggle.removeClass('active');
             $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+            return;
         }
+        if ($desc.hasClass('acm-tab-mode') && !resetTab) return;
+
+        $desc.addClass('acm-tab-mode');
+        // Activate the first tab
+        const firstTab = $('#acm-desc-tab-bar .acm-tab-button').first().data('acm-tab');
+        $('#acm-desc-tab-bar .acm-tab-button').removeClass('active').first().addClass('active');
+        $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
+        const $section = $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"]`).addClass('acm-section-active');
+        // Reset textarea heights for the active section
+        $section.children('.inline-drawer-content').find('textarea.autoSetHeight').each(function () {
+            resetScrollHeight(this);
+        });
     }
 
     /**
@@ -189,9 +280,171 @@ export class ModalManager {
     closeDetails(): void {
         $('#acm_export_format_popup').hide();
         getCardElement(this.settings.selectedChar)?.classList.replace('char_selected', 'char_select');
+        // Phone: the details scroll as a whole (the summary in landscape), so the next
+        // opening must start at the top instead of where this one was left
+        $('#char-details, #char-details-block').scrollTop(0);
         document.getElementById('char-details')!.classList.remove('open');
         document.getElementById('char-sep')!.style.display = 'none';
         this.settings.setSelectedChar(undefined);
+    }
+
+    /**
+     * Tags the popups with acm-editing while one of their text fields has the focus: on small
+     * screens the virtual keyboard then takes half the screen, so the CSS hides their footer.
+     * Reacting to the focus rather than detecting the keyboard also fits a physical keyboard.
+     */
+    initializeEditingState(): void {
+        const popups = '#acm_popup, #acm_character_popup, #acm_create_popup';
+        const isTextField = (el: Element | null) => !!el?.matches(
+            'textarea, [contenteditable="true"], input:not([type="range"], [type="checkbox"], [type="radio"], [type="file"], [type="color"], [type="button"])',
+        );
+        const update = () => {
+            const active = document.activeElement;
+            $(popups).each(function (this: HTMLElement) {
+                $(this).toggleClass('acm-editing', isTextField(active) && this.contains(active));
+            });
+        };
+        // focusout before the next focusin: wait for the new focus, so moving from one field
+        // to another doesn't show and hide the footer again
+        $(document).on('focusin', popups, update);
+        $(document).on('focusout', popups, () => setTimeout(update, 0));
+    }
+
+    /**
+     * Touch: a horizontal swipe goes to the previous / next tab, on the details sections
+     * (tab view only) and in the character creation popup (main / advanced definitions).
+     */
+    initializeTabSwipe(): void {
+        const desc = document.getElementById('char-details-desc');
+        if (desc) {
+            this.attachTabSwipe(desc, '#acm-desc-tab-bar .acm-tab-button', () => desc.classList.contains('acm-tab-mode'));
+        }
+        const create = document.getElementById('acm_create_popup');
+        if (create) {
+            this.attachTabSwipe(create, '#acm_create_popup .acm-create-tab');
+        }
+    }
+
+    /**
+     * Swiping horizontally on `area` clicks the tab (among `tabsSelector`, the current one
+     * having the `active` class) next to the current one: swipe left, the next one.
+     * Kept clear of the screen edges (the system back gesture), of text selection, of
+     * vertical scrolling and of the sliders (dragged horizontally).
+     */
+    attachTabSwipe(area: HTMLElement, tabsSelector: string, isEnabled: () => boolean = () => true): void {
+        let start: { x: number; y: number; time: number } | null = null;
+
+        area.addEventListener('touchstart', (event: TouchEvent) => {
+            const touch = event.touches[0];
+            const edge = SWIPE_EDGE_MARGIN;
+            const onSlider = (event.target as Element | null)?.closest?.('input[type="range"]');
+            start = event.touches.length === 1 && !onSlider && touch.clientX > edge && touch.clientX < window.innerWidth - edge
+                ? { x: touch.clientX, y: touch.clientY, time: Date.now() }
+                : null;
+        }, { passive: true });
+
+        area.addEventListener('touchend', (event: TouchEvent) => {
+            if (!start || !isEnabled()) return;
+            const touch = event.changedTouches[0];
+            const dx = touch.clientX - start.x;
+            const dy = touch.clientY - start.y;
+            const quick = Date.now() - start.time < SWIPE_MAX_DURATION;
+            start = null;
+            if (!quick || Math.abs(dx) < SWIPE_MIN_DISTANCE || Math.abs(dx) < 2 * Math.abs(dy)) return;
+            // Selecting text with the finger moves horizontally too
+            if (window.getSelection()?.toString()) return;
+
+            const $tabs = $(tabsSelector);
+            const current = $tabs.index($tabs.filter('.active'));
+            // Swipe left: content comes from the right, so the next tab
+            const next = current + (dx < 0 ? 1 : -1);
+            if (next >= 0 && next < $tabs.length) $tabs.eq(next).trigger('click');
+        }, { passive: true });
+
+        area.addEventListener('touchcancel', () => { start = null; }, { passive: true });
+    }
+
+    /**
+     * Phone: the details and the advanced definitions / creation popups cover the screen,
+     * so the system back button (Android) closes the top one instead of leaving the page.
+     *
+     * Each of these layers gets an history entry when it opens. Their opening and closing
+     * are watched on the elements themselves, whatever closes them (button, other manager...):
+     * - closed by the UI: its entry is dropped (history.back(), whose popstate is ignored);
+     * - closed by the back button: its entry is already gone, it's closed with `close`.
+     */
+    initializeBackButton(): void {
+        const isDisplayed = (el: HTMLElement) => getComputedStyle(el).display !== 'none';
+        const layers: { el: HTMLElement; isOpen: (el: HTMLElement) => boolean; close: () => void }[] = [
+            {
+                el: document.getElementById('char-details')!,
+                isOpen: el => el.classList.contains('open'),
+                close: () => this.closeDetails(),
+            },
+            {
+                el: document.getElementById('acm_character_popup')!,
+                isOpen: isDisplayed,
+                close: () => $('#acm_character_cross').trigger('click'),
+            },
+            {
+                el: document.getElementById('acm_create_popup')!,
+                isOpen: isDisplayed,
+                close: () => $('#acm_create_popup_close').trigger('click'),
+            },
+        ];
+        const wasOpen = new Map(layers.map(layer => [layer.el, layer.isOpen(layer.el)]));
+        // Layers that have an history entry, the top one last
+        const stack: HTMLElement[] = [];
+        let ignoredPops = 0;
+
+        const onChange = () => {
+            const opened: HTMLElement[] = [];
+            const closed: HTMLElement[] = [];
+            for (const layer of layers) {
+                const open = layer.isOpen(layer.el);
+                if (open === wasOpen.get(layer.el)) continue;
+                wasOpen.set(layer.el, open);
+                (open ? opened : closed).push(layer.el);
+            }
+            for (const el of closed) {
+                const index = stack.lastIndexOf(el);
+                if (index === -1) continue;
+                stack.splice(index, 1);
+                // One layer closed and another opened at once (e.g. the creation popup closes
+                // the details): reuse the entry, as history.back() and pushState would race
+                const next = opened.shift();
+                if (next) {
+                    history.replaceState({ acmLayer: true }, '');
+                    stack.push(next);
+                } else {
+                    ignoredPops++;
+                    history.back();
+                }
+            }
+            if (!$('#acm_popup').hasClass('acm-mobile')) return;
+            for (const el of opened) {
+                history.pushState({ acmLayer: true }, '');
+                stack.push(el);
+            }
+        };
+
+        const observer = new MutationObserver(onChange);
+        for (const layer of layers) {
+            observer.observe(layer.el, { attributes: true, attributeFilter: ['class', 'style'] });
+        }
+
+        // A reload keeps the entries but not the stack: unmark the current one
+        if (history.state?.acmLayer) history.replaceState(null, '');
+
+        window.addEventListener('popstate', () => {
+            if (ignoredPops > 0) {
+                ignoredPops--;
+                return;
+            }
+            const el = stack.pop();
+            if (!el) return;
+            layers.find(layer => layer.el === el)?.close();
+        });
     }
 
     /**
@@ -252,6 +505,10 @@ export class ModalManager {
                 element: '#acm-settings-popup',
                 popper: 'Settings',
             },
+            tools: {
+                element: '#acm-toolbar-menu',
+                popper: 'Tools',
+            },
         };
 
         if (closeAll) {
@@ -286,7 +543,9 @@ export class ModalManager {
             'acm_export_format_popup',
             'acm_export_button',
             'acm-settings-popup',
-            'acm_settings_button']
+            'acm_settings_button',
+            'acm-toolbar-menu',
+            'acm_toolbar_more']
             .map(id => document.getElementById(id));
 
         return (event: MouseEvent) => {
@@ -342,10 +601,14 @@ export class ModalManager {
             this.closeModal();
         });
 
-        // Trigger when clicking on the separator to close the character details
-        $(document).on('click', '#char-sep', () => {
+        // Trigger when clicking on the separator (or, on a phone, the back button) to close the character details
+        $(document).on('click', '#char-sep, #acm_details_back', () => {
             this.closeDetails();
         });
+
+        this.initializeBackButton();
+        this.initializeEditingState();
+        this.initializeTabSwipe();
 
         const $slider = $('#acm_widthSlider');
         const $popup = $('#acm_popup');
@@ -489,6 +752,15 @@ export class ModalManager {
         $('#acm_settings_button').on('click', () => {
             this.toggleDropdownMenus({ menuToToggle: 'settings' });
         });
+        $('#acm_toolbar_more').on('click', () => {
+            this.toggleDropdownMenus({ menuToToggle: 'tools' });
+        });
+        // Each entry of the toolbar menu runs the toolbar button it stands for (hidden on small screens)
+        $('#acm-toolbar-menu').on('click', '.dropdown-ui-item[data-acm-target]', (event: JQuery.TriggeredEvent) => {
+            const target = $(event.currentTarget).data('acm-target') as string;
+            this.toggleDropdownMenus({ closeAll: true });
+            $(`#${target}`).trigger('click');
+        });
         $('#acm_dropdown_sub').on('click', () => {
             this.toggleDropdownMenus({ menuToToggle: 'sub' });
         });
@@ -571,32 +843,9 @@ export class ModalManager {
 
         // Toggle switch: switch between dropdown and tab view
         $(document).on('click', '#acm-desc-view-toggle', () => {
-            const $toggle = $('#acm-desc-view-toggle');
-            const $desc = $('#char-details-desc');
-            const isNowActive = !$toggle.hasClass('active');
-            $toggle.toggleClass('active', isNowActive);
-
-            if (!isNowActive) {
-                // Switch to dropdown mode
-                $desc.removeClass('acm-tab-mode');
-                $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
-                this.settings.updateSetting('detailsTabMode', false);
-            } else {
-                // Switch to tab mode
-                $desc.addClass('acm-tab-mode');
-                // Activate the first tab by default
-                const firstTab = $('#acm-desc-tab-bar .acm-tab-button').first().data('acm-tab');
-                $('#acm-desc-tab-bar .acm-tab-button').removeClass('active').first().addClass('active');
-                $('#char-details-desc > .inline-drawer').removeClass('acm-section-active');
-                $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"]`).addClass('acm-section-active');
-                this.settings.updateSetting('detailsTabMode', true);
-
-                // Reset textarea heights for the active section
-                const $activeContent = $(`#char-details-desc > .inline-drawer[data-acm-section="${firstTab}"] > .inline-drawer-content`);
-                $activeContent.find('textarea.autoSetHeight').each(function () {
-                    resetScrollHeight(this);
-                });
-            }
+            const isNowActive = !$('#acm-desc-view-toggle').hasClass('active');
+            this.settings.updateSetting('detailsTabMode', isNowActive);
+            this.applyDetailsViewMode(true);
         });
     }
 }

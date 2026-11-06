@@ -8,6 +8,15 @@ const { Fuse } = SillyTavern.libs;
 const CARD_GAP_RATIO = 0.19;
 /** Default --acm-card-width (see charactersList.css). */
 const DEFAULT_CARD_WIDTH = 110;
+/** Minimum cards per row on a phone (popup tagged acm-mobile), see getDisplayedCardsPerRow(). */
+const MOBILE_MIN_CARDS_PER_ROW = 3;
+/** Small screens: smallest target card width, on the shortest screens. */
+const MIN_SMALL_CARD_WIDTH = 80;
+/** Small screens: toolbar + footer height, so screen height minus this is about the list height. */
+const SMALL_SCREEN_CHROME_HEIGHT = 120;
+/** List height / card width for about 1.5 rows to show (a card and its margins are about
+ *  1.8 times as high as wide). */
+const ROWS_HEIGHT_PER_CARD_WIDTH = 2.9;
 
 export class CharListManager {
     eventManager: any;
@@ -25,6 +34,8 @@ export class CharListManager {
     lastSession: { avatar: string | undefined; scrollTop: number } | null = null;
     /** Set when ACM opens, so the first list refresh restores `lastSession`. */
     restoreSessionPending: boolean = false;
+    /** Small screens: list height the cards are fitted to, kept while typing (see fitCardsPerRow). */
+    private smallScreenListHeight: number | null = null;
 
     /** Shown (one at random) when no character matches the search and filters. */
     static EMPTY_LIST_MESSAGES: readonly string[] = [
@@ -202,7 +213,11 @@ export class CharListManager {
         // Same in both UIs: the dropdown views are built from the same filtered list
         const count = this.hasActiveFilters() ? visibleCount : total;
 
-        $('#charNumber').empty().append(`Characters: ${count}/${total}`);
+        // The label is in its own span so small screens can hide it (responsive.css)
+        $('#charNumber')
+            .attr('title', `Characters: ${count}/${total}`)
+            .empty()
+            .append('<span class="acm_charNumber_label">Characters: </span>', `${count}/${total}`);
     }
 
     /**
@@ -487,7 +502,7 @@ export class CharListManager {
                 renderItem: (item: any) => this.createCharacterBlock(item),
                 getItemVersion: (item: any) => this.getCardVersion(item),
                 itemHeight: 180, // Height of a line of cards
-                itemsPerRow: this.clampCardsPerRow(this.settings.getSetting('cardsPerRow')),
+                itemsPerRow: this.getDisplayedCardsPerRow(),
                 buffer: 3, // Preload 3 lines before/after
                 // Card width is derived from the container width, so re-solve
                 // it whenever the list is resized (window, popup width, details panel...)
@@ -520,6 +535,20 @@ export class CharListManager {
     }
 
     /**
+     * Cards per row actually displayed: the setting (or `cols`), except on a phone or tablet
+     * where it's derived from the list width instead: as many default-width cards as fit, at
+     * least MOBILE_MIN_CARDS_PER_ROW (3 on a portrait phone, more on wider screens, fewer
+     * when the tablet details take half the screen). The setting is kept.
+     */
+    getDisplayedCardsPerRow(cols?: number): number {
+        const container = document.getElementById('character-list');
+        if (container && this.isSmallScreen()) {
+            return this.fitCardsPerRow(container);
+        }
+        return this.clampCardsPerRow(cols ?? this.settings.getSetting('cardsPerRow'));
+    }
+
+    /**
      * Sets the --acm-card-width value that fits exactly `cols` cards per row,
      * then refreshes the virtual scroller so it re-measures against the new size.
      *
@@ -530,7 +559,7 @@ export class CharListManager {
         const container = document.getElementById('character-list');
         if (!container) return;
 
-        const cardsPerRow = this.clampCardsPerRow(cols ?? this.settings.getSetting('cardsPerRow'));
+        const cardsPerRow = this.getDisplayedCardsPerRow(cols);
         const width = this.computeCardWidthForColumns(container, cardsPerRow);
         if (width !== null) {
             container.style.setProperty('--acm-card-width', String(width));
@@ -561,10 +590,44 @@ export class CharListManager {
         return Math.max(Math.floor(availableWidth / (validCols * (1 + CARD_GAP_RATIO))), 20);
     }
 
+    /** Phone or tablet (see ModalManager.applyResponsiveMode). */
+    private isSmallScreen(): boolean {
+        const popup = document.getElementById('acm_popup');
+        return !!popup && (popup.classList.contains('acm-mobile') || popup.classList.contains('acm-compact'));
+    }
+
+    /**
+     * Small screens: as many cards as fit in `container` at the target card width, at least
+     * MOBILE_MIN_CARDS_PER_ROW. The target is the default width, smaller on short screens
+     * (landscape phones) so that more than one row of cards is visible.
+     */
+    private fitCardsPerRow(container: HTMLElement): number {
+        // The list is the screen minus the toolbar and the footer. While typing, the virtual
+        // keyboard shrinks the screen: keep the height from before, so the cards don't re-fit
+        // under the finger at each search
+        const typing = document.getElementById('acm_popup')?.classList.contains('acm-editing');
+        if (!typing || this.smallScreenListHeight === null) {
+            this.smallScreenListHeight = window.innerHeight - SMALL_SCREEN_CHROME_HEIGHT;
+        }
+        const listHeight = this.smallScreenListHeight;
+        const target = Math.max(MIN_SMALL_CARD_WIDTH, Math.min(DEFAULT_CARD_WIDTH, listHeight / ROWS_HEIGHT_PER_CARD_WIDTH));
+        const fitting = Math.floor(this.getContentWidth(container) / (target * (1 + CARD_GAP_RATIO)));
+        return Math.max(MOBILE_MIN_CARDS_PER_ROW, fitting);
+    }
+
     /**
      * Number of cards that fit in a dropdown section at the current card width.
      */
     private calculateItemsPerRow(container: HTMLElement): number {
+        // Small screens: the cards are fitted to the section itself (narrower than the list
+        // because of its padding), as the list's card width would leave room for one less
+        if (this.isSmallScreen()) {
+            const cols = this.fitCardsPerRow(container);
+            const width = this.computeCardWidthForColumns(container, cols);
+            if (width !== null) container.style.setProperty('--acm-card-width', String(width));
+            return cols;
+        }
+        container.style.removeProperty('--acm-card-width');
         // Inherited from #character-list (set by the cards-per-row slider in classic view)
         const cardWidth = parseFloat(getComputedStyle(container).getPropertyValue('--acm-card-width')) || DEFAULT_CARD_WIDTH;
         return Math.max(1, Math.floor(this.getContentWidth(container) / (cardWidth * (1 + CARD_GAP_RATIO))));
@@ -1064,6 +1127,11 @@ export class CharListManager {
         const tagsList = document.getElementById('acm_tagQuery');
         if (!tagsList) return;
         if (tagsList.classList.contains('open')) {
+            // From its current height (auto once open), as a transition can't start from auto
+            const currentHeight = tagsList.offsetHeight + 'px';
+            tagsList.style.minHeight = currentHeight;
+            tagsList.style.height = currentHeight;
+            void tagsList.offsetHeight;
             tagsList.style.overflow = 'hidden';
             tagsList.style.minHeight = '0';
             tagsList.style.height = '0';
@@ -1074,6 +1142,9 @@ export class CharListManager {
             setTimeout(() => {
                 if (tagsList.classList.contains('open')) {
                     tagsList.style.overflow = 'visible';
+                    // Then follow the content: tags added on a narrow screen wrap on more lines
+                    tagsList.style.minHeight = 'auto';
+                    tagsList.style.height = 'auto';
                 }
             }, 300); // Match the transition duration (0.3s = 300ms)
         }

@@ -5,3 +5,5 @@
 @import url('css/tags.css');
 @import url('css/presets.css');
 @import url('css/charactersCreation.css');
+/* Last: overrides the rules above on small screens */
+@import url('css/responsive.css');
