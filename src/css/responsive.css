@@ -232,22 +232,23 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
     min-height: 2.4em;
 }
 
-/* Touch screens: no hover, so a tapped card doesn't stay enlarged and highlighted */
+/* Touch screens: no hover, so a tapped card doesn't stay enlarged and highlighted.
+   Scoped to the popup: .card is a generic class that themes or other extensions may use. */
 @media (hover: none) {
-    .card:hover {
+    #acm_popup .card:hover {
         transform: none;
     }
 
     /* Back to the resting colors, without touching the selected and favourite styles */
-    .card:not(.char_selected):hover {
+    #acm_popup .card:not(.char_selected):hover {
         background-color: var(--SmartThemeBlurTintColor);
     }
 
-    .card:not(.char_selected, .fav):hover {
+    #acm_popup .card:not(.char_selected, .fav):hover {
         border-color: rgba(255, 255, 255, 0.15);
     }
 
-    .acm_avatarList:hover {
+    #acm_popup .acm_avatarList:hover {
         transform: none;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     }
@@ -469,7 +470,7 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
 
 /* Touch screens: no hover to reveal the avatar edit button, so it's always shown */
 @media (hover: none) {
-    #edit_icon {
+    #acm_popup #edit_icon {
         opacity: 1;
         transform: scale(1);
     }
@@ -506,7 +507,7 @@ body:has(#acm_popup:is(.acm-mobile, .acm-compact)) #acm_character_cross {
 
 /* Menus (Switch UI and its submenus, more actions, settings rows, export format):
    finger-sized items on phones and tablets */
-body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(.dropdown-ui-item, .acm_export_format) {
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#dropdown-ui-menu, #dropdown-submenu, #preset-submenu, #acm-toolbar-menu, #acm_export_format_popup) :is(.dropdown-ui-item, .acm_export_format) {
     box-sizing: border-box;
     min-height: 40px;
     display: flex;
