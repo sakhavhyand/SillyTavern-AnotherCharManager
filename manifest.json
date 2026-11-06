@@ -6,7 +6,7 @@
     "js": "dist/index.js",
     "css": "src/style.css",
     "author": "Rendal",
-    "version": "3.0",
+    "version": "3.1",
     "homePage": "https://github.com/sakhavhyand/SillyTavern-AnotherCharManager",
     "auto_update": true
 }
