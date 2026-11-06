@@ -72,16 +72,29 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
     padding: 0 14px;
 }
 
-#acm_popup.acm-mobile #char-details-block {
+/* The summary takes its height, the sections the rest of the screen: the text then ends
+   at the bottom of the screen instead of past it. With many tags the summary scrolls on
+   its own rather than squeezing the sections under 240px. */
+#acm_popup:is(.acm-mobile, .acm-compact) #char-details-block {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #char-details-desc {
+    flex: 1 0 240px;
+    height: auto;
+    min-height: 240px;
+}
+
+/* The tags are part of the summary (which scrolls), instead of a list of their own squeezed
+   to nothing when the summary is short (landscape) */
+#acm_popup:is(.acm-mobile, .acm-compact) .char-details-tags {
     flex: 0 0 auto;
 }
 
-/* The sections take the screen height (minus the back button and the footer): scroll past
-   the summary, then the text fills the screen */
-#acm_popup.acm-mobile #char-details-desc {
-    flex: 0 0 auto;
-    height: calc(100dvh - 120px);
-    min-height: 240px;
+#acm_popup:is(.acm-mobile, .acm-compact) #tag_List {
+    overflow-y: visible;
 }
 
 /* One column of infos (two don't fit next to the avatar), in this order:
@@ -99,6 +112,39 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
 #acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_permtok { order: 6; }
 #acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_lastchat { order: 7; }
 #acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_link { order: 8; }
+
+/* When there's room next to the avatar (landscape, wide tablet column): the infos after the
+   creator on two columns, read top to bottom so the order above is kept:
+     version, created, added, tokens | perm. tokens, last chat, link */
+#acm_popup:is(.acm-mobile, .acm-compact) .char-details-summary-desc {
+    container: acm-infos / inline-size;
+}
+
+/* A slightly smaller avatar (120x190 on desktop, same ratio) leaves the infos the 280px
+   they need for two columns on a ~410px wide phone in portrait */
+#acm_popup:is(.acm-mobile, .acm-compact) .char-details-summary .acm_avatar {
+    width: 100px;
+    height: 158px;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .ch_infos_item {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* (a "Created: 2026-02-20" is about 130px at 0.9em: two columns need about 280px) */
+@container acm-infos (min-width: 280px) {
+    #acm_popup:is(.acm-mobile, .acm-compact) .ch_infos_container {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, max-content));
+        grid-template-rows: repeat(4, auto);
+        grid-auto-flow: column;
+        column-gap: 14px;
+        font-size: 0.9em;
+        /* After the creator (order: 1), now that it's a box of its own */
+        order: 2;
+    }
+}
 
 /* Landscape phone: too short to stack them, the summary and the sections sit side by side,
    each scrolling on its own, under the back button (by orientation, not width: small
@@ -177,16 +223,6 @@ body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
     transform: none;
 }
 
-#acm_popup.acm-compact #char-details-block {
-    flex: 0 0 auto;
-}
-
-/* Same as on a phone: scroll past the summary, then the sections fill the column */
-#acm_popup.acm-compact #char-details-desc {
-    flex: 0 0 auto;
-    height: calc(100dvh - 80px);
-    min-height: 240px;
-}
 
 /* ----- Character cards ----- */
 
