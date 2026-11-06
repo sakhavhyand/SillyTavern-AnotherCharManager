@@ -2,7 +2,7 @@
 
 ## DISCLAIMER
 * I'm not a developer, so yes, my code is not perfect (especially the CSS, I hate that).
-* This extension has not been tested on mobile phones, so expect the UI to be unusable on them. I don't intend to work on it, because I'm terrible with UI.
+* Since 3.1, the UI adapts to phones and tablets (see [Phones and tablets](#phones-and-tablets)). It has been tested on Android: feedback from iPhone and iPad users is welcome.
 
 ## What is this extension doing?
 
@@ -24,6 +24,8 @@ I've decided to work on it to have something that better suits my needs, because
 This extension has been tested from SillyTavern 1.11.0 to the last stable version.
 
 The replace avatar feature requires SillyTavern 1.14.0 or later. No server plugin is needed anymore.
+
+ACM seems to work with TauriTavern too, but not everything has been tested on it.
 
 ## Installation
 
@@ -51,7 +53,7 @@ Clicking on these buttons will open a pop-up window showing your characters. The
 * Search by name, creator, Creator's notes, tags, or all of them at once.
 * Favorites are highlighted with a golden border, and you can filter to only display them.
 * The dice picks a random character among the ones listed.
-* The toolbar also gives access to the Manage Tags menu and the import buttons (file and URL).
+* The toolbar also gives access to the Manage Tags menu and the import buttons (file and URL). On phones and tablets, they are in the ⋮ menu.
 * The fade at the bottom of the list tells you there are more characters below.
 
 ### Tag query
@@ -105,13 +107,33 @@ Each category is defined by a tag query (mandatory / at least one / excluded tag
 
 <img width="511" height="632" alt="Image" src="https://github.com/user-attachments/assets/8ad7b246-faf6-428e-ae5e-be454fcc8e3b" />
 
+## Phones and tablets
+
+ACM adapts to the size of the screen.
+
+* **Phones**: the window takes the whole screen. The toolbar fits on two rows (one in landscape) and the cards are sized to the screen.
+* **Character details** open full screen on phones, with a Back button. In landscape, the summary and the sections sit side by side.
+* **Tablets**: full screen too, with the details next to the list instead of below it. Large touch screens up to 1366px wide (like an iPad Pro in landscape) count as tablets.
+
+<img width="361" height="779" alt="Image" src="https://github.com/user-attachments/assets/1eae4b59-3bf4-433d-bd0f-ea65dea50d62" /> <img width="359" height="779" alt="Image" src="https://github.com/user-attachments/assets/cf1e2832-76a4-4098-8f56-b5b1966fa161" />
+
+<img width="782" height="360" alt="Image" src="https://github.com/user-attachments/assets/a01debea-1a93-425f-9ad4-63f028180a61" />
+
+<img width="798" height="1272" alt="Image" src="https://github.com/user-attachments/assets/fd7de0ee-61cc-4556-8e31-67fc213709f2" />
+
+On touch screens:
+
+* Swipe left or right on the sections (or in the creation window) to go to the next or previous tab.
+* The Android back button (or back gesture) closes the details, the advanced definitions and the creation window, instead of leaving SillyTavern.
+* While you type, the bottom buttons hide to leave room for the keyboard.
+
 ## Settings
 
 The Settings button gives access to:
 
-* **Width**: the width of the window, useful if you have a widescreen monitor.
-* **Cards per row**: how many characters are displayed on each row.
-* **Details panel**: stacked sections or tabs.
+* **Width**: the width of the window, up to the whole screen, useful if you have a widescreen monitor. On phones and tablets, the window always takes the whole screen.
+* **Cards per row**: how many characters are displayed on each row. On phones and tablets, it adapts to the screen.
+* **Details panel**: stacked sections or tabs. Phones always use tabs.
 * **Accent color**: the color of the selection, active states and main buttons. Transparency is supported.
 * **Empty list**: the messages shown when no character matches. One is picked at random, and SillyTavern macros such as `{{user}}` can be used.
 

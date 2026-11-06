@@ -339,6 +339,11 @@
     gap: 4px;
 }
 
+/* Short tab label: phones only (responsive.css) */
+.acm-tab-label-short {
+    display: none;
+}
+
 .acm-tab-button .editor_maximize,
 .acm-tab-button .acm-add-alt-greeting {
     cursor: pointer;

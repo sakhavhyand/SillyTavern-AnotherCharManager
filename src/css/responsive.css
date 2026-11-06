@@ -1,0 +1,632 @@
+/* ===== SMALL SCREENS =====
+   ModalManager.initializeResponsiveMode() puts one class on #acm_popup:
+   - .acm-mobile:  phone, in portrait (width <= 600px) or landscape (height <= 500px)
+   - .acm-compact: tablet (width <= 1024px, or a touch screen up to 1366px wide)
+   Neither class: desktop, nothing here applies. */
+
+/* ----- Popup width ----- */
+
+/* Phone and tablet: full screen, the width setting is ignored (but kept for the desktop) */
+#acm_popup:is(.acm-mobile, .acm-compact) {
+    width: 100% !important;
+    height: 100dvh;
+    top: 0;
+    box-sizing: border-box;
+    padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .list-character-wrapper {
+    padding: 0 6px;
+}
+
+/* The width and cards per row settings have no effect on a phone or tablet (full screen,
+   cards per row from the width, see CharListManager): hide them and their separators */
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#acm_popup_width_row, #acm_popup_cardsize),
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#acm_popup_width_row, #acm_popup_cardsize) + .dropdown-separator {
+    display: none;
+}
+
+/* Tabs are forced on a phone (ModalManager.applyDetailsViewMode): the toggle has no effect there */
+body:has(#acm_popup.acm-mobile) #acm_details_view_row,
+body:has(#acm_popup.acm-mobile) #acm_details_view_row + .dropdown-separator {
+    display: none;
+}
+
+/* ----- Character details -----
+   Phone: the details cover the list (instead of the bottom panel), with a back button.
+   The list is only made invisible, so it keeps its scroll position for the way back. */
+
+#acm_popup:not(.acm-mobile) #acm_details_back {
+    display: none;
+}
+
+#acm_popup.acm-mobile .list-character-wrapper:has(> #char-details.open) > :not(#char-details) {
+    visibility: hidden;
+}
+
+#acm_popup.acm-mobile #char-details.open {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    height: auto;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 6px 5px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    transform: none;
+}
+
+#acm_popup.acm-mobile #acm_details_back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    align-self: flex-start;
+    width: auto;
+    height: 38px;
+    margin: 5px 0 0;
+    padding: 0 14px;
+}
+
+/* The summary takes its height, the sections the rest of the screen: the text then ends
+   at the bottom of the screen instead of past it. With many tags the summary scrolls on
+   its own rather than squeezing the sections under 240px. */
+#acm_popup:is(.acm-mobile, .acm-compact) #char-details-block {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #char-details-desc {
+    flex: 1 0 240px;
+    height: auto;
+    min-height: 240px;
+}
+
+/* The tags are part of the summary (which scrolls), instead of a list of their own squeezed
+   to nothing when the summary is short (landscape) */
+#acm_popup:is(.acm-mobile, .acm-compact) .char-details-tags {
+    flex: 0 0 auto;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #tag_List {
+    overflow-y: visible;
+}
+
+/* One column of infos (two don't fit next to the avatar), in this order:
+   creator, version, created, added, tokens, perm. tokens, last chat, link.
+   The two columns are dissolved so their items can be reordered with the creator. */
+#acm_popup:is(.acm-mobile, .acm-compact) :is(.ch_infos_container, .ch_infos_column) {
+    display: contents;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_creator { order: 1; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_version { order: 2; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_date { order: 3; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_adddate { order: 4; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_tok { order: 5; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_permtok { order: 6; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_lastchat { order: 7; }
+#acm_popup:is(.acm-mobile, .acm-compact) #ch_infos_link { order: 8; }
+
+/* When there's room next to the avatar (landscape, wide tablet column): the infos after the
+   creator on two columns, read top to bottom so the order above is kept:
+     version, created, added, tokens | perm. tokens, last chat, link */
+#acm_popup:is(.acm-mobile, .acm-compact) .char-details-summary-desc {
+    container: acm-infos / inline-size;
+}
+
+/* A slightly smaller avatar (120x190 on desktop, same ratio) leaves the infos the 280px
+   they need for two columns on a ~410px wide phone in portrait */
+#acm_popup:is(.acm-mobile, .acm-compact) .char-details-summary .acm_avatar {
+    width: 100px;
+    height: 158px;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .ch_infos_item {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* (a "Created: 2026-02-20" is about 130px at 0.9em: two columns need about 280px) */
+@container acm-infos (min-width: 280px) {
+    #acm_popup:is(.acm-mobile, .acm-compact) .ch_infos_container {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, max-content));
+        grid-template-rows: repeat(4, auto);
+        grid-auto-flow: column;
+        column-gap: 14px;
+        font-size: 0.9em;
+        /* After the creator (order: 1), now that it's a box of its own */
+        order: 2;
+    }
+}
+
+/* Landscape phone: too short to stack them, the summary and the sections sit side by side,
+   each scrolling on its own, under the back button (by orientation, not width: small
+   phones are under 600px wide even in landscape) */
+@media (max-height: 500px) and (orientation: landscape) {
+    #acm_popup.acm-mobile #char-details.open {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        column-gap: 8px;
+        row-gap: 5px;
+        overflow: hidden;
+    }
+
+    #acm_popup.acm-mobile #acm_details_back {
+        grid-column: 1 / -1;
+        justify-self: start;
+    }
+
+    #acm_popup.acm-mobile #char-details-block {
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    #acm_popup.acm-mobile #char-details-desc {
+        height: auto;
+        min-height: 0;
+    }
+}
+
+/* Tablet: the list on the left, the details on the right, the separator between them
+   (still closes the details) instead of the bottom panel. The cards re-fit the narrower
+   list (cards per row from the width, see CharListManager). */
+#acm_popup.acm-compact .list-character-wrapper:has(> #char-details.open) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 7px minmax(0, 1.25fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    column-gap: 6px;
+}
+
+#acm_popup.acm-compact .list-character-wrapper:has(> #char-details.open) > :is(.sortAndFilter, #acm_tagQuery, #acm_tagQuery + .acm-zone-sep) {
+    grid-column: 1;
+}
+
+#acm_popup.acm-compact .list-character-wrapper:has(> #char-details.open) > #character-list {
+    grid-column: 1;
+    grid-row: 4;
+}
+
+/* The separator above the footer spans both columns */
+#acm_popup.acm-compact #char-details.open + .acm-zone-sep {
+    grid-column: 1 / -1;
+    grid-row: 5;
+}
+
+/* Vertical: a 2px accent line centered in the clickable band */
+#acm_popup.acm-compact .list-character-wrapper:has(> #char-details.open) > #char-sep {
+    grid-column: 2;
+    grid-row: 1 / 5;
+    width: 7px;
+    height: auto;
+    margin: 5px 0;
+    background: linear-gradient(180deg, transparent, var(--acm-accent), transparent) center / 2px 100% no-repeat;
+}
+
+#acm_popup.acm-compact #char-details.open {
+    grid-column: 3;
+    grid-row: 1 / 5;
+    height: auto;
+    min-height: 0;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 5px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    transform: none;
+}
+
+
+/* ----- Character cards ----- */
+
+/* Names are clamped to 2 lines: always reserve both, so every row of the grid has the
+   same height whether its names wrap or not */
+#acm_popup:is(.acm-mobile, .acm-compact) .card__header-title {
+    min-height: 2.4em;
+}
+
+/* Touch screens: no hover, so a tapped card doesn't stay enlarged and highlighted.
+   Scoped to the popup: .card is a generic class that themes or other extensions may use. */
+@media (hover: none) {
+    #acm_popup .card:hover {
+        transform: none;
+    }
+
+    /* Back to the resting colors, without touching the selected and favourite styles */
+    #acm_popup .card:not(.char_selected):hover {
+        background-color: var(--SmartThemeBlurTintColor);
+    }
+
+    #acm_popup .card:not(.char_selected, .fav):hover {
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    #acm_popup .acm_avatarList:hover {
+        transform: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* ----- Toolbar -----
+   Desktop: a single row. Small screens: two rows
+     1. search (filter + text) | more actions
+     2. character count | sort | tag filters | favourites | random | create
+   Import from file / URL and Manage tags move to the "more actions" menu. */
+
+#acm_popup:not(.acm-mobile, .acm-compact) #acm_toolbar_more {
+    display: none;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .sortAndFilter {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 0;
+}
+
+/* The form's children become items of the toolbar, so #charNumber can join row 2 */
+#acm_popup:is(.acm-mobile, .acm-compact) .form_sort_filter {
+    display: contents;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) :is(
+    #acm_character_import_button,
+    #acm_external_import_button,
+    #acm_tags_view,
+    .acm_toolbar_separator,
+    .sortText) {
+    display: none;
+}
+
+/* Buttons: square, finger-sized, spaced by the gap instead of their own margins */
+#acm_popup:is(.acm-mobile, .acm-compact) .sortAndFilter .menu_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: 38px;
+    height: 38px;
+    margin: 0;
+    padding: 0;
+}
+
+/* Row 1: the search takes all the width left by the "more" button, which pushes row 2 down */
+#acm_popup:is(.acm-mobile, .acm-compact) label[for="char_search_bar"] {
+    order: 1;
+    flex: 1 1 calc(100% - 48px);
+    min-width: 0;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_toolbar_more {
+    order: 2;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #charNumber {
+    order: 3;
+    flex-shrink: 0;
+    min-width: 0;
+    margin: 0;
+    padding: 0 2px;
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+/* "12/12" instead of "Characters: 12/12" (the full text stays in the tooltip) */
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_charNumber_label {
+    display: none;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #char_sort_order {
+    order: 4;
+    flex: 1 1 0;
+    min-width: 70px;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_tags_filter { order: 5; }
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_fav_filter_button { order: 6; }
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_random_button { order: 7; }
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_character_create_button { order: 8; }
+
+#acm_popup:is(.acm-mobile, .acm-compact) :is(#char_sort_order, #char_search_bar, #search_filter_dropdown) {
+    box-sizing: border-box;
+    height: 38px;
+    margin: 0;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .search-with-dropdown {
+    width: 100%;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #search_filter_dropdown {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 40%;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #char_search_bar {
+    min-width: 0;
+}
+
+/* Landscape phone: height is what's missing, so one row when the width allows it:
+     count | sort | search | tag filters | favourites | random | create | more
+   The toolbar still wraps if the popup is too narrow. */
+@media (max-height: 500px) {
+    #acm_popup.acm-mobile #charNumber { order: 1; }
+    /* Bases kept small so the row also fits a narrow landscape phone (~480px) */
+    #acm_popup.acm-mobile #char_sort_order { order: 2; flex: 0 1 90px; }
+
+    #acm_popup.acm-mobile label[for="char_search_bar"] {
+        order: 3;
+        flex: 1 1 0;
+        min-width: 120px;
+    }
+
+    #acm_popup.acm-mobile #acm_tags_filter { order: 4; }
+    #acm_popup.acm-mobile #acm_fav_filter_button { order: 5; }
+    #acm_popup.acm-mobile #acm_random_button { order: 6; }
+    #acm_popup.acm-mobile #acm_character_create_button { order: 7; }
+    #acm_popup.acm-mobile #acm_toolbar_more { order: 8; }
+
+    #acm_popup.acm-mobile #search_filter_dropdown {
+        max-width: 35%;
+    }
+}
+
+/* ----- Touch finishes (phone and tablet, unless said otherwise) ----- */
+
+/* Details action buttons: finger-sized, spread over the row */
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_details_buttons_block {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+/* 40px wide, narrower (down to 32px) rather than wrapping on the smallest phones */
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_details_buttons_block .menu_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    flex: 0 1 40px;
+    min-width: 32px;
+    width: auto;
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    font-size: 1.1em;
+}
+
+/* Narrow tab bar, whatever the mode (tablet details column, narrow desktop popup):
+   the short labels, as the full ones would be cut */
+#char-details-desc {
+    container: acm-desc / inline-size;
+}
+
+@container acm-desc (max-width: 440px) {
+    .acm-tab-label {
+        display: none;
+    }
+
+    .acm-tab-label-short {
+        display: inline;
+    }
+}
+
+/* Phone tabs: short labels, so each title holds on one line and the tabs stay low */
+#acm_popup.acm-mobile .acm-tab-label {
+    display: none;
+}
+
+#acm_popup.acm-mobile .acm-tab-label-short {
+    display: inline;
+}
+
+#acm_popup.acm-mobile .acm-tab-button {
+    gap: 0;
+    padding: 2px;
+}
+
+/* Not clipped (short labels fit): the enlarged touch area of the icons below can overflow */
+#acm_popup.acm-mobile :is(.acm-tab-title, .acm-tab-subtext) {
+    overflow: visible;
+}
+
+/* Expand and add greeting: finger-sized (the negative margins keep the tab low) */
+#acm_popup:is(.acm-mobile, .acm-compact) .acm-tab-button :is(.editor_maximize, .acm-add-alt-greeting) {
+    font-size: 15px;
+    padding: 6px 8px;
+    margin: -5px -4px;
+    opacity: 0.85;
+}
+
+/* Footer: finger-sized buttons */
+#acm_popup:is(.acm-mobile, .acm-compact) .acm-popup-controls {
+    padding: 0 6px;
+    gap: 6px;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .acm-popup-controls > .menu_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-sizing: border-box;
+    min-height: 38px;
+    margin: 0;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_popup_close.menu_button {
+    flex: 1 1 auto;
+    max-width: 160px;
+}
+
+/* Touch screens: no hover to reveal the avatar edit button, so it's always shown */
+@media (hover: none) {
+    #acm_popup #edit_icon {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Advanced definitions and character creation: full screen over the full screen popup,
+   instead of the width of SillyTavern's chat (--sheldWidth) under its top bar */
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#acm_character_popup, #acm_create_popup) {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    top: 0;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+}
+
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) #acm_create_popup .acm-popup-controls > .menu_button {
+    display: flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 20px;
+}
+
+/* Bigger target for the close cross of the advanced definitions */
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) #acm_character_cross {
+    top: 4px;
+    right: 4px;
+    padding: 8px;
+}
+
+/* Menus (Switch UI and its submenus, more actions, settings rows, export format):
+   finger-sized items on phones and tablets */
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#dropdown-ui-menu, #dropdown-submenu, #preset-submenu, #acm-toolbar-menu, #acm_export_format_popup) :is(.dropdown-ui-item, .acm_export_format) {
+    box-sizing: border-box;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+/* ----- Tag query builder (phone and tablet) -----
+   Narrow (portrait): one row per rule, label | input | save | reset, its tags on the line
+   below. Wide: label | input | tags | save | reset (see the container query below) */
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_container {
+    gap: 6px;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row {
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_label {
+    min-width: 0;
+    width: 7.5em;
+    flex-shrink: 0;
+    text-align: left;
+    white-space: normal;
+    font-size: 0.85em;
+    line-height: 1.15;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row > label {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row .acm_tagQuery_input {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    height: 36px;
+    padding: 0 6px !important;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) :is(#acm_tagQuery_save, #acm_tagQuery_reset) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 38px;
+    height: 36px;
+    margin: 0;
+    padding: 0;
+}
+
+/* The rule's tags: a full line under it, none when there are none */
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row > .tags {
+    order: 10;
+    flex: 1 1 100%;
+}
+
+#acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row > .tags:empty {
+    display: none;
+}
+
+/* Wide enough (landscape, tablet): a narrower input, its tags right after it on the same
+   line (wrapping there), then the buttons, as on the desktop */
+#acm_popup:is(.acm-mobile, .acm-compact) #acm_tagQuery {
+    container: acm-tagquery / inline-size;
+}
+
+@container acm-tagquery (min-width: 480px) {
+    #acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row {
+        flex-wrap: nowrap;
+    }
+
+    #acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row > label {
+        flex: 0 0 150px;
+    }
+
+    #acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row > .tags {
+        order: 0;
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    /* Even empty, it keeps its room so the buttons stay at the end of the line */
+    #acm_popup:is(.acm-mobile, .acm-compact) .acm_tagQuery_row > .tags:empty {
+        display: flex;
+    }
+}
+
+/* ----- Scrolling and screen edges (phone and tablet) ----- */
+
+/* Reaching the end of the list or the details doesn't scroll the page behind,
+   nor starts the browser's pull-to-refresh */
+#acm_popup:is(.acm-mobile, .acm-compact) :is(#character-list, #char-details, #char-details-block, #char-details-desc, .dropdown-content),
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#acm_character_popup, #acm_create_popup) {
+    overscroll-behavior: contain;
+}
+
+/* Notch / status bar (SillyTavern installed as an app, viewport-fit=cover): the full screen
+   popups keep clear of it, as they already do of the bottom one */
+#acm_popup:is(.acm-mobile, .acm-compact) {
+    padding-top: calc(4px + env(safe-area-inset-top));
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) :is(#acm_character_popup, #acm_create_popup) {
+    padding-top: calc(10px + env(safe-area-inset-top));
+}
+
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) #acm_character_cross {
+    top: calc(4px + env(safe-area-inset-top));
+}
+
+/* Typing (ModalManager.initializeEditingState): the virtual keyboard takes half the screen,
+   so the footer and the separator above it give their room to the text */
+#acm_popup.acm-editing:is(.acm-mobile, .acm-compact) > .acm-popup-controls,
+#acm_popup.acm-editing:is(.acm-mobile, .acm-compact) .list-character-wrapper > .acm-zone-sep:last-child,
+body:has(#acm_popup:is(.acm-mobile, .acm-compact)) #acm_create_popup.acm-editing .acm-popup-controls {
+    display: none;
+}

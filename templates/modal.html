@@ -37,6 +37,7 @@
                 <div class="acm_toolbar_separator"></div>
                 <div id="acm_fav_filter_button" class="menu_button fa-solid fa-star fav_off faSmallFontSquareFix acm_toolbar_button" title="Show favourites only" data-i18n="[title]Show favourites only" aria-pressed="false"></div>
                 <div id="acm_random_button" class="menu_button fa-solid fa-dice faSmallFontSquareFix acm_toolbar_button" title="Random character" data-i18n="[title]Random character"></div>
+                <div id="acm_toolbar_more" class="menu_button fa-solid fa-ellipsis-vertical faSmallFontSquareFix acm_toolbar_button" title="More actions" data-i18n="[title]More actions"></div>
             </form>
             <span id="charNumber"></span>
         </div>
@@ -69,6 +70,11 @@
         <div id="character-list"> </div>
         <div id="char-sep" role="separator" title="Close the details" style="display:none"></div>
         <div id="char-details">
+            <!-- Phone only (responsive.css): the details cover the list, this goes back to it -->
+            <div id="acm_details_back" class="menu_button" title="Back to the list" data-i18n="[title]Back to the list">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span data-i18n="Back">Back</span>
+            </div>
             <div id="char-details-block">
                 <div class="char-details-summary">
                     <div class="acm_avatar" id="avatar_title">
@@ -122,14 +128,14 @@
                     <div id="acm-desc-tab-bar" class="acm-tab-bar">
                         <div class="acm-tab-buttons">
                             <div class="acm-tab-button active" data-acm-tab="desc">
-                                <span class="acm-tab-title">Description</span>
+                                <span class="acm-tab-title"><span class="acm-tab-label">Description</span><span class="acm-tab-label-short">Desc.</span></span>
                                 <span class="acm-tab-subtext">
                                     <span id="acm_tab_desc_tokens">0 tokens</span>
                                     <i class="editor_maximize fa-solid fa-maximize" data-for="acm_description" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
                                 </span>
                             </div>
                             <div class="acm-tab-button" data-acm-tab="greeting">
-                                <span class="acm-tab-title">Greeting</span>
+                                <span class="acm-tab-title"><span class="acm-tab-label">Greeting</span><span class="acm-tab-label-short">Greeting</span></span>
                                 <span class="acm-tab-subtext">
                                     <span id="acm_tab_greeting_tokens">0 tokens</span>
                                     <i class="editor_maximize fa-solid fa-maximize" data-for="acm_firstMess" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
@@ -137,13 +143,13 @@
                             </div>
                             <div class="acm-tab-button" data-acm-tab="altgreetings">
                                 <span class="acm-tab-title">
-                                    Alt. Greetings
+                                    <span class="acm-tab-label">Alt. Greetings</span><span class="acm-tab-label-short">Alt.</span>
                                     <i class="fa-solid fa-plus acm-add-alt-greeting" title="Add Alternative Greeting"></i>
                                 </span>
                                 <span class="acm-tab-subtext" id="acm_tab_altgreetings_count">0 greetings</span>
                             </div>
                             <div class="acm-tab-button" data-acm-tab="creatorsnotes">
-                                <span class="acm-tab-title">Creator's Notes</span>
+                                <span class="acm-tab-title"><span class="acm-tab-label">Creator's Notes</span><span class="acm-tab-label-short">Notes</span></span>
                                 <span class="acm-tab-subtext">
                                     <span id="acm_tab_creatorsnotes_tokens">0 tokens</span>
                                     <i class="editor_maximize fa-solid fa-maximize" data-for="acm_creator_notes_textarea" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
@@ -252,10 +258,15 @@
     <div class="dropdown-ui-item" data-ui="preset" data-preset="3"><i class="acm-menu-check fa-solid fa-check"></i><span class="acm-menu-label">Preset 4</span></div>
     <div class="dropdown-ui-item" data-ui="preset" data-preset="4"><i class="acm-menu-check fa-solid fa-check"></i><span class="acm-menu-label">Preset 5</span></div>
 </div>
+<div id="acm-toolbar-menu" class="dropdown-ui-menu list-group">
+    <div class="dropdown-ui-item" data-acm-target="acm_character_import_button"><i class="acm-menu-check acm-menu-icon fa-solid fa-file-import"></i><span class="acm-menu-label">Import from file</span></div>
+    <div class="dropdown-ui-item" data-acm-target="acm_external_import_button"><i class="acm-menu-check acm-menu-icon fa-solid fa-cloud-arrow-down"></i><span class="acm-menu-label">Import from URL</span></div>
+    <div class="dropdown-ui-item" data-acm-target="acm_tags_view"><i class="acm-menu-check acm-menu-icon fa-solid fa-gear"></i><span class="acm-menu-label">Manage tags</span></div>
+</div>
 <div id="acm-settings-popup" class="dropdown-ui-menu list-group">
-    <div class="acm-settings-row">
+    <div id="acm_popup_width_row" class="acm-settings-row">
         <label for="acm_widthSlider">Width</label>
-        <input id="acm_widthSlider" max="90" min="50" type="range" value="50">
+        <input id="acm_widthSlider" max="100" min="50" type="range" value="50">
         <span id="acm_widthValue">50%</span>
     </div>
     <hr class="dropdown-separator">
@@ -265,7 +276,7 @@
         <span id="acm_cardsPerRowValue">5</span>
     </div>
     <hr class="dropdown-separator">
-    <div class="acm-settings-row">
+    <div id="acm_details_view_row" class="acm-settings-row">
         <label for="acm-desc-view-toggle">Details panel</label>
         <div id="acm-desc-view-toggle" class="acm-toggle-switch" title="Show the details panel sections stacked or as tabs" data-i18n="[title]Show the details panel sections stacked or as tabs">
             <span class="acm-settings-label">Stacked</span>
