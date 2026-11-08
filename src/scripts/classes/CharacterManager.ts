@@ -235,9 +235,7 @@ export class CharacterManager {
      * Fills the character details in the user interface based on the provided avatar.
      */
     async fillDetails(avatar: string): Promise<void> {
-        if (typeof this.st.characters[getIdByAvatar(avatar)].data.alternate_greetings === 'undefined') {
-            await this.st.unshallowCharacter(getIdByAvatar(avatar));
-        }
+        await this.st.unshallowCharacter(getIdByAvatar(avatar));
         const char = this.st.characters[getIdByAvatar(avatar)];
         const avatarThumb = this.getAvatarThumbnailUrl(char.avatar);
 
