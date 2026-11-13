@@ -5,7 +5,7 @@ import {
     create_data as defaultCreateData,
     ExtensionSettings,
     CreateData,
-} from '../settings';
+} from './settings';
 
 interface SettingsManagerParams {
     extensionSettings: any;

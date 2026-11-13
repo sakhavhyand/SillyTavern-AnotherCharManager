@@ -3,7 +3,7 @@ import { CharCreationManager } from './CharCreationManager';
 import { PresetManager } from './PresetManager';
 import { TagManager } from './TagManager';
 import { CharListManager } from './CharListManager';
-import { DEFAULT_ACCENT_COLOR } from '../settings';
+import { DEFAULT_ACCENT_COLOR } from '../../core/settings';
 const { Popper } = SillyTavern.libs;
 
 // Screen modes, see applyResponsiveMode() and css/responsive.css

@@ -1,5 +1,5 @@
 import { debounce, escapeHtml, getCardElement, matchesTagRules, sortMoments } from '../acm-utils';
-import { VirtualScroller } from './VirtualScroller';
+import { VirtualScroller } from '../../core/VirtualScroller';
 import { CharacterManager } from './CharacterManager';
 
 const { Fuse } = SillyTavern.libs;

@@ -1,5 +1,5 @@
 // An extension that allows you to manage characters.
-import { AppContext } from './scripts/classes/AppContext';
+import { AppContext } from './core/AppContext';
 import { ModalManager } from './scripts/classes/ModalManager';
 
 export const acm: AppContext = new AppContext();
