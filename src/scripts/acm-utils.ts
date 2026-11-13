@@ -7,6 +7,11 @@ export const TALKATIVENESS_DEFAULT = 0.5;
 export const DEPTH_PROMPT_DEPTH_DEFAULT = 4;
 export const DEPTH_PROMPT_ROLE_DEFAULT = 'system';
 export const NARRATOR_MESSAGE_TYPE = 'narrator';
+// Swipe between the details tabs (attachTabSwipe): minimum horizontal distance and
+// maximum duration, and the screen edges left to the system back gesture (px, ms, px)
+const SWIPE_MIN_DISTANCE = 60;
+const SWIPE_MAX_DURATION = 600;
+const SWIPE_EDGE_MARGIN = 24;
 
 /**
  * Escapes HTML special characters in a string to prevent XSS and DOM breakage.
@@ -324,4 +329,45 @@ export function toYYYYMMDD(createDate: string | Date): string {
 
     const [, y, mo, d] = m;
     return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+}
+
+
+
+/**
+ * Swiping horizontally on `area` clicks the tab (among `tabsSelector`, the current one
+ * having the `active` class) next to the current one: swipe left, the next one.
+ * Kept clear of the screen edges (the system back gesture), of text selection, of
+ * vertical scrolling and of the sliders (dragged horizontally).
+ */
+export function attachTabSwipe(area: HTMLElement, tabsSelector: string, isEnabled: () => boolean = () => true): void {
+    let start: { x: number; y: number; time: number } | null = null;
+
+    area.addEventListener('touchstart', (event: TouchEvent) => {
+        const touch = event.touches[0];
+        const edge = SWIPE_EDGE_MARGIN;
+        const onSlider = (event.target as Element | null)?.closest?.('input[type="range"]');
+        start = event.touches.length === 1 && !onSlider && touch.clientX > edge && touch.clientX < window.innerWidth - edge
+            ? { x: touch.clientX, y: touch.clientY, time: Date.now() }
+            : null;
+    }, { passive: true });
+
+    area.addEventListener('touchend', (event: TouchEvent) => {
+        if (!start || !isEnabled()) return;
+        const touch = event.changedTouches[0];
+        const dx = touch.clientX - start.x;
+        const dy = touch.clientY - start.y;
+        const quick = Date.now() - start.time < SWIPE_MAX_DURATION;
+        start = null;
+        if (!quick || Math.abs(dx) < SWIPE_MIN_DISTANCE || Math.abs(dx) < 2 * Math.abs(dy)) return;
+        // Selecting text with the finger moves horizontally too
+        if (window.getSelection()?.toString()) return;
+
+        const $tabs = $(tabsSelector);
+        const current = $tabs.index($tabs.filter('.active'));
+        // Swipe left: content comes from the right, so the next tab
+        const next = current + (dx < 0 ? 1 : -1);
+        if (next >= 0 && next < $tabs.length) $tabs.eq(next).trigger('click');
+    }, { passive: true });
+
+    area.addEventListener('touchcancel', () => { start = null; }, { passive: true });
 }
