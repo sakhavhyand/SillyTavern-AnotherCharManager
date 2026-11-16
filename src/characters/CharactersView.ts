@@ -3,21 +3,32 @@ import {
     resetScrollHeight,
     attachTabSwipe,
 } from '../scripts/acm-utils';
+import { MenuManager } from '../core/MenuManager';
 
 export class CharactersView {
     eventManager: any;
     settings: any;
     st: any;
+    menuManager: MenuManager;
 
-    constructor(eventManager: any, settings: any, st: any) {
+    constructor(eventManager: any, settings: any, st: any, menuManager: MenuManager) {
         this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
+        this.menuManager = menuManager;
     }
 
     init(): void {
         this.initializeDetailsTabs();
         this.initializeTabSwipe();
+        this.initializeSwitchUIEvents();
+        this.initializeExportButton();
+        this.menuManager.register('export', 'acm_export_button', 'acm_export_format_popup', 'left');
+        this.menuManager.register('main', 'acm_switch_ui', 'dropdown-ui-menu', 'top-start');
+        // '-end' aligns the bottoms so submenus grow upward from the footer
+        this.menuManager.register('sub', 'acm_dropdown_sub', 'dropdown-submenu', 'right-end');
+        this.menuManager.register('preset', 'acm_dropdown_cat', 'preset-submenu', 'right-end');
+        this.applyMenusPlacement();
     }
 
     /**
@@ -111,6 +122,111 @@ export class CharactersView {
             const isNowActive = !$('#acm-desc-view-toggle').hasClass('active');
             this.settings.updateSetting('detailsTabMode', isNowActive);
             this.applyDetailsViewMode(true);
+        });
+    }
+
+    /**
+     * Marks the current display mode (and its parent entries) in the Switch UI menus.
+     */
+    updateUIMenuActiveState(): void {
+        const dropdownUI = Boolean(this.settings.getSetting('dropdownUI'));
+        const mode = this.settings.getSetting('dropdownMode');
+        const presetId = this.settings.getSetting('presetId');
+
+        $('#acm_switch_classic').toggleClass('active', !dropdownUI);
+        $('#acm_dropdown_sub').toggleClass('active', dropdownUI);
+        $('#acm_switch_alltags').toggleClass('active', dropdownUI && mode === 'allTags');
+        $('#acm_switch_creators').toggleClass('active', dropdownUI && mode === 'creators');
+        $('#acm_dropdown_cat').toggleClass('active', dropdownUI && mode === 'custom');
+        $('#preset-submenu [data-ui="preset"]').each((_, item) => {
+            $(item).toggleClass('active', dropdownUI && mode === 'custom' && $(item).data('preset') === presetId);
+        });
+    }
+
+    /**
+     * Switch UI submenus: to the right of their item, or on a phone (no room on the right)
+     * over it and the items above, each submenu stacking upward on its parent menu.
+     */
+    applyMenusPlacement(): void {
+        const placement = $('#acm_popup').hasClass('acm-mobile') ? 'top-start' : 'right-end';
+        this.menuManager.setPlacement('sub', placement);
+        this.menuManager.setPlacement('preset', placement);
+    }
+
+    /**
+     * Initializes the export button click handler to toggle the export menu.
+     *
+     * @return {void}
+     */
+    initializeExportButton(): void {
+        $('#acm_export_button').on('click', () => {
+            this.menuManager.toggle('export');
+        });
+    }
+
+    /**
+     * Initializes click event handlers for switching between available UI modes and related dropdown menus.
+     *
+     * Binds controls that toggle the main, sub, and preset menus, updates the active UI menu state,
+     * applies selected UI mode settings, opens the preset manager modal, refreshes the character list
+     * when a mode change occurs, and closes all menus after a menu action is handled.
+     *
+     * @return {void} This method does not return a value.
+     */
+    initializeSwitchUIEvents(): void {
+        $('#acm_switch_ui').on('click', () => {
+            this.updateUIMenuActiveState();
+            this.menuManager.toggle('main');
+        });
+        $('#acm_dropdown_sub').on('click', () => {
+            this.menuManager.toggle('sub');
+        });
+        $('#acm_dropdown_cat').on('click', () => {
+            this.menuManager.toggle('preset');
+        });
+
+        const menuActions: Record<string, (event?: JQuery.TriggeredEvent) => void> = {
+            '#acm_switch_classic': () => {
+                if (this.settings.getSetting('dropdownUI')) {
+                    this.settings.updateSetting('dropdownUI', false);
+                    this.eventManager.emit('charList:refresh');
+                }
+            },
+            '#acm_switch_alltags': () => {
+                if (!this.settings.getSetting('dropdownUI') || (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') !== 'allTags')) {
+                    this.settings.updateSetting('dropdownUI', true);
+                    this.settings.updateSetting('dropdownMode', 'allTags');
+                    this.eventManager.emit('charList:refresh');
+                }
+            },
+            '#acm_switch_creators': () => {
+                if (!this.settings.getSetting('dropdownUI') || (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') !== 'creators')) {
+                    this.settings.updateSetting('dropdownUI', true);
+                    this.settings.updateSetting('dropdownMode', 'creators');
+                    this.eventManager.emit('charList:refresh');
+                }
+            },
+            '#acm_manage_categories': () => {
+                this.eventManager.emit('modal:openPresetManager');
+            },
+            '[data-ui="preset"]': (event?: JQuery.TriggeredEvent) => {
+                const presetId = $(event!.target).closest('[data-ui="preset"]').data('preset');
+                if (!this.settings.getSetting('dropdownUI') ||
+                    (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') !== 'custom') ||
+                    (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') === 'custom' && this.settings.getSetting('presetId') !== presetId)) {
+                    this.settings.updateSetting('dropdownUI', true);
+                    this.settings.updateSetting('dropdownMode', 'custom');
+                    this.settings.updateSetting('presetId', presetId);
+                    this.eventManager.emit('charList:refresh');
+                }
+            },
+        };
+
+        Object.entries(menuActions).forEach(([selector, action]) => {
+            $(document).on('click', selector, (event: JQuery.TriggeredEvent) => {
+                action(event);
+                this.menuManager.closeAll();
+            });
         });
     }
 }

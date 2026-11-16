@@ -27,13 +27,5 @@ interface JQuery {
 
 // Window extensions
 interface Window {
-    acmPoppers: {
-        Export: any;
-        UI: any;
-        UISub: any;
-        UIPreset: any;
-        Settings: any;
-        Tools: any;
-    };
     acmIsUpdatingDetails: boolean;
 }

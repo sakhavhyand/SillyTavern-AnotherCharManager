@@ -5,7 +5,7 @@ import { TagManager } from './TagManager';
 import { CharListManager } from './CharListManager';
 import { DEFAULT_ACCENT_COLOR } from '../../core/settings';
 import { CharactersView } from '../../characters/CharactersView';
-const { Popper } = SillyTavern.libs;
+import { MenuManager } from '../../core/MenuManager';
 
 // Screen modes, see applyResponsiveMode() and css/responsive.css
 // Mobile: phone in portrait (narrow) or in landscape (short)
@@ -23,16 +23,18 @@ export class ModalManager {
     presetManager: PresetManager;
     charListManager: CharListManager;
     charactersView: CharactersView;
+    menuManager: MenuManager;
 
     constructor(eventManager: any, settings: any, st: any) {
         this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
+        this.menuManager = new MenuManager();
         this.charCreationManager = new CharCreationManager(this.eventManager, this.settings, this.st);
         this.tagManager = new TagManager(this.eventManager, this.settings, this.st);
         this.presetManager = new PresetManager(this.eventManager, this.settings, this.st, this.tagManager);
         this.charListManager = new CharListManager(this.eventManager, this.settings, this.st, this.presetManager);
-        this.charactersView = new CharactersView(this.eventManager, this.settings, this.st);
+        this.charactersView = new CharactersView(this.eventManager, this.settings, this.st, this.menuManager);
     }
 
     /**
@@ -92,7 +94,10 @@ export class ModalManager {
         this.initializeResponsiveMode();
 
         // Initialize popper.js for dropdowns
-        this.initializePoppers();
+        this.menuManager.init();
+        this.menuManager.register('settings', 'acm_settings_button', 'acm-settings-popup', 'top-end');
+        // Small screens: the toolbar actions that don't fit go in this menu
+        this.menuManager.register('tools', 'acm_toolbar_more', 'acm-toolbar-menu', 'bottom-end');
         this.initializeModalEvents();
         this.initializeUIMenuEvents();
         this.charactersView.init();
@@ -134,74 +139,8 @@ export class ModalManager {
         // The details view too (tabs forced on phones), and the submenus placement
         if (wasMobile !== isMobile) {
             this.charactersView.applyDetailsViewMode();
-            this.applyMenusPlacement();
+            this.charactersView.applyMenusPlacement();
         }
-    }
-
-    /**
-     * Switch UI submenus: to the right of their item, or on a phone (no room on the right)
-     * over it and the items above, each submenu stacking upward on its parent menu.
-     */
-    applyMenusPlacement(): void {
-        const placement = $('#acm_popup').hasClass('acm-mobile') ? 'top-start' : 'right-end';
-        window.acmPoppers?.UISub?.setOptions({ placement });
-        window.acmPoppers?.UIPreset?.setOptions({ placement });
-    }
-
-    /**
-     * Initializes popper.js for dropdown positioning
-     */
-    initializePoppers(): void {
-        // Create poppers for various dropdowns
-        const Export = Popper.createPopper(
-            document.getElementById('acm_export_button')!,
-            document.getElementById('acm_export_format_popup')!,
-            { placement: 'left' },
-        );
-
-        const UI = Popper.createPopper(
-            document.getElementById('acm_switch_ui')!,
-            document.getElementById('dropdown-ui-menu')!,
-            { placement: 'top-start' },
-        );
-
-        const UISub = Popper.createPopper(
-            document.getElementById('acm_dropdown_sub')!,
-            document.getElementById('dropdown-submenu')!,
-            // '-end' aligns the bottoms so submenus grow upward from the footer
-            { placement: 'right-end' },
-        );
-
-        const UIPreset = Popper.createPopper(
-            document.getElementById('acm_dropdown_cat')!,
-            document.getElementById('preset-submenu')!,
-            { placement: 'right-end' },
-        );
-
-        const Settings = Popper.createPopper(
-            document.getElementById('acm_settings_button'),
-            document.getElementById('acm-settings-popup'),
-            { placement: 'top-end' },
-        );
-
-        // Small screens: the toolbar actions that don't fit go in this menu
-        const Tools = Popper.createPopper(
-            document.getElementById('acm_toolbar_more')!,
-            document.getElementById('acm-toolbar-menu')!,
-            { placement: 'bottom-end' },
-        );
-
-        // Store poppers for later use
-        window.acmPoppers = {
-            Export,
-            UI,
-            UISub,
-            UIPreset,
-            Settings,
-            Tools,
-        };
-        // The screen mode was set before the poppers existed
-        this.applyMenusPlacement();
     }
 
     /**
@@ -365,92 +304,6 @@ export class ModalManager {
             $popup.css('display', 'none');
         }, 125);
         this.eventManager.emit('modal:closed');
-    }
-
-    /**
-     * Toggles the visibility of dropdown menus based on the provided options.
-     */
-    toggleDropdownMenus(options: {
-        closeAll?: boolean;
-        menuToToggle?: string | null;
-        updatePoppers?: boolean;
-    } = {}): void {
-        const {
-            closeAll = false,
-            menuToToggle = null,
-            updatePoppers = true,
-        } = options;
-
-        // Menu elements
-        const menus: Record<string, { element: string; popper: string }> = {
-            main: {
-                element: '#dropdown-ui-menu',
-                popper: 'UI',
-            },
-            sub: {
-                element: '#dropdown-submenu',
-                popper: 'UISub',
-            },
-            preset: {
-                element: '#preset-submenu',
-                popper: 'UIPreset',
-            },
-            export: {
-                element: '#acm_export_format_popup',
-                popper: 'Export',
-            },
-            settings: {
-                element: '#acm-settings-popup',
-                popper: 'Settings',
-            },
-            tools: {
-                element: '#acm-toolbar-menu',
-                popper: 'Tools',
-            },
-        };
-
-        if (closeAll) {
-            // Close all menus
-            Object.values(menus).forEach(menu => {
-                $(menu.element).toggle(false);
-            });
-        } else if (menuToToggle && menus[menuToToggle]) {
-            // Toggle specific menu
-            $(menus[menuToToggle].element).toggle();
-        }
-
-        // Update poppers if necessary
-        if (updatePoppers && window.acmPoppers) {
-            Object.values(menus).forEach(menu => {
-                if (window.acmPoppers[menu.popper]) {
-                    window.acmPoppers[menu.popper].update();
-                }
-            });
-        }
-    }
-
-    /**
-     * Initializes a function to handle clicks outside of specified dropdown elements.
-     */
-    initializeDropdownClickOutside(): (event: MouseEvent) => void {
-        const excludedElements = [
-            'dropdown-ui-menu',
-            'dropdown-submenu',
-            'preset-submenu',
-            'acm_switch_ui',
-            'acm_export_format_popup',
-            'acm_export_button',
-            'acm-settings-popup',
-            'acm_settings_button',
-            'acm-toolbar-menu',
-            'acm_toolbar_more']
-            .map(id => document.getElementById(id));
-
-        return (event: MouseEvent) => {
-            if (!excludedElements.some(element => element?.contains(event.target as Node))) {
-                this.toggleDropdownMenus({ closeAll: true });
-            }
-        };
     }
 
     /**
@@ -621,94 +474,20 @@ export class ModalManager {
     }
 
     /**
-     * Marks the current display mode (and its parent entries) in the Switch UI menus.
-     */
-    updateUIMenuActiveState(): void {
-        const dropdownUI = Boolean(this.settings.getSetting('dropdownUI'));
-        const mode = this.settings.getSetting('dropdownMode');
-        const presetId = this.settings.getSetting('presetId');
-
-        $('#acm_switch_classic').toggleClass('active', !dropdownUI);
-        $('#acm_dropdown_sub').toggleClass('active', dropdownUI);
-        $('#acm_switch_alltags').toggleClass('active', dropdownUI && mode === 'allTags');
-        $('#acm_switch_creators').toggleClass('active', dropdownUI && mode === 'creators');
-        $('#acm_dropdown_cat').toggleClass('active', dropdownUI && mode === 'custom');
-        $('#preset-submenu [data-ui="preset"]').each((_, item) => {
-            $(item).toggleClass('active', dropdownUI && mode === 'custom' && $(item).data('preset') === presetId);
-        });
-    }
-
-    /**
      * Initializes UI menu events by binding click event handlers to various elements.
      */
     initializeUIMenuEvents(): void {
-        $('#acm_switch_ui').on('click', () => {
-            this.updateUIMenuActiveState();
-            this.toggleDropdownMenus({ menuToToggle: 'main' });
-        });
         $('#acm_settings_button').on('click', () => {
-            this.toggleDropdownMenus({ menuToToggle: 'settings' });
+            this.menuManager.toggle('settings');
         });
         $('#acm_toolbar_more').on('click', () => {
-            this.toggleDropdownMenus({ menuToToggle: 'tools' });
+            this.menuManager.toggle('tools');
         });
         // Each entry of the toolbar menu runs the toolbar button it stands for (hidden on small screens)
         $('#acm-toolbar-menu').on('click', '.dropdown-ui-item[data-acm-target]', (event: JQuery.TriggeredEvent) => {
             const target = $(event.currentTarget).data('acm-target') as string;
-            this.toggleDropdownMenus({ closeAll: true });
+            this.menuManager.closeAll();
             $(`#${target}`).trigger('click');
         });
-        $('#acm_dropdown_sub').on('click', () => {
-            this.toggleDropdownMenus({ menuToToggle: 'sub' });
-        });
-        $('#acm_dropdown_cat').on('click', () => {
-            this.toggleDropdownMenus({ menuToToggle: 'preset' });
-        });
-
-        const menuActions: Record<string, (event?: JQuery.TriggeredEvent) => void> = {
-            '#acm_switch_classic': () => {
-                if (this.settings.getSetting('dropdownUI')) {
-                    this.settings.updateSetting('dropdownUI', false);
-                    this.eventManager.emit('charList:refresh');
-                }
-            },
-            '#acm_switch_alltags': () => {
-                if (!this.settings.getSetting('dropdownUI') || (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') !== 'allTags')) {
-                    this.settings.updateSetting('dropdownUI', true);
-                    this.settings.updateSetting('dropdownMode', 'allTags');
-                    this.eventManager.emit('charList:refresh');
-                }
-            },
-            '#acm_switch_creators': () => {
-                if (!this.settings.getSetting('dropdownUI') || (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') !== 'creators')) {
-                    this.settings.updateSetting('dropdownUI', true);
-                    this.settings.updateSetting('dropdownMode', 'creators');
-                    this.eventManager.emit('charList:refresh');
-                }
-            },
-            '#acm_manage_categories': () => {
-                this.eventManager.emit('modal:openPresetManager');
-            },
-            '[data-ui="preset"]': (event?: JQuery.TriggeredEvent) => {
-                const presetId = $(event!.target).closest('[data-ui="preset"]').data('preset');
-                if (!this.settings.getSetting('dropdownUI') ||
-                    (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') !== 'custom') ||
-                    (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') === 'custom' && this.settings.getSetting('presetId') !== presetId)) {
-                    this.settings.updateSetting('dropdownUI', true);
-                    this.settings.updateSetting('dropdownMode', 'custom');
-                    this.settings.updateSetting('presetId', presetId);
-                    this.eventManager.emit('charList:refresh');
-                }
-            },
-        };
-
-        Object.entries(menuActions).forEach(([selector, action]) => {
-            $(document).on('click', selector, (event: JQuery.TriggeredEvent) => {
-                action(event);
-                this.toggleDropdownMenus({ closeAll: true });
-            });
-        });
-
-        document.addEventListener('click', this.initializeDropdownClickOutside());
     }
 }

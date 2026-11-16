@@ -164,12 +164,6 @@ export class CharacterManager {
         // Trigger when the favorites button is clicked
         $('#acm_favorite_button').on('click', () => this.toggleFavoriteStatus());
 
-        // Export character
-        $('#acm_export_button').on('click', function () {
-            $('#acm_export_format_popup').toggle();
-            window.acmPoppers.Export.update();
-        });
-
         $(document).on('click', '.acm_export_format', (event: JQuery.TriggeredEvent) => {
             const format = $(event.currentTarget).data('format');
             if (format) {
