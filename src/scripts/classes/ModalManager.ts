@@ -1,8 +1,3 @@
-import { resetScrollHeight } from '../acm-utils';
-import { CharCreationManager } from './CharCreationManager';
-import { PresetManager } from './PresetManager';
-import { TagManager } from './TagManager';
-import { CharListManager } from './CharListManager';
 import { DEFAULT_ACCENT_COLOR } from '../../core/settings';
 import { CharactersView } from '../../characters/CharactersView';
 import { MenuManager } from '../../core/MenuManager';
@@ -18,10 +13,6 @@ export class ModalManager {
     eventManager: any;
     settings: any;
     st: any;
-    charCreationManager: CharCreationManager;
-    tagManager: TagManager;
-    presetManager: PresetManager;
-    charListManager: CharListManager;
     charactersView: CharactersView;
     menuManager: MenuManager;
 
@@ -30,10 +21,6 @@ export class ModalManager {
         this.settings = settings;
         this.st = st;
         this.menuManager = new MenuManager();
-        this.charCreationManager = new CharCreationManager(this.eventManager, this.settings, this.st);
-        this.tagManager = new TagManager(this.eventManager, this.settings, this.st);
-        this.presetManager = new PresetManager(this.eventManager, this.settings, this.st, this.tagManager);
-        this.charListManager = new CharListManager(this.eventManager, this.settings, this.st, this.presetManager);
         this.charactersView = new CharactersView(this.eventManager, this.settings, this.st, this.menuManager);
     }
 
@@ -87,7 +74,6 @@ export class ModalManager {
             .appendTo('#acm_accentColor_slot');
         this.openPickerPanelUpward($picker[0]);
 
-
         // Put the button before rm_button_group_chats in the form_character_search_form
         $('#rm_button_group_chats').before('<button id="acm-manager" class="menu_button fa-solid fa-users faSmallFontSquareFix" title="Open Char Manager"></button>');
 
@@ -101,10 +87,6 @@ export class ModalManager {
         this.initializeModalEvents();
         this.initializeUIMenuEvents();
         this.charactersView.init();
-        this.charCreationManager.initializeCharacterCreationEvents();
-        this.tagManager.init();
-        this.presetManager.init();
-        this.charListManager.init();
     }
 
     /**
@@ -134,12 +116,11 @@ export class ModalManager {
             .toggleClass('acm-compact', isCompact);
         // Cards per row depend on the mode (from the width on phones and tablets)
         if (wasMobile !== isMobile || wasCompact !== isCompact) {
-            this.charListManager?.applyCardWidthForColumns();
+            this.eventManager.emit('modal:modeChanged');
         }
         // The details view too (tabs forced on phones), and the submenus placement
         if (wasMobile !== isMobile) {
-            this.charactersView.applyDetailsViewMode();
-            this.charactersView.applyMenusPlacement();
+            this.eventManager.emit('modal:mobileChanged');
         }
     }
 
@@ -158,25 +139,7 @@ export class ModalManager {
             easing: 'ease-in-out',
         });
 
-        const charSortOrderSelect = document.getElementById('char_sort_order') as HTMLSelectElement;
-        Array.from(charSortOrderSelect.options).forEach(option => {
-            const field = option.getAttribute('data-field');
-            const order = option.getAttribute('data-order');
-
-            option.selected = field === this.settings.getSetting('sortingField') && order === this.settings.getSetting('sortingOrder');
-        });
-
-        const favOnly = this.settings.getSetting('favOnly');
-        this.charListManager.updateFavFilterButtonState(favOnly);
-
-        const currentCardsPerRow = this.charListManager.clampCardsPerRow(this.settings.getSetting('cardsPerRow'));
-        $('#acm_cardsPerRowSlider').val(currentCardsPerRow);
-        $('#acm_cardsPerRowValue').text(currentCardsPerRow);
-
         this.eventManager.emit('modal:opened');
-
-        // Apply persisted tab/dropdown view mode for char-details-desc
-        this.charactersView.applyDetailsViewMode(true);
     }
 
     /**
@@ -314,47 +277,9 @@ export class ModalManager {
             this.openModal();
         });
 
-        // Trigger when clicking on a drawer to open/close it
-        $(document).on('click', '.altgreetings-drawer-toggle', function (this: HTMLElement) {
-            const icon = $(this).find('.idit');
-            icon.toggleClass('down up').toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
-            $(this).closest('.inline-drawer').children('.inline-drawer-content').stop().slideToggle();
-
-            // Set the height of "autoSetHeight" text areas within the inline-drawer to their scroll height
-            $(this).closest('.inline-drawer').find('.inline-drawer-content textarea.autoSetHeight').each(function (this: HTMLElement) {
-                resetScrollHeight(this);
-            });
-        });
-
-        // Dropdown mode: top-level sections open one at a time, without the slide animation,
-        // so the open section fills the panel at once. Runs before ST's document-level drawer
-        // handler and stops it; alt greeting sub-drawers keep the default behavior.
-        const descElement = document.getElementById('char-details-desc');
-        $(descElement).on('click', '.inline-drawer-header', function (this: HTMLElement, event: JQuery.TriggeredEvent) {
-            const drawer = this.parentElement;
-            if (drawer?.parentElement !== descElement) return;
-            // Let the expand / add greeting buttons do their own thing
-            if ($(event.target).closest('.editor_maximize, .acm-add-alt-greeting').length) return;
-            event.stopPropagation();
-
-            const expand = !$(this).find('.idit').hasClass('up');
-            $(descElement).children('.inline-drawer').each(function (this: HTMLElement) {
-                const isOpen = this === drawer && expand;
-                $(this).children('.inline-drawer-header').find('.idit')
-                    .toggleClass('up fa-circle-chevron-up', isOpen)
-                    .toggleClass('down fa-circle-chevron-down', !isOpen);
-                $(this).children('.inline-drawer-content').stop(true, true).css('display', isOpen ? '' : 'none');
-            });
-        });
-
         // Trigger when the modal is closed to reset some global parameters
         $('#acm_popup_close').on('click', () => {
             this.closeModal();
-        });
-
-        // Trigger when clicking on the separator (or, on a phone, the back button) to close the character details
-        $(document).on('click', '#char-sep, #acm_details_back', () => {
-            this.charactersView.closeDetails();
         });
 
         this.initializeBackButton();
@@ -383,23 +308,6 @@ export class ModalManager {
             // The character list's ResizeObserver re-fits the cards as the popup resizes.
         });
 
-        const $cardsPerRowSlider = $('#acm_cardsPerRowSlider');
-        const $cardsPerRowValue = $('#acm_cardsPerRowValue');
-
-        const initialCardsPerRow = this.charListManager.clampCardsPerRow(this.settings.getSetting('cardsPerRow'));
-        $cardsPerRowSlider.val(initialCardsPerRow);
-        $cardsPerRowValue.text(initialCardsPerRow);
-
-        $cardsPerRowSlider.on('input', (event) => {
-            const cols = parseInt(<string>$(event.target).val(), 10);
-            $cardsPerRowValue.text(cols);
-            this.eventManager.emit('charList:setCardsPerRow', { cols, persist: false });
-        }).on('change', (event) => {
-            const cols = parseInt(<string>$(event.target).val(), 10);
-            $cardsPerRowValue.text(cols);
-            this.eventManager.emit('charList:setCardsPerRow', { cols, persist: true });
-        });
-
         // Accent color: ST's picker fires 'change' continuously while picking, so the UI
         // follows live; the save itself is debounced by ST
         $('#acm_accentColor').on('change', (event: any) => {
@@ -412,10 +320,6 @@ export class ModalManager {
         // Setting the picker's color fires its 'change', which applies and saves it
         $('#acm_accentColor_reset').on('click', () => {
             ($('#acm_accentColor')[0] as any).color = DEFAULT_ACCENT_COLOR;
-        });
-
-        this.eventManager.on('modal:closeDetails', () => {
-            this.charactersView.closeDetails();
         });
 
         this.eventManager.on('modal:close', () => {

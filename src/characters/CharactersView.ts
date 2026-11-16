@@ -4,18 +4,30 @@ import {
     attachTabSwipe,
 } from '../scripts/acm-utils';
 import { MenuManager } from '../core/MenuManager';
+import { CharCreationManager } from '../scripts/classes/CharCreationManager';
+import { TagManager } from '../scripts/classes/TagManager';
+import { PresetManager } from '../scripts/classes/PresetManager';
+import { CharListManager } from '../scripts/classes/CharListManager';
 
 export class CharactersView {
     eventManager: any;
     settings: any;
     st: any;
     menuManager: MenuManager;
+    charCreationManager: CharCreationManager;
+    tagManager: TagManager;
+    presetManager: PresetManager;
+    charListManager: CharListManager;
 
     constructor(eventManager: any, settings: any, st: any, menuManager: MenuManager) {
         this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
         this.menuManager = menuManager;
+        this.charCreationManager = new CharCreationManager(this.eventManager, this.settings, this.st);
+        this.tagManager = new TagManager(this.eventManager, this.settings, this.st);
+        this.presetManager = new PresetManager(this.eventManager, this.settings, this.st, this.tagManager);
+        this.charListManager = new CharListManager(this.eventManager, this.settings, this.st, this.presetManager);
     }
 
     init(): void {
@@ -29,6 +41,11 @@ export class CharactersView {
         this.menuManager.register('sub', 'acm_dropdown_sub', 'dropdown-submenu', 'right-end');
         this.menuManager.register('preset', 'acm_dropdown_cat', 'preset-submenu', 'right-end');
         this.applyMenusPlacement();
+        this.charCreationManager.initializeCharacterCreationEvents();
+        this.tagManager.init();
+        this.presetManager.init();
+        this.charListManager.init();
+        this.initializeCharactersViewEvents();
     }
 
     /**
@@ -227,6 +244,66 @@ export class CharactersView {
                 action(event);
                 this.menuManager.closeAll();
             });
+        });
+    }
+
+    /**
+     * Initializes event handlers for the characters view, including modal lifecycle handling,
+     * details panel closing, drawer toggling, dropdown section behavior, textarea height resets,
+     * and mobile layout updates.
+     *
+     * @return Nothing.
+     */
+    initializeCharactersViewEvents(): void {
+        this.eventManager.on('modal:opened', () => {
+            this.applyDetailsViewMode(true);
+        });
+
+        this.eventManager.on('modal:closeDetails', () => {
+            this.closeDetails();
+        });
+
+        // Trigger when clicking on the separator (or, on a phone, the back button) to close the character details
+        $(document).on('click', '#char-sep, #acm_details_back', () => {
+            this.closeDetails();
+        });
+
+        // Trigger when clicking on a drawer to open/close it
+        $(document).on('click', '.altgreetings-drawer-toggle', function (this: HTMLElement) {
+            const icon = $(this).find('.idit');
+            icon.toggleClass('down up').toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
+            $(this).closest('.inline-drawer').children('.inline-drawer-content').stop().slideToggle();
+
+            // Set the height of "autoSetHeight" text areas within the inline-drawer to their scroll height
+            $(this).closest('.inline-drawer').find('.inline-drawer-content textarea.autoSetHeight').each(function (this: HTMLElement) {
+                resetScrollHeight(this);
+            });
+        });
+
+        // Dropdown mode: top-level sections open one at a time, without the slide animation,
+        // so the open section fills the panel at once. Runs before ST's document-level drawer
+        // handler and stops it; alt greeting sub-drawers keep the default behavior.
+        const descElement = document.getElementById('char-details-desc');
+        $(descElement).on('click', '.inline-drawer-header', function (this: HTMLElement, event: JQuery.TriggeredEvent) {
+            const drawer = this.parentElement;
+            if (drawer?.parentElement !== descElement) return;
+            // Let the expand / add greeting buttons do their own thing
+            if ($(event.target).closest('.editor_maximize, .acm-add-alt-greeting').length) return;
+            event.stopPropagation();
+
+            const expand = !$(this).find('.idit').hasClass('up');
+            $(descElement).children('.inline-drawer').each(function (this: HTMLElement) {
+                const isOpen = this === drawer && expand;
+                $(this).children('.inline-drawer-header').find('.idit')
+                    .toggleClass('up fa-circle-chevron-up', isOpen)
+                    .toggleClass('down fa-circle-chevron-down', !isOpen);
+                $(this).children('.inline-drawer-content').stop(true, true).css('display', isOpen ? '' : 'none');
+            });
+        });
+
+        this.eventManager.on('modal:mobileChanged', () => {
+            this.applyDetailsViewMode();
+            this.applyMenusPlacement();
         });
     }
 }

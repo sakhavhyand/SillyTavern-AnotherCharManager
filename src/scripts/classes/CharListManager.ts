@@ -111,6 +111,21 @@ export class CharListManager {
         });
 
         this.eventManager.on('modal:opened', () => {
+            const favOnly = this.settings.getSetting('favOnly');
+            this.updateFavFilterButtonState(favOnly);
+
+            const currentCardsPerRow = this.clampCardsPerRow(this.settings.getSetting('cardsPerRow'));
+            $('#acm_cardsPerRowSlider').val(currentCardsPerRow);
+            $('#acm_cardsPerRowValue').text(currentCardsPerRow);
+
+            const charSortOrderSelect = document.getElementById('char_sort_order') as HTMLSelectElement;
+            Array.from(charSortOrderSelect.options).forEach(option => {
+                const field = option.getAttribute('data-field');
+                const order = option.getAttribute('data-order');
+
+                option.selected = field === this.settings.getSetting('sortingField') && order === this.settings.getSetting('sortingOrder');
+            });
+
             this.modalOpen = true;
             this.restoreSessionPending = this.lastSession !== null;
             this.refreshCharListDebounced(false);
@@ -121,9 +136,27 @@ export class CharListManager {
             this.destroyDropdownScrollers();
         });
 
+        this.eventManager.on('modal:modeChanged', () => {
+            this.applyCardWidthForColumns();
+        });
+
         this.st.eventSource.on(this.st.event_types.CHARACTER_PAGE_LOADED, () => {
             this.eventManager.emit('charList:refresh');
-        });    }
+        });
+
+        const $cardsPerRowSlider = $('#acm_cardsPerRowSlider');
+        const $cardsPerRowValue = $('#acm_cardsPerRowValue');
+
+        $cardsPerRowSlider.on('input', (event) => {
+            const cols = parseInt(<string>$(event.target).val(), 10);
+            $cardsPerRowValue.text(cols);
+            this.eventManager.emit('charList:setCardsPerRow', { cols, persist: false });
+        }).on('change', (event) => {
+            const cols = parseInt(<string>$(event.target).val(), 10);
+            $cardsPerRowValue.text(cols);
+            this.eventManager.emit('charList:setCardsPerRow', { cols, persist: true });
+        });
+    }
 
     /**
      * Initializes event listeners for toolbar actions.
