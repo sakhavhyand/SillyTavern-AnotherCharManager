@@ -1,6 +1,7 @@
 import { DEFAULT_ACCENT_COLOR } from '../../core/settings';
 import { CharactersView } from '../../characters/CharactersView';
 import { MenuManager } from '../../core/MenuManager';
+import { LayerManager } from '../../core/LayerManager';
 
 // Screen modes, see applyResponsiveMode() and css/responsive.css
 // Mobile: phone in portrait (narrow) or in landscape (short)
@@ -15,13 +16,15 @@ export class ModalManager {
     st: any;
     charactersView: CharactersView;
     menuManager: MenuManager;
+    layerManager: LayerManager;
 
     constructor(eventManager: any, settings: any, st: any) {
         this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
         this.menuManager = new MenuManager();
-        this.charactersView = new CharactersView(this.eventManager, this.settings, this.st, this.menuManager);
+        this.layerManager = new LayerManager(() => $('#acm_popup').hasClass('acm-mobile'));
+        this.charactersView = new CharactersView(this.eventManager, this.settings, this.st, this.menuManager, this.layerManager);
     }
 
     /**
@@ -165,96 +168,12 @@ export class ModalManager {
     }
 
     /**
-     * Phone: the details and the advanced definitions / creation popups cover the screen,
-     * so the system back button (Android) closes the top one instead of leaving the page.
-     *
-     * Each of these layers gets an history entry when it opens. Their opening and closing
-     * are watched on the elements themselves, whatever closes them (button, other manager...):
-     * - closed by the UI: its entry is dropped (history.back(), whose popstate is ignored);
-     * - closed by the back button: its entry is already gone, it's closed with `close`.
-     */
-    initializeBackButton(): void {
-        const isDisplayed = (el: HTMLElement) => getComputedStyle(el).display !== 'none';
-        const layers: { el: HTMLElement; isOpen: (el: HTMLElement) => boolean; close: () => void }[] = [
-            {
-                el: document.getElementById('char-details')!,
-                isOpen: el => el.classList.contains('open'),
-                close: () => this.charactersView.closeDetails(),
-            },
-            {
-                el: document.getElementById('acm_character_popup')!,
-                isOpen: isDisplayed,
-                close: () => $('#acm_character_cross').trigger('click'),
-            },
-            {
-                el: document.getElementById('acm_create_popup')!,
-                isOpen: isDisplayed,
-                close: () => $('#acm_create_popup_close').trigger('click'),
-            },
-        ];
-        const wasOpen = new Map(layers.map(layer => [layer.el, layer.isOpen(layer.el)]));
-        // Layers that have an history entry, the top one last
-        const stack: HTMLElement[] = [];
-        let ignoredPops = 0;
-
-        const onChange = () => {
-            const opened: HTMLElement[] = [];
-            const closed: HTMLElement[] = [];
-            for (const layer of layers) {
-                const open = layer.isOpen(layer.el);
-                if (open === wasOpen.get(layer.el)) continue;
-                wasOpen.set(layer.el, open);
-                (open ? opened : closed).push(layer.el);
-            }
-            for (const el of closed) {
-                const index = stack.lastIndexOf(el);
-                if (index === -1) continue;
-                stack.splice(index, 1);
-                // One layer closed and another opened at once (e.g. the creation popup closes
-                // the details): reuse the entry, as history.back() and pushState would race
-                const next = opened.shift();
-                if (next) {
-                    history.replaceState({ acmLayer: true }, '');
-                    stack.push(next);
-                } else {
-                    ignoredPops++;
-                    history.back();
-                }
-            }
-            if (!$('#acm_popup').hasClass('acm-mobile')) return;
-            for (const el of opened) {
-                history.pushState({ acmLayer: true }, '');
-                stack.push(el);
-            }
-        };
-
-        const observer = new MutationObserver(onChange);
-        for (const layer of layers) {
-            observer.observe(layer.el, { attributes: true, attributeFilter: ['class', 'style'] });
-        }
-
-        // A reload keeps the entries but not the stack: unmark the current one
-        if (history.state?.acmLayer) history.replaceState(null, '');
-
-        window.addEventListener('popstate', () => {
-            if (ignoredPops > 0) {
-                ignoredPops--;
-                return;
-            }
-            const el = stack.pop();
-            if (!el) return;
-            layers.find(layer => layer.el === el)?.close();
-        });
-    }
-
-    /**
      * Closes the modal and hides the popup.
      */
     closeModal(): void {
         // Before closeDetails() clears the selection: the list remembers it for the next opening
         this.eventManager.emit('modal:closing');
-        this.charactersView.closeDetails();
-
+        this.eventManager.emit('modal:closeDetails');
         document.querySelector('#acm_lock')!.classList.remove('is-active');
 
         const $popup = $('#acm_popup');
@@ -282,7 +201,6 @@ export class ModalManager {
             this.closeModal();
         });
 
-        this.initializeBackButton();
         this.initializeEditingState();
 
         const $slider = $('#acm_widthSlider');

@@ -8,6 +8,7 @@ import { CharCreationManager } from '../scripts/classes/CharCreationManager';
 import { TagManager } from '../scripts/classes/TagManager';
 import { PresetManager } from '../scripts/classes/PresetManager';
 import { CharListManager } from '../scripts/classes/CharListManager';
+import { LayerManager } from '../core/LayerManager';
 
 export class CharactersView {
     eventManager: any;
@@ -18,12 +19,14 @@ export class CharactersView {
     tagManager: TagManager;
     presetManager: PresetManager;
     charListManager: CharListManager;
+    layerManager: LayerManager;
 
-    constructor(eventManager: any, settings: any, st: any, menuManager: MenuManager) {
+    constructor(eventManager: any, settings: any, st: any, menuManager: MenuManager, layerManager: LayerManager) {
         this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
         this.menuManager = menuManager;
+        this.layerManager = layerManager;
         this.charCreationManager = new CharCreationManager(this.eventManager, this.settings, this.st);
         this.tagManager = new TagManager(this.eventManager, this.settings, this.st);
         this.presetManager = new PresetManager(this.eventManager, this.settings, this.st, this.tagManager);
@@ -31,6 +34,7 @@ export class CharactersView {
     }
 
     init(): void {
+        const isDisplayed = (el: HTMLElement) => getComputedStyle(el).display !== 'none';
         this.initializeDetailsTabs();
         this.initializeTabSwipe();
         this.initializeSwitchUIEvents();
@@ -40,6 +44,9 @@ export class CharactersView {
         // '-end' aligns the bottoms so submenus grow upward from the footer
         this.menuManager.register('sub', 'acm_dropdown_sub', 'dropdown-submenu', 'right-end');
         this.menuManager.register('preset', 'acm_dropdown_cat', 'preset-submenu', 'right-end');
+        this.layerManager.register(document.getElementById('char-details')!, el => el.classList.contains('open'), () => this.closeDetails());
+        this.layerManager.register(document.getElementById('acm_character_popup')!, isDisplayed, () => $('#acm_character_cross').trigger('click'));
+        this.layerManager.register(document.getElementById('acm_create_popup')!, isDisplayed, () => $('#acm_create_popup_close').trigger('click'));
         this.applyMenusPlacement();
         this.charCreationManager.initializeCharacterCreationEvents();
         this.tagManager.init();
